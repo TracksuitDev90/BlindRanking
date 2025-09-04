@@ -1,8 +1,8 @@
 "use strict";
 
 /* =========================================================
-   Blind Rankings — stable flow, image reliability,
-   face/character focus, perf-friendly UI, confetti+CTA.
+   Blind Rankings — progressive images, prefetch, SW caching,
+   stable flow, face/character focus, idempotent events.
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -22,13 +22,19 @@ function escapeHtml(str){
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[s]));
 }
-function preloadImage(src){
-  return new Promise(res=>{
-    const img = new Image();
-    img.onload  = () => res(src);
-    img.onerror = () => res(null);
-    img.src = src;
-  });
+function tokenize(s){
+  return String(s||"").toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu," ")
+    .split(" ").filter(Boolean);
+}
+const STOP = new Set(["the","a","an","of","and","&","in","on","at","to","for"]);
+function scoreMatch(query, candidate){
+  const qt = new Set(tokenize(query).filter(w=>!STOP.has(w)));
+  const ct = new Set(tokenize(candidate).filter(w=>!STOP.has(w)));
+  if (!qt.size || !ct.size) return 0;
+  let hit = 0; qt.forEach(t=>{ if (ct.has(t)) hit++; });
+  const recall = hit/qt.size, precis = hit/ct.size;
+  return 0.65*recall + 0.35*precis;
 }
 
 /* Fetch with timeout (prevents stalls) */
@@ -39,32 +45,36 @@ async function fetchJson(url, opts = {}, timeoutMs = 7000){
     const r = await fetch(url, { ...opts, signal: controller.signal });
     if (!r.ok) return null;
     const ct = r.headers.get("content-type") || "";
-    const data = ct.includes("application/json") ? await r.json() : await r.text();
-    return data;
+    return ct.includes("application/json") ? r.json() : r.text();
   }catch(_){ return null; }
   finally{ clearTimeout(id); }
 }
 
-/* Relevance scoring to avoid unrelated images */
-const STOP = new Set(["the","a","an","of","and","&","in","on","at","to","for"]);
-function tokenize(s){
-  return String(s||"").toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu," ")
-    .split(" ").filter(w => w && !STOP.has(w));
+/* Progressive image helpers */
+function tmdbLowRes(url){
+  return url && url.includes("image.tmdb.org/t/p/")
+    ? url.replace(/\/w(1280|780|500)\//, "/w342/")
+    : url;
 }
-function scoreMatch(query, candidate){
-  const qt = new Set(tokenize(query));
-  const ct = new Set(tokenize(candidate));
-  if (!qt.size || !ct.size) return 0;
-  let hit = 0;
-  qt.forEach(t => { if (ct.has(t)) hit++; });
-  const recall  = hit / qt.size;
-  const precis  = hit / ct.size;
-  return 0.65*recall + 0.35*precis;
+function decodeWithTimeout(img, ms=3500){
+  return Promise.race([
+    img.decode().catch(()=>{}),
+    new Promise(res => setTimeout(res, ms))
+  ]);
+}
+async function loadProgressive(el, highUrl, faceFocus=false){
+  const low = tmdbLowRes(highUrl) || highUrl;
+  el.style.objectPosition = faceFocus ? "center 20%" : "center";
+  el.src = low;
+  const hi = new Image();
+  hi.decoding = "async";
+  hi.src = highUrl;
+  await decodeWithTimeout(hi, 3000);
+  if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
 }
 
 /* ---------- Image providers & fallbacks ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v8";
+const IMG_CACHE_KEY = "blind-rank:imageCache:v9";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
@@ -79,29 +89,25 @@ async function tmdbSearchImages(query, mediaType = "movie"){
   if (!key) return null;
   const url = `${TMDB_BASE}/search/${mediaType}?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
   const data = await fetchJson(url);
-  if (!data || !Array.isArray(data.results) || !data.results.length) return null;
+  if (!data?.results?.length) return null;
 
-  const results = data.results
-    .map(r => ({
-      raw: r, title: r.title || r.name || "", score: scoreMatch(query, r.title || r.name || "")
-    }))
-    .sort((a,b)=> b.score - a.score);
+  const results = data.results.map(r => ({
+    raw: r, title: r.title || r.name || "", score: scoreMatch(query, r.title || r.name || "")
+  })).sort((a,b)=> b.score - a.score);
 
   const best = results[0];
   if (!best || best.score < 0.35) return null;
 
-  const first = best.raw;
-
+  const r = best.raw;
   if (mediaType === "person"){
-    const profile = first.profile_path ? `${TMDB_IMG}/w780${first.profile_path}` : null;
+    const profile = r.profile_path ? `${TMDB_IMG}/w780${r.profile_path}` : null;
     if (!profile) return null;
-    return { main: profile, thumb: profile, title: first.name || query };
+    return { main: profile, thumb: profile };
   }
-
-  const main  = first.backdrop_path ? `${TMDB_IMG}/w1280${first.backdrop_path}` : (first.poster_path ? `${TMDB_IMG}/w780${first.poster_path}` : null);
-  const thumb = first.poster_path   ? `${TMDB_IMG}/w500${first.poster_path}`   : (first.backdrop_path ? `${TMDB_IMG}/w780${first.backdrop_path}` : null);
+  const main  = r.backdrop_path ? `${TMDB_IMG}/w1280${r.backdrop_path}` : (r.poster_path ? `${TMDB_IMG}/w780${r.poster_path}` : null);
+  const thumb = r.poster_path   ? `${TMDB_IMG}/w500${r.poster_path}`   : (r.backdrop_path ? `${TMDB_IMG}/w780${r.backdrop_path}` : null);
   if (!main && !thumb) return null;
-  return { main, thumb, title: first.title || first.name || query };
+  return { main, thumb };
 }
 
 /** Wikipedia PageImages + Wikidata P18 (Commons) */
@@ -109,11 +115,10 @@ async function wikiBestImage(title){
   const wp = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&titles=${encodeURIComponent(title)}&origin=*`);
   try{
     const pages = wp?.query?.pages || {};
-    const firstPage = Object.values(pages)[0];
-    const direct = firstPage?.thumbnail?.source || null;
+    const first = Object.values(pages)[0];
+    const direct = first?.thumbnail?.source || null;
     if (direct) return direct;
-
-    const qid = firstPage?.pageprops?.wikibase_item;
+    const qid = first?.pageprops?.wikibase_item;
     if (qid){
       const wd = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${qid}&property=P18&format=json&origin=*`);
       const p18 = wd?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
@@ -132,8 +137,7 @@ async function tvmazeShowImage(query){
   if (!Array.isArray(data) || !data.length) return null;
   const ranked = data
     .map(x => ({ url: x?.show?.image?.original || x?.show?.image?.medium, title: x?.show?.name || "", score: scoreMatch(query, x?.show?.name || "") }))
-    .filter(x => x.url)
-    .sort((a,b)=> b.score - a.score);
+    .filter(x => x.url).sort((a,b)=> b.score - a.score);
   return (ranked[0] && ranked[0].score >= 0.35) ? ranked[0].url : null;
 }
 
@@ -150,36 +154,24 @@ async function omdbPoster(query){
 function upscaleItunes(url){ return url ? url.replace(/\/\d+x\d+bb\.jpg/, '/1200x1200bb.jpg') : null; }
 async function itunesArtistImage(query){
   const d = await fetchJson(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=musicArtist&limit=3`);
-  const cands = Array.isArray(d?.results) ? d.results : [];
-  let best = null, bestScore = 0;
-  for (const r of cands){
-    const t = r.artistName || "";
-    const s = scoreMatch(query, t);
-    if (s > bestScore){ bestScore = s; best = upscaleItunes(r.artworkUrl100); }
-  }
-  return bestScore >= 0.35 ? best : null;
+  const arr = Array.isArray(d?.results) ? d.results : [];
+  let best=null,score=0; for(const r of arr){ const s=scoreMatch(query,r.artistName||""); if(s>score){score=s; best=upscaleItunes(r.artworkUrl100);} }
+  return score>=0.35?best:null;
 }
 async function itunesMoviePoster(query){
   const d = await fetchJson(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=movie&entity=movie&limit=3`);
-  const cands = Array.isArray(d?.results) ? d.results : [];
-  let best = null, bestScore = 0;
-  for (const r of cands){
-    const t = r.trackName || r.collectionName || "";
-    const s = scoreMatch(query, t);
-    if (s > bestScore){ bestScore = s; best = upscaleItunes(r.artworkUrl100); }
-  }
-  return bestScore >= 0.35 ? best : null;
+  const arr = Array.isArray(d?.results) ? d.results : [];
+  let best=null,score=0; for(const r of arr){ const t=r.trackName||r.collectionName||""; const s=scoreMatch(query,t); if(s>score){score=s; best=upscaleItunes(r.artworkUrl100);} }
+  return score>=0.35?best:null;
 }
 
-/** TheAudioDB (key or test key "1") */
+/** TheAudioDB + Last.fm */
 async function audioDbArtistImage(query){
   const key = window.BR_CONFIG?.AUDIODB_API_KEY || "1";
   const d = await fetchJson(`https://www.theaudiodb.com/api/v1/json/${encodeURIComponent(key)}/search.php?s=${encodeURIComponent(query)}`);
   const a = d?.artists?.[0];
   return a?.strArtistFanart || a?.strArtistThumb || null;
 }
-
-/** Last.fm (key) */
 async function lastfmArtistImage(query){
   const key = window.BR_CONFIG?.LASTFM_API_KEY;
   if (!key) return null;
@@ -189,7 +181,7 @@ async function lastfmArtistImage(query){
   return url || null;
 }
 
-/** Pixabay / Unsplash / Pexels (keys optional) */
+/** Pixabay / Unsplash / Pexels (optional keys) */
 async function pixabayPhoto(query){
   const key = window.BR_CONFIG?.PIXABAY_API_KEY;
   if (!key) return null;
@@ -253,8 +245,7 @@ async function resolveImages(topic, item){
   const provider  = topic.provider || "static";
   const mediaType = topic.mediaType || "";
   const cacheKey  = `${provider}|${mediaType}|${item.label}`;
-  const hit = cacheGet(cacheKey);
-  if (hit) return hit;
+  const hit = cacheGet(cacheKey); if (hit) return hit;
 
   const wantFace = topicPrefersFace(topic) || labelPrefersFace(item.label);
   let out = null;
@@ -290,7 +281,7 @@ async function resolveImages(topic, item){
     if (itMovie) out = { main: itMovie, thumb: itMovie };
   }
 
-  // 3) Generic “just get something nice”
+  // 3) Generic fallback with small context hint
   if (!out){
     const suffix = contextSuffix(topic.name);
     const pxb = await pixabayPhoto(item.label + suffix);
@@ -321,10 +312,10 @@ let placed       = {};    // rank -> item
 let currentItem  = null;
 let didCelebrate = false;
 
-const SESSION_KEY = "blind-rank:session:v5";
+const SESSION_KEY = "blind-rank:session:v6";
 
 const topicTag     = $("#topicTag");
-const cardPhoto    = $("#cardPhoto");
+const cardImg      = $("#cardImg");
 const itemTitle    = $("#itemTitle");
 const helpText     = $("#cardHelp");
 const placeButtons = $("#placeButtons");
@@ -335,20 +326,18 @@ const newGameBtn   = $("#newGameBtn");
 const confettiEl   = $("#confetti");
 const nextTopicCta = $("#nextTopicCta");
 
-/* ---------- Central UI updater (prevents stuck state) ---------- */
+/* ---------- Central UI updater ---------- */
 function updateUIAfterState(){
-  // Show CTA or the current image depending on state
   if (!currentItem){
-    if (itemTitle) itemTitle.textContent = "All items placed!";
-    if (helpText)  helpText.textContent  = "Great job — tap Next Topic to continue.";
-    if (cardPhoto) cardPhoto.style.display = "none";
+    itemTitle && (itemTitle.textContent = "All items placed!");
+    helpText  && (helpText.textContent  = "Great job — tap Next Topic to continue.");
+    if (cardImg) cardImg.style.display = "none";
     if (nextTopicCta) nextTopicCta.hidden = false;
-    celebrate(); // safe to call repeatedly; guarded by didCelebrate
+    celebrate();
     return;
   }
-
   if (nextTopicCta) nextTopicCta.hidden = true;
-  if (cardPhoto)   cardPhoto.style.display = "";
+  if (cardImg) cardImg.style.display = "";
 }
 
 /* ---------- Session ---------- */
@@ -357,7 +346,7 @@ function saveSession(){
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 5,
+      version: 6,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -373,7 +362,7 @@ function restoreSession(){
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return false;
     const s = JSON.parse(raw);
-    if (!s || !Array.isArray(s.topicOrder)) return false;
+    if (!s?.topicOrder) return false;
 
     topicOrder = s.topicOrder;
     currentTopicIndex = s.currentTopicIndex || 0;
@@ -384,23 +373,22 @@ function restoreSession(){
     const byLabel = (label)=> (currentTopic.items || []).find(it => it.label === label);
 
     placed = {};
-    for (const [rank, label] of Object.entries(s.placedLabels || {})) {
+    Object.entries(s.placedLabels || {}).forEach(([rank, label])=>{
       const it = byLabel(label); if (it) placed[Number(rank)] = it;
-    }
+    });
     itemsQueue  = (s.queueLabels || []).map(byLabel).filter(Boolean);
     currentItem = s.currentItemLabel ? byLabel(s.currentItemLabel) : (itemsQueue.shift() || null);
 
     topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
     clearSlots();
-    for (const [rankStr, it] of Object.entries(placed)) {
+    Object.entries(placed).forEach(([rankStr, it])=>{
       const slot = $(`.rank-slot[data-rank="${rankStr}"]`);
       if (slot) renderSlotInto(slot, it, currentTopic);
-    }
+    });
     updateResults();
-    didCelebrate = false;      // reset confetti on restore
-    paintCurrent();            // (async) load current image
+    didCelebrate = false;
+    paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
     updateStartOverLock();
-    updateUIAfterState();
     wireControls();
     return true;
   }catch(_){ return false; }
@@ -417,28 +405,33 @@ function clearSlots(){
 }
 
 async function paintCurrent(){
-  // Paint image/title for the current item; do not decide CTA here
   if (!currentItem){
     updateUIAfterState();
     return;
   }
-
   const { main } = await resolveImages(currentTopic, currentItem);
-  const loaded   = await preloadImage(main);
-  const bg       = loaded || `https://placehold.co/800x450?text=${encodeURIComponent(currentItem.label)}`;
-
-  const faceFocus = topicPrefersFace(currentTopic) || labelPrefersFace(currentItem.label);
-  if (cardPhoto){
-    cardPhoto.style.backgroundImage  = `url('${bg}')`;
-    cardPhoto.style.backgroundPosition = faceFocus ? "center 20%" : "center";
+  const face = topicPrefersFace(currentTopic) || labelPrefersFace(currentItem.label);
+  if (cardImg){
+    await loadProgressive(cardImg, main, face);
+    cardImg.alt = currentItem.label;
   }
   itemTitle && (itemTitle.textContent = currentItem.label);
-
   if (helpText) {
     helpText.innerHTML = `
       <svg class="info-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path></svg>
       Use the <strong>Place</strong> buttons to lock this into a rank. No drag needed.
     `;
+  }
+}
+
+/* Prefetch next N items (low-res) */
+async function prefetchNext(n=2){
+  const peek = itemsQueue.slice(0, n);
+  for (const it of peek){
+    const { main } = await resolveImages(currentTopic, it);
+    const img = new Image();
+    img.decoding = "async";
+    img.src = tmdbLowRes(main) || main;
   }
 }
 
@@ -465,13 +458,12 @@ function loadTopicByOrderIndex(orderIdx){
   itemsQueue  = shuffle((currentTopic.items || []).slice());
   currentItem = itemsQueue.shift() || null;
 
-  didCelebrate = false;  // IMPORTANT: reset celebration on new topic
+  didCelebrate = false;  // reset
   topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
   clearSlots();
   updateResults();
   updateStartOverLock();
-  paintCurrent();
-  updateUIAfterState();
+  paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
   saveSession();
 }
 
@@ -493,8 +485,7 @@ async function placeCurrentItemInto(rank){
   updateStartOverLock();
   saveSession();
 
-  // Update UI once per state change (prevents stuck state)
-  paintCurrent().then(updateUIAfterState);
+  paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
 }
 
 async function renderSlotInto(slot, item, topic){
@@ -510,13 +501,13 @@ async function renderSlotInto(slot, item, topic){
     </div>
   `;
   const { thumb } = await resolveImages(topic, item);
-  const ok = await preloadImage(thumb);
-  const finalThumb = ok || `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
-  const faceFocus = topicPrefersFace(topic) || labelPrefersFace(item.label);
+  const imgOk = await (new Promise(res=>{ const im=new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src=thumb; }));
+  const finalThumb = imgOk ? thumb : `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
+  const face = topicPrefersFace(topic) || labelPrefersFace(item.label);
   const thumbEl = $(".slot-thumb", dz);
   if (thumbEl){
     thumbEl.style.backgroundImage   = `url('${finalThumb}')`;
-    thumbEl.style.backgroundPosition = faceFocus ? "center 20%" : "center";
+    thumbEl.style.backgroundPosition = face ? "center 20%" : "center";
   }
 }
 
@@ -526,7 +517,7 @@ function updateResults(){
   resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
 }
 
-/* Start Over locking: disabled after 3 placements (persisted by session) */
+/* Start Over locking: disabled after 3 placements */
 function updateStartOverLock(){
   const filled = Object.keys(placed).length;
   if (!newGameBtn) return;
@@ -545,6 +536,18 @@ function updateStartOverLock(){
 function gotoNextTopic(){
   const next = (currentTopicIndex + 1) % topicOrder.length;
   loadTopicByOrderIndex(next);
+}
+function addRipple(btn, evt){
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement("span");
+  ripple.className = "ripple";
+  const size = Math.max(rect.width, rect.height) * 1.25;
+  const x = ((evt.clientX ?? (rect.left + rect.width/2)) - rect.left) - size/2;
+  const y = ((evt.clientY ?? (rect.top + rect.height/2)) - rect.top)  - size/2;
+  ripple.style.width = ripple.style.height = `${size * 1.6}px`;
+  ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
+  btn.appendChild(ripple);
+  setTimeout(()=> ripple.remove(), 800);
 }
 function wireControls(){
   if (placeButtons && !placeButtons.__wired){
@@ -577,39 +580,24 @@ function wireControls(){
       clearSlots();
       updateResults();
       updateStartOverLock();
-      didCelebrate = false;  // IMPORTANT: reset on Start Over
+      didCelebrate = false;
       saveSession();
-      paintCurrent();
-      updateUIAfterState();
+      paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
     });
     newGameBtn.__wired = true;
   }
 }
 wireControls();
 
-/* ---------- Ripple ---------- */
-function addRipple(btn, evt){
-  const rect = btn.getBoundingClientRect();
-  const ripple = document.createElement("span");
-  ripple.className = "ripple";
-  const size = Math.max(rect.width, rect.height) * 1.25;
-  const x = ((evt.clientX ?? (rect.left + rect.width/2)) - rect.left) - size/2;
-  const y = ((evt.clientY ?? (rect.top + rect.height/2)) - rect.top)  - size/2;
-  ripple.style.width = ripple.style.height = `${size * 1.6}px`;
-  ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
-  btn.appendChild(ripple);
-  setTimeout(()=> ripple.remove(), 800);
-}
-
-/* ---------- Confetti (lighter for perf) ---------- */
+/* ---------- Confetti (lighter) ---------- */
 function celebrate(){
   const filled = Object.keys(placed).length;
   if (filled !== 5 || didCelebrate || !confettiEl) return;
   didCelebrate = true;
 
   const canvas = confettiEl;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
   canvas.style.display = "block";
 
   const ctx = canvas.getContext("2d");
@@ -643,10 +631,10 @@ function celebrate(){
     else canvas.style.display = "none";
   })();
 }
-window.addEventListener("resize", ()=>{
+addEventListener("resize", ()=>{
   if (!confettiEl) return;
-  confettiEl.width = window.innerWidth;
-  confettiEl.height = window.innerHeight;
+  confettiEl.width = innerWidth;
+  confettiEl.height = innerHeight;
 });
 
 /* ---------- Bootstrap ---------- */
