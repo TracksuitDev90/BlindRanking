@@ -1,8 +1,8 @@
 "use strict";
 
 /* =========================================================
-   Blind Rankings — robust pointer drag, face-first framing,
-   session save/restore, desktop+mobile button layout.
+   Blind Rankings — buttons-only placement, ripple feedback,
+   face/top focus, localStorage resume, confetti celebration.
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -30,8 +30,8 @@ function preloadImage(src){
   });
 }
 
-// ---------- Provider image helpers ----------
-const IMG_CACHE_KEY = "blind-rank:imageCache:v4";
+/* ------------------ Providers & image helpers ------------------ */
+const IMG_CACHE_KEY = "blind-rank:imageCache:v5";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
@@ -55,7 +55,6 @@ async function tmdbSearchImages(query, mediaType = "movie"){
     return { main, thumb, title: first.title || first.name || query };
   }catch(_){ return null; }
 }
-
 async function wikiLeadImage(title){
   const endpoint = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1200&titles=${encodeURIComponent(title)}&origin=*`;
   try{
@@ -70,11 +69,11 @@ async function wikiLeadImage(title){
   }catch(_){ return null; }
 }
 
-/* Heuristic: if topic is about people, favor top-centered crop so faces show */
+/* People-first focus heuristic */
 const PERSON_HINTS = [
   "artist","artists","singer","singers","musician","musicians","people","players",
   "athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers",
-  "sprinters","tennis","composers","legends"
+  "sprinters","tennis","composers","legends","girl groups","boy bands","pop artists","hip-hop"
 ];
 function topicPrefersFace(topic){
   const name = (topic?.name || "").toLowerCase();
@@ -109,7 +108,7 @@ async function resolveImages(topic, item){
   return out;
 }
 
-// ---------- App state + session ----------
+/* ------------------ State & elements ------------------ */
 const topics = window.BLIND_RANK_TOPICS || [];
 let topicOrder = shuffle(topics.map((_,i)=>i));
 let currentTopicIndex = 0;
@@ -118,37 +117,109 @@ let currentTopic = null;
 let itemsQueue   = [];
 let placed       = {};    // rank -> item
 let currentItem  = null;
-let usingTouch   = false;
 
-const SESSION_KEY = "blind-rank:session:v1";
+const SESSION_KEY = "blind-rank:session:v2";
 
-// ---------- Elements ----------
 const topicTag     = $("#topicTag");
-const currentCard  = $("#currentCard");
 const cardPhoto    = $("#cardPhoto");
 const itemTitle    = $("#itemTitle");
 const helpText     = $("#cardHelp");
 const placeButtons = $("#placeButtons");
-
 const rankSlots    = $$(".rank-slot");
 const resultsEl    = $("#results");
-const reshuffleBtn = $("#reshuffleBtn");
 const nextTopicBtn = $("#nextTopicBtn");
 const newGameBtn   = $("#newGameBtn");
+const confettiEl   = $("#confetti");
 
-// ---------- Init ----------
-detectTouch();
+/* ------------------ Init ------------------ */
 restoreSession() || startNewSession();
 
-function detectTouch(){
-  function setTouch(){
-    usingTouch = true;
-    if (placeButtons) placeButtons.hidden = false;
-    window.removeEventListener("touchstart", setTouch);
-  }
-  window.addEventListener("touchstart", setTouch, { passive:true });
+/* ------------------ Session ------------------ */
+function saveSession(){
+  try{
+    const placedLabels = {};
+    for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
+    const payload = {
+      version: 2,
+      topicOrder,
+      currentTopicIndex,
+      placedLabels,
+      queueLabels: itemsQueue.map(it => it.label),
+      currentItemLabel: currentItem?.label || null,
+      when: Date.now()
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+  }catch(_){}
+}
+function restoreSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.topicOrder)) return false;
+
+    topicOrder = s.topicOrder;
+    currentTopicIndex = s.currentTopicIndex || 0;
+    const topicIdx = topicOrder[currentTopicIndex] ?? 0;
+    currentTopic = topics[topicIdx];
+    if (!currentTopic) return false;
+
+    const byLabel = (label)=> (currentTopic.items || []).find(it => it.label === label);
+
+    placed = {};
+    for (const [rank, label] of Object.entries(s.placedLabels || {})) {
+      const it = byLabel(label); if (it) placed[Number(rank)] = it;
+    }
+    itemsQueue  = (s.queueLabels || []).map(byLabel).filter(Boolean);
+    currentItem = s.currentItemLabel ? byLabel(s.currentItemLabel) : (itemsQueue.shift() || null);
+
+    topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
+    clearSlots();
+    for (const [rankStr, it] of Object.entries(placed)) {
+      const slot = $(`.rank-slot[data-rank="${rankStr}"]`);
+      if (slot) renderSlotInto(slot, it, currentTopic);
+    }
+    updateResults();
+    paintCurrent();
+    updateStartOverLock();
+    return true;
+  }catch(_){ return false; }
 }
 
+/* ------------------ UI helpers ------------------ */
+function clearSlots(){
+  rankSlots.forEach(slot=>{
+    slot.setAttribute("aria-selected","false");
+    const dz = $(".slot-dropzone", slot);
+    dz.innerHTML = "";
+    dz.classList.add("empty");
+  });
+}
+async function paintCurrent(){
+  if (!currentItem){
+    if (cardPhoto) cardPhoto.style.backgroundImage = "none";
+    if (itemTitle) itemTitle.textContent = "All items placed!";
+    if (helpText)  helpText.textContent  = "Great job — pick a new topic to continue.";
+    celebrate(); // trigger confetti
+    return;
+  }
+  const { main } = await resolveImages(currentTopic, currentItem);
+  const loaded   = await preloadImage(main);
+  const bg       = loaded || `https://placehold.co/800x450?text=${encodeURIComponent(currentItem.label)}`;
+
+  const faceFocus = topicPrefersFace(currentTopic);
+  cardPhoto && (cardPhoto.style.backgroundImage  = `url('${bg}')`);
+  cardPhoto && (cardPhoto.style.backgroundPosition = faceFocus ? "center 20%" : "center");
+  itemTitle && (itemTitle.textContent = currentItem.label);
+  if (helpText) {
+    helpText.innerHTML = `
+      <svg class="info-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path></svg>
+      Use the <strong>Place</strong> buttons below to lock the item into a rank.
+    `;
+  }
+}
+
+/* ------------------ Game flow ------------------ */
 function startNewSession(){
   if (!Array.isArray(topics) || topics.length === 0) {
     topicTag && (topicTag.textContent = "Add topics to begin");
@@ -161,17 +232,6 @@ function startNewSession(){
   loadTopicByOrderIndex(0);
   saveSession();
 }
-
-function clearSlots(){
-  rankSlots.forEach(slot=>{
-    slot.setAttribute("aria-selected","false");
-    const dz = $(".slot-dropzone", slot);
-    dz.innerHTML = "";
-    dz.classList.add("empty");
-    dz.classList.remove("is-hovered");
-  });
-}
-
 function loadTopicByOrderIndex(orderIdx){
   const idx = topicOrder[orderIdx] ?? 0;
   currentTopicIndex = orderIdx;
@@ -179,46 +239,15 @@ function loadTopicByOrderIndex(orderIdx){
 
   placed      = {};
   itemsQueue  = shuffle((currentTopic.items || []).slice());
-  currentItem = null;
-  updateResults();
-  clearSlots();
-
-  topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
-  dealNextItem();
-  saveSession();
-}
-
-async function dealNextItem(){
   currentItem = itemsQueue.shift() || null;
 
-  if (!currentItem) {
-    currentCard && currentCard.classList.remove("dragging");
-    if (cardPhoto) cardPhoto.style.backgroundImage = "none";
-    itemTitle && (itemTitle.textContent = "All items ranked!");
-    helpText  && (helpText.textContent  = "Reshuffle or start a new topic.");
-    return;
-  }
-
-  const { main } = await resolveImages(currentTopic, currentItem);
-  const loaded = await preloadImage(main);
-  const bg = loaded || `https://placehold.co/800x450?text=${encodeURIComponent(currentItem.label)}`;
-
-  // Face/top focus when the topic is about people
-  const faceFocus = topicPrefersFace(currentTopic);
-  if (cardPhoto) {
-    cardPhoto.style.backgroundImage  = `url('${bg}')`;
-    cardPhoto.style.backgroundPosition = faceFocus ? "center 20%" : "center";
-    cardPhoto.setAttribute("aria-label", `${currentItem.label} image`);
-  }
-  itemTitle && (itemTitle.textContent = currentItem.label);
-  helpText  && (helpText.textContent  = usingTouch
-    ? "Tap a button to place this into a rank."
-    : "Drag the card to a rank slot, or use the buttons below."
-  );
-
+  topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
+  clearSlots();
+  updateResults();
+  updateStartOverLock();
+  paintCurrent();
   saveSession();
 }
-
 async function placeCurrentItemInto(rank){
   rank = Number(rank);
   if (!currentItem) return;
@@ -230,17 +259,16 @@ async function placeCurrentItemInto(rank){
   placed[rank] = currentItem;
   await renderSlotInto(slot, currentItem, currentTopic);
   slot.setAttribute("aria-selected","true");
-  slot.animate([{transform:"scale(1)"},{transform:"scale(1.02)"},{transform:"scale(1)"}], { duration: 160, easing:"ease-out" });
 
+  currentItem = itemsQueue.shift() || null;
   updateResults();
+  updateStartOverLock();
   saveSession();
-  dealNextItem();
+  paintCurrent();
 }
-
 async function renderSlotInto(slot, item, topic){
   const dz = $(".slot-dropzone", slot);
   dz.classList.remove("empty");
-
   dz.innerHTML = `
     <div class="slot-item">
       <div class="slot-thumb" style="background-image:url('https://placehold.co/320x200?text=...')"></div>
@@ -250,11 +278,9 @@ async function renderSlotInto(slot, item, topic){
       </div>
     </div>
   `;
-
   const { thumb } = await resolveImages(topic, item);
   const ok = await preloadImage(thumb);
   const finalThumb = ok || `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
-
   const faceFocus = topicPrefersFace(topic);
   const thumbEl = $(".slot-thumb", dz);
   if (thumbEl){
@@ -262,201 +288,126 @@ async function renderSlotInto(slot, item, topic){
     thumbEl.style.backgroundPosition = faceFocus ? "center 20%" : "center";
   }
 }
-
 function updateResults(){
   const filled = Object.keys(placed).length;
   const remain = Math.max(0, 5 - filled);
   resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
 }
 
-/* ---------- Session save / restore ---------- */
-function saveSession(){
-  try{
-    const placedLabels = {};
-    for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
-
-    const payload = {
-      version: 1,
-      topicOrder,
-      currentTopicIndex,
-      currentTopicName: currentTopic?.name || null,
-      placedLabels,
-      queueLabels: itemsQueue.map(it => it.label),
-      currentItemLabel: currentItem?.label || null,
-      when: Date.now()
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-  }catch(_){}
-}
-
-function restoreSession(){
-  try{
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return false;
-    const s = JSON.parse(raw);
-    if (!s || !Array.isArray(s.topicOrder)) return false;
-
-    topicOrder = s.topicOrder;
-    currentTopicIndex = s.currentTopicIndex || 0;
-    const topicIdx = topicOrder[currentTopicIndex] ?? 0;
-    currentTopic = topics[topicIdx];
-
-    if (!currentTopic) return false;
-
-    // Rebuild placed/queue/current from labels
-    const findItem = (label) => (currentTopic.items || []).find(it => it.label === label);
-
-    placed = {};
-    for (const [rank, label] of Object.entries(s.placedLabels || {})) {
-      const it = findItem(label);
-      if (it) placed[Number(rank)] = it;
-    }
-    itemsQueue = (s.queueLabels || []).map(findItem).filter(Boolean);
-    currentItem = s.currentItemLabel ? findItem(s.currentItemLabel) : (itemsQueue.shift() || null);
-
-    // Paint UI
-    topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
-    clearSlots();
-    for (const [rankStr, it] of Object.entries(placed)) {
-      const slot = $(`.rank-slot[data-rank="${rankStr}"]`);
-      if (slot) renderSlotInto(slot, it, currentTopic);
-    }
-    updateResults();
-
-    // Render current card
-    if (currentItem) {
-      (async ()=>{
-        const { main } = await resolveImages(currentTopic, currentItem);
-        const loaded = await preloadImage(main);
-        const bg = loaded || `https://placehold.co/800x450?text=${encodeURIComponent(currentItem.label)}`;
-        const faceFocus = topicPrefersFace(currentTopic);
-        cardPhoto && (cardPhoto.style.backgroundImage = `url('${bg}')`);
-        cardPhoto && (cardPhoto.style.backgroundPosition = faceFocus ? "center 20%" : "center");
-        itemTitle && (itemTitle.textContent = currentItem.label);
-      })();
-    } else {
-      itemTitle && (itemTitle.textContent = "All items ranked!");
-      cardPhoto && (cardPhoto.style.backgroundImage = "none");
-    }
-    return true;
-  }catch(_){ return false; }
-}
-
-/* ---------- Pointer-based drag (works on iPad + desktop) ---------- */
-let dragActive = false;
-let dragId = null;
-let startX = 0, startY = 0;
-let lastDX = 0, lastDY = 0;
-let raf = null;
-let hoverDZ = null;
-
-function setTransform(dx, dy){
-  if (!currentCard) return;
-  currentCard.style.transform = `translate(${dx}px, ${dy}px) scale(1.02)`;
-}
-
-function onPointerMove(e){
-  if (!dragActive) return;
-  lastDX = e.clientX - startX;
-  lastDY = e.clientY - startY;
-  if (!raf) raf = requestAnimationFrame(()=>{
-    setTransform(lastDX, lastDY);
-    raf = null;
-  });
-
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const dz = el && el.closest && el.closest(".slot-dropzone");
-  if (dz !== hoverDZ){
-    if (hoverDZ) hoverDZ.classList.remove("is-hovered");
-    hoverDZ = dz;
-    if (hoverDZ){
-      const slot = hoverDZ.closest(".rank-slot");
-      if (slot && !placed[slot.dataset.rank]) hoverDZ.classList.add("is-hovered");
-    }
+/* Start Over locking: allowed until 3 placements, then disabled to keep it fair */
+function updateStartOverLock(){
+  const filled = Object.keys(placed).length;
+  if (!newGameBtn) return;
+  if (filled >= 3){
+    newGameBtn.disabled = true;
+    newGameBtn.title = "Start Over is locked after 3 placements to keep it fair";
+    newGameBtn.setAttribute("aria-disabled","true");
+  } else {
+    newGameBtn.disabled = false;
+    newGameBtn.title = "Start Over (resets this topic)";
+    newGameBtn.removeAttribute("aria-disabled");
   }
 }
 
-function snapBack(){
-  if (!currentCard) return;
-  currentCard.style.transition = "transform 120ms ease-out";
-  currentCard.style.transform  = "translate(0,0)";
-  setTimeout(()=>{
-    currentCard.style.transition = "";
-    currentCard.classList.remove("dragging");
-  }, 140);
-}
-
-if (currentCard){
-  currentCard.addEventListener("pointerdown", (e)=>{
-    if (!currentItem) return;
-    dragActive = true;
-    dragId = e.pointerId;
-    startX = e.clientX; startY = e.clientY;
-    currentCard.setPointerCapture(dragId);
-    currentCard.classList.add("dragging");
-  });
-  currentCard.addEventListener("pointermove", onPointerMove);
-  currentCard.addEventListener("pointerup", (e)=>{
-    if (!dragActive) return;
-    dragActive = false;
-    currentCard.releasePointerCapture(dragId);
-    dragId = null;
-
-    if (hoverDZ){
-      const slot = hoverDZ.closest(".rank-slot");
-      const rank = slot && slot.dataset.rank;
-      hoverDZ.classList.remove("is-hovered");
-      hoverDZ = null;
-      currentCard.style.transform = "translate(0,0)";
-      currentCard.classList.remove("dragging");
-      if (rank) placeCurrentItemInto(rank);
-    } else {
-      snapBack();
-    }
-  });
-  currentCard.addEventListener("pointercancel", ()=>{
-    dragActive = false; if (hoverDZ){ hoverDZ.classList.remove("is-hovered"); hoverDZ=null; } snapBack();
-  });
-}
-
-/* ---------- Keyboard & touch buttons ---------- */
+/* ------------------ Controls ------------------ */
 if (placeButtons){
   placeButtons.addEventListener("click",(e)=>{
     const btn = e.target.closest("[data-rank]");
     if (!btn) return;
+    addRipple(btn, e);
+    btn.animate(
+      [{ transform: "translateY(0)" },{ transform: "translateY(1px)" },{ transform: "translateY(0)" }],
+      { duration: 120, easing: "ease-out" }
+    );
     placeCurrentItemInto(btn.dataset.rank);
   });
 }
-
-$$(".rank-slot").forEach(slot=>{
-  slot.addEventListener("keydown",(e)=>{
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      placeCurrentItemInto(slot.dataset.rank);
-    }
-  });
-});
-
-/* ---------- Controls ---------- */
-if (reshuffleBtn) {
-  reshuffleBtn.addEventListener("click", ()=>{
-    placed = {};
-    clearSlots();
-    itemsQueue = shuffle((currentTopic.items || []).slice());
-    dealNextItem();
-    updateResults();
-    saveSession();
-  });
-}
-if (nextTopicBtn) {
+if (nextTopicBtn){
   nextTopicBtn.addEventListener("click", ()=>{
     const next = (currentTopicIndex + 1) % topicOrder.length;
     loadTopicByOrderIndex(next);
   });
 }
-if (newGameBtn) {
+if (newGameBtn){
   newGameBtn.addEventListener("click", ()=>{
-    localStorage.removeItem(SESSION_KEY);
-    startNewSession();
+    if (newGameBtn.disabled) return;
+    // reset only this topic
+    placed = {};
+    itemsQueue = shuffle((currentTopic.items || []).slice());
+    currentItem = itemsQueue.shift() || null;
+    clearSlots();
+    updateResults();
+    updateStartOverLock();
+    saveSession();
+    paintCurrent();
   });
+}
+
+/* ------------------ Ripple (Material-inspired) ------------------ */
+function addRipple(btn, evt){
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement("span");
+  ripple.className = "ripple";
+  const size = Math.max(rect.width, rect.height);
+  const x = (evt.clientX ?? (rect.left + rect.width/2)) - rect.left - size/2;
+  const y = (evt.clientY ?? (rect.top + rect.height/2)) - rect.top  - size/2;
+  ripple.style.width = ripple.style.height = `${size*1.2}px`;
+  ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
+  btn.appendChild(ripple);
+  setTimeout(()=> ripple.remove(), 450);
+}
+
+/* ------------------ Confetti celebration ------------------ */
+let didCelebrate = false;
+function celebrate(){
+  const filled = Object.keys(placed).length;
+  if (filled !== 5 || didCelebrate || !confettiEl) return;
+  didCelebrate = true;
+  const canvas = confettiEl;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.display = "block";
+
+  const ctx = canvas.getContext("2d");
+  const colors = ["#FFD84D","#7C5CFF","#22C55E","#F472B6","#38BDF8"];
+  const parts = Array.from({length: 160}).map(()=>({
+    x: Math.random()*canvas.width,
+    y: -20 - Math.random()*canvas.height*0.3,
+    r: 4 + Math.random()*6,
+    c: colors[Math.floor(Math.random()*colors.length)],
+    vx: -2 + Math.random()*4,
+    vy: 2 + Math.random()*3,
+    rot: Math.random()*Math.PI,
+    vr: -0.1 + Math.random()*0.2
+  }));
+
+  let t = 0;
+  function tick(){
+    t++;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    parts.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.vy += 0.02;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+      ctx.restore();
+    });
+    if (t < 220) requestAnimationFrame(tick);
+    else canvas.style.display = "none";
+  }
+  tick();
+}
+window.addEventListener("resize", ()=>{
+  if (!confettiEl) return;
+  confettiEl.width = window.innerWidth;
+  confettiEl.height = window.innerHeight;
+});
+
+/* ------------------ Start / first topic ------------------ */
+if (!restoreSession()) {
+  // ensure buttons usable if no session existed
+  updateStartOverLock();
 }
