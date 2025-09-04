@@ -1,4 +1,4 @@
-/* Flat, modern, bold. No header background. Material-style button ripple. */
+/* Flat, modern, bold. No header background. Strong ripple. */
 :root{
   --bg: #0b0c0b;
   --surface: #111311;
@@ -8,7 +8,7 @@
   --line: #232823;
 
   --accent:  #7c5cff;  /* purple */
-  --success: #22c55e;  /* soft green for "new" */
+  --success: #22c55e;  /* green for "new" / next */
   --accent-ink: #07090e;
 
   --r-lg: 16px;
@@ -84,6 +84,7 @@ body{
 
 /* Image card */
 .card{
+  position: relative;
   width:min(920px, 100%); aspect-ratio: 16/9;
   background: #0e120e;
   border: 1px solid var(--line);
@@ -92,18 +93,26 @@ body{
 }
 .card-photo{
   width:100%; height:100%;
-  background-size: cover;         /* cover; JS may adjust background-position */
+  background-size: cover;         /* JS may adjust background-position */
   background-position: center;
 }
 
-/* Help line with info icon */
+/* CTA that replaces photo when complete */
+.next-topic-cta{
+  position:absolute; inset:0;
+  margin:auto; height:56px; width:min(320px, 70%);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 8px 26px rgba(34,197,94,.25);
+}
+
+/* Help line with info icon (fixed size) */
 .help{
   margin:0; display:flex; align-items:center; justify-content:center; gap:8px;
   color: var(--muted); font-size:14px; text-align:center;
 }
 .info-icon{
-  width:18px; height:18px; flex:0 0 18px; display:block;
-  fill: none; stroke: none;
+  width:18px; height:18px; display:inline-block; flex:0 0 18px;
+  vertical-align: -2px;
 }
 .info-icon circle{ fill: #1b1f1b }
 .info-icon path{ fill: var(--ink) }
@@ -116,7 +125,7 @@ body{
   .place-buttons{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
 }
 
-/* Buttons (solid) + ripple */
+/* Buttons (solid) + stronger ripple */
 .btn{
   position: relative; overflow: hidden; /* needed for ripple */
   appearance:none; border:none; cursor:pointer;
@@ -132,15 +141,18 @@ body{
 .btn--accent{  background: var(--accent);  color: var(--accent-ink) }
 .btn--success{ background: var(--success); color: #05130a }
 
-/* Material-like ripple element */
+/* Ripple: bigger, brighter, longer */
 .btn .ripple{
   position:absolute; border-radius:50%;
-  transform: scale(0); opacity:.35; pointer-events:none;
-  background: rgba(255,255,255,.9);
-  animation: ripple-expand .45s ease-out forwards;
+  transform: scale(0.15); opacity:.45; pointer-events:none;
+  background: rgba(255,255,255,.95);
+  filter: blur(0.5px);
+  animation: ripple-expand .65s cubic-bezier(.2,.8,.2,1) forwards;
+  mix-blend-mode: screen;
 }
 @keyframes ripple-expand{
-  to{ transform: scale(6); opacity:0 }
+  60%{ transform: scale(8); opacity:.35 }
+  100%{ transform: scale(10); opacity:0 }
 }
 
 /* Ranks (right) */
@@ -202,4 +214,9 @@ body{
 .app-footer{
   display:flex; align-items:center; justify-content:center;
   padding:16px; color: var(--muted);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .rank-slot, .btn{ transition: none }
 }
