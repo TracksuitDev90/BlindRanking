@@ -1,8 +1,8 @@
 "use strict";
 
 /* =========================================================
-   Blind Rank — App Logic (provider-aware, a11y, DnD, touch)
-   Works even without a TMDB key (uses placeholders/Wikipedia)
+   Blind Rank — App Logic (flat UI, DnD, touch, a11y)
+   Works without a TMDB key; TMDB used when configured.
    ========================================================= */
 
 // ---------- Tiny DOM + utils ----------
@@ -34,21 +34,19 @@ function preloadImage(src){
 }
 
 // ---------- Simple image cache ----------
-const IMG_CACHE_KEY = "blind-rank:imageCache:v2";
+const IMG_CACHE_KEY = "blind-rank:imageCache:v3";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
 const cacheSet = (k,v)=>{ imageCache[k] = v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){} };
 
-// ---------- External providers (TMDB + Wikipedia) ----------
+// ---------- Providers (TMDB + Wikipedia) ----------
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
 /**
- * Search TMDB for movie/tv and return best images.
- * Returns { main, thumb, title } or null.
- * - main: prefer backdrop (w1280), fallback to poster (w780)
- * - thumb: prefer poster (w500), fallback to backdrop (w780)
+ * Returns { main, thumb, title } or null
+ * main: prefer backdrop (w1280), thumb: prefer poster (w500)
  */
 async function tmdbSearchImages(query, mediaType = "movie"){
   const key = (window.BR_CONFIG && window.BR_CONFIG.TMDB_API_KEY) || "";
@@ -71,10 +69,7 @@ async function tmdbSearchImages(query, mediaType = "movie"){
   }
 }
 
-/**
- * Wikipedia lead image using PageImages (no key).
- * Returns a single URL or null.
- */
+/** Wikipedia PageImages (no key). Returns url or null. */
 async function wikiLeadImage(title){
   const endpoint = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1200&titles=${encodeURIComponent(title)}&origin=*`;
   try{
@@ -92,17 +87,15 @@ async function wikiLeadImage(title){
 }
 
 /**
- * Resolve images for the given topic/item using provider hints:
- *  - item.imageUrl overrides everything
- *  - topic.provider === "tmdb" with topic.mediaType "movie"|"tv" → TMDB
+ * Resolve images using provider hints on the topic:
+ *  - item.imageUrl overrides
+ *  - topic.provider === "tmdb" (mediaType "movie"|"tv") → TMDB
  *  - topic.provider === "wiki" → Wikipedia PageImages
- * Fallback: placeholder with item label
+ * Fallback → readable placeholder.
  * Returns { main, thumb }
  */
 async function resolveImages(topic, item){
-  if (item.imageUrl) {
-    return { main: item.imageUrl, thumb: item.imageUrl };
-  }
+  if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl };
 
   const provider  = topic.provider || "static";
   const mediaType = topic.mediaType || "";
@@ -134,7 +127,7 @@ async function resolveImages(topic, item){
   return out;
 }
 
-// ---------- App state ----------
+// ---------- State ----------
 const topics = window.BLIND_RANK_TOPICS || [];
 let topicOrder = shuffle(topics.map((_,i)=>i));
 let currentTopicIndex = 0;
@@ -149,9 +142,9 @@ let usingTouch   = false;
 const topicTag     = $("#topicTag");
 const currentCard  = $("#currentCard");
 const cardPhoto    = $("#cardPhoto");
-const cardTitle    = $("#cardTitle");
+const itemTitle    = $("#itemTitle");
 const helpText     = $("#cardHelp");
-const placeButtons = $("#placeButtons"); // NOTE: declared once here only
+const placeButtons = $("#placeButtons");
 
 const rankSlots    = $$(".rank-slot");
 const resultsEl    = $("#results");
@@ -166,23 +159,23 @@ startNewSession();
 function detectTouch(){
   function setTouch(){
     usingTouch = true;
-    placeButtons.hidden = false;
+    if (placeButtons) placeButtons.hidden = false;
     window.removeEventListener("touchstart", setTouch);
   }
-  window.addEventListener("touchstart", setTouch, { passive:true });
+  window.addEventListener("touchstart", setTouch, { passive: true });
 }
 
 function startNewSession(){
   if (!Array.isArray(topics) || topics.length === 0) {
-    // No topics yet; keep UI friendly
-    topicTag.textContent   = "Add topics to begin";
-    cardTitle.textContent  = "No topics found";
-    helpText.textContent   = "Create topics.js and define window.BLIND_RANK_TOPICS.";
-    currentCard.draggable  = false;
-    cardPhoto.style.backgroundImage = "none";
+    if (topicTag)  topicTag.textContent  = "Add topics to begin";
+    if (itemTitle) itemTitle.textContent = "No topics found";
+    if (helpText)  helpText.textContent  = "Create topics.js and define window.BLIND_RANK_TOPICS.";
+    if (currentCard) {
+      currentCard.draggable = false;
+      cardPhoto && (cardPhoto.style.backgroundImage = "none");
+    }
     return;
   }
-
   topicOrder = shuffle(topics.map((_,i)=>i));
   currentTopicIndex = 0;
   loadTopicByOrderIndex(0);
@@ -194,7 +187,7 @@ function clearSlots(){
     const dz = $(".slot-dropzone", slot);
     dz.innerHTML = "";
     dz.classList.add("empty");
-    dz.style.outline = "none";
+    dz.classList.remove("is-hovered");
   });
 }
 
@@ -209,7 +202,7 @@ function loadTopicByOrderIndex(orderIdx){
   updateResults();
   clearSlots();
 
-  topicTag.textContent = currentTopic.name || "Untitled";
+  if (topicTag)  topicTag.textContent = currentTopic.name || "Untitled";
   dealNextItem();
 }
 
@@ -217,12 +210,12 @@ async function dealNextItem(){
   currentItem = itemsQueue.shift() || null;
 
   if (!currentItem) {
-    currentCard.setAttribute("aria-grabbed","false");
-    currentCard.classList.remove("dragging");
-    cardPhoto.style.backgroundImage = "none";
-    cardTitle.textContent = "All items ranked!";
-    helpText.textContent  = "You can reshuffle items or move to the next topic.";
-    currentCard.draggable = false;
+    currentCard && currentCard.setAttribute("aria-grabbed","false");
+    currentCard && currentCard.classList.remove("dragging");
+    if (cardPhoto) cardPhoto.style.backgroundImage = "none";
+    if (itemTitle) itemTitle.textContent = "All items ranked!";
+    if (helpText)  helpText.textContent  = "You can reshuffle items or load a new topic.";
+    if (currentCard) currentCard.draggable = false;
     return;
   }
 
@@ -230,33 +223,38 @@ async function dealNextItem(){
   const loaded = await preloadImage(main);
   const bg = loaded || `https://placehold.co/800x450?text=${encodeURIComponent(currentItem.label)}`;
 
-  cardPhoto.style.backgroundImage = `url('${bg}')`;
-  cardPhoto.setAttribute("aria-label", `${currentItem.label} image`);
-  cardTitle.textContent = currentItem.label;
+  if (cardPhoto) {
+    cardPhoto.style.backgroundImage = `url('${bg}')`;
+    cardPhoto.setAttribute("aria-label", `${currentItem.label} image`);
+  }
+  if (itemTitle) itemTitle.textContent = currentItem.label;
 
-  currentCard.draggable = true;
-  currentCard.setAttribute("aria-grabbed","false");
+  if (currentCard) {
+    currentCard.draggable = true;
+    currentCard.setAttribute("aria-grabbed","false");
+  }
 
-  helpText.textContent = usingTouch
-    ? "Tap a button to place this into a rank."
-    : "Drag the card to a rank slot, or use the buttons below.";
+  if (helpText) {
+    helpText.textContent = usingTouch
+      ? "Tap a button to place this into a rank."
+      : "Drag the card to a rank slot, or use the buttons below.";
+  }
 }
 
 async function placeCurrentItemInto(rank){
   rank = Number(rank);
   if (!currentItem)   return;
-  if (placed[rank])   return; // already filled
+  if (placed[rank])   return;
 
   const slot = $(`.rank-slot[data-rank="${rank}"]`);
   if (!slot) return;
 
-  // Mark placement
   placed[rank] = currentItem;
 
-  // Render the slot card (thumb)
   await renderSlotInto(slot, currentItem, currentTopic);
   slot.setAttribute("aria-selected","true");
-  slot.animate([{transform:"scale(1)"},{transform:"scale(1.02)"},{transform:"scale(1)"}], { duration:180, easing:"ease-out" });
+  // Tiny bounce
+  slot.animate([{transform:"scale(1)"},{transform:"scale(1.02)"},{transform:"scale(1)"}], { duration: 160, easing:"ease-out" });
 
   persistResults();
   updateResults();
@@ -267,7 +265,7 @@ async function renderSlotInto(slot, item, topic){
   const dz = $(".slot-dropzone", slot);
   dz.classList.remove("empty");
 
-  // Skeleton while loading thumb
+  // Skeleton while thumb resolves
   dz.innerHTML = `
     <div class="slot-item">
       <div class="slot-thumb" style="background-image:url('https://placehold.co/320x200?text=...')"></div>
@@ -288,7 +286,7 @@ async function renderSlotInto(slot, item, topic){
 function updateResults(){
   const filled = Object.keys(placed).length;
   const remain = Math.max(0, 5 - filled);
-  resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`;
+  if (resultsEl) resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`;
 }
 
 function persistResults(){
@@ -299,33 +297,35 @@ function persistResults(){
   }catch(_){}
 }
 
-// ---------- Drag & Drop ----------
-currentCard.addEventListener("dragstart", (e)=>{
-  if (!currentItem) { e.preventDefault(); return; }
-  currentCard.classList.add("dragging");
-  currentCard.setAttribute("aria-grabbed","true");
-  e.dataTransfer.setData("text/plain","current-card");
-  e.dataTransfer.effectAllowed = "move";
-});
-currentCard.addEventListener("dragend", ()=>{
-  currentCard.classList.remove("dragging");
-  currentCard.setAttribute("aria-grabbed","false");
-});
+// ---------- Drag & Drop (buttery-smooth: class-based hover) ----------
+if (currentCard) {
+  currentCard.addEventListener("dragstart", (e)=>{
+    if (!currentItem){ e.preventDefault(); return; }
+    currentCard.classList.add("dragging");
+    currentCard.setAttribute("aria-grabbed","true");
+    e.dataTransfer.setData("text/plain","current-card");
+    e.dataTransfer.effectAllowed = "move";
+  });
+  currentCard.addEventListener("dragend", ()=>{
+    currentCard.classList.remove("dragging");
+    currentCard.setAttribute("aria-grabbed","false");
+  });
+}
 
 $$(".rank-slot").forEach(slot=>{
   const dz = $(".slot-dropzone", slot);
 
-  ["dragenter","dragover"].forEach(type=>{
-    dz.addEventListener(type, (e)=>{
-      if (!currentItem || placed[slot.dataset.rank]) return;
-      e.preventDefault();
-      dz.style.outline = "2px solid rgba(198,255,85,.6)";
-    });
+  dz.addEventListener("dragenter", (e)=>{
+    if (!currentItem || placed[slot.dataset.rank]) return;
+    e.preventDefault();
+    dz.classList.add("is-hovered");
+  });
+  dz.addEventListener("dragover", (e)=>{
+    if (!currentItem || placed[slot.dataset.rank]) return;
+    e.preventDefault(); // required to allow drop
   });
   ["dragleave","drop"].forEach(type=>{
-    dz.addEventListener(type, ()=>{
-      dz.style.outline = "none";
-    });
+    dz.addEventListener(type, ()=> dz.classList.remove("is-hovered"));
   });
   dz.addEventListener("drop", (e)=>{
     e.preventDefault();
@@ -335,11 +335,13 @@ $$(".rank-slot").forEach(slot=>{
 });
 
 // ---------- Keyboard & Touch ----------
-placeButtons.addEventListener("click",(e)=>{
-  const btn = e.target.closest("[data-rank]");
-  if (!btn) return;
-  placeCurrentItemInto(btn.dataset.rank);
-});
+if (placeButtons) {
+  placeButtons.addEventListener("click",(e)=>{
+    const btn = e.target.closest("[data-rank]");
+    if (!btn) return;
+    placeCurrentItemInto(btn.dataset.rank);
+  });
+}
 
 $$(".rank-slot").forEach(slot=>{
   slot.addEventListener("keydown",(e)=>{
@@ -351,17 +353,23 @@ $$(".rank-slot").forEach(slot=>{
 });
 
 // ---------- Controls ----------
-reshuffleBtn.addEventListener("click", ()=>{
-  placed = {};
-  clearSlots();
-  itemsQueue = shuffle((currentTopic.items || []).slice());
-  dealNextItem();
-  updateResults();
-});
+if (reshuffleBtn) {
+  reshuffleBtn.addEventListener("click", ()=>{
+    placed = {};
+    clearSlots();
+    itemsQueue = shuffle((currentTopic.items || []).slice());
+    dealNextItem();
+    updateResults();
+  });
+}
 
-nextTopicBtn.addEventListener("click", ()=>{
-  const next = (currentTopicIndex + 1) % topicOrder.length;
-  loadTopicByOrderIndex(next);
-});
+if (nextTopicBtn) {
+  nextTopicBtn.addEventListener("click", ()=>{
+    const next = (currentTopicIndex + 1) % topicOrder.length;
+    loadTopicByOrderIndex(next);
+  });
+}
 
-newGameBtn.addEventListener("click", startNewSession);
+if (newGameBtn) {
+  newGameBtn.addEventListener("click", startNewSession);
+}
