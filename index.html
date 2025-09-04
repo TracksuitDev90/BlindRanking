@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blind Rank</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="brand" aria-label="Blind Rank">BLIND RANK</h1>
+    <div class="header-actions">
+      <button id="newGameBtn" class="btn ghost" aria-label="Start a new topic">New Topic</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-labelledby="topicTag">
+      <div class="topic-tag" id="topicTag" aria-live="polite"></div>
+
+      <article id="currentCard" class="card" draggable="true" aria-grabbed="false" aria-describedby="cardHelp">
+        <div class="card-photo" id="cardPhoto" role="img" aria-label=""></div>
+        <div class="card-title" id="cardTitle"></div>
+      </article>
+
+      <p id="cardHelp" class="help">
+        Drag the card to a rank slot, or use the buttons below.
+      </p>
+
+      <div id="placeButtons" class="place-buttons" aria-label="Place into rank" hidden>
+        <button class="btn place" data-rank="1">Place in #1</button>
+        <button class="btn place" data-rank="2">Place in #2</button>
+        <button class="btn place" data-rank="3">Place in #3</button>
+        <button class="btn place" data-rank="4">Place in #4</button>
+        <button class="btn place" data-rank="5">Place in #5</button>
+      </div>
+    </section>
+
+    <section class="ranks" aria-label="Ranking slots">
+      <ol class="rank-list" role="listbox" aria-label="Rankings 1 to 5">
+        <li class="rank-slot" data-rank="1" role="option" aria-selected="false" tabindex="0">
+          <div class="slot-label">#1</div>
+          <div class="slot-dropzone" aria-label="Drop here for rank 1"></div>
+        </li>
+        <li class="rank-slot" data-rank="2" role="option" aria-selected="false" tabindex="0">
+          <div class="slot-label">#2</div>
+          <div class="slot-dropzone" aria-label="Drop here for rank 2"></div>
+        </li>
+        <li class="rank-slot" data-rank="3" role="option" aria-selected="false" tabindex="0">
+          <div class="slot-label">#3</div>
+          <div class="slot-dropzone" aria-label="Drop here for rank 3"></div>
+        </li>
+        <li class="rank-slot" data-rank="4" role="option" aria-selected="false" tabindex="0">
+          <div class="slot-label">#4</div>
+          <div class="slot-dropzone" aria-label="Drop here for rank 4"></div>
+        </li>
+        <li class="rank-slot" data-rank="5" role="option" aria-selected="false" tabindex="0">
+          <div class="slot-label">#5</div>
+          <div class="slot-dropzone" aria-label="Drop here for rank 5"></div>
+        </li>
+      </ol>
+
+      <div id="results" class="results" aria-live="polite"></div>
+      <div class="actions">
+        <button id="reshuffleBtn" class="btn">Reshuffle Items</button>
+        <button id="nextTopicBtn" class="btn">Next Topic</button>
+      </div>
+    </section>
+  </main>
+  <!-- Your TMDB key goes here (rename config.example.js to config.js) -->
+  <script src="config.js"></script>
+
+  <!-- Your topics file (you supply it): must define window.BLIND_RANK_TOPICS -->
+  <script src="topics.js"></script>
+
+  <!-- App logic -->
+  <script src="script.js"></script>
+
+  <noscript>
+    <style>.layout{display:none}</style>
+    <p style="padding:1rem">Please enable JavaScript to play.</p>
+  </noscript>
+</body>
+</html>
