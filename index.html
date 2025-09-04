@@ -10,16 +10,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header: text-only brand, no background -->
+  <!-- Header: clean text only, no background -->
   <header class="app-header">
-    <h1 class="brand" aria-label="Blind Rankings">BLIND RANKINGS</h1>
+    <h1 class="brand" aria-label="Fireside Blind Rankings">BLIND RANKINGS</h1>
   </header>
 
   <main class="layout">
-    <!-- Left: Stage -->
+    <!-- Stage (left) -->
     <section class="stage" aria-labelledby="topicTag">
       <div class="stage-bar">
-        <!-- Compact, consistent category chip (not too big) -->
+        <!-- Category chip: compact, consistent size -->
         <span id="topicTag" class="chip" aria-live="polite">Topic</span>
       </div>
 
@@ -27,52 +27,64 @@
       <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
 
       <!-- Image card (face/top focus handled in JS) -->
-      <article id="currentCard" class="card" draggable="false" aria-grabbed="false" aria-describedby="cardHelp">
+      <article id="currentCard" class="card" aria-describedby="cardHelp">
         <div id="cardPhoto" class="card-photo" role="img" aria-label=""></div>
       </article>
 
-      <p id="cardHelp" class="help">Drag the card into a rank, or use the buttons below.</p>
+      <!-- Help with info icon -->
+      <p id="cardHelp" class="help">
+        <svg class="info-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path>
+        </svg>
+        Use the <strong>Place</strong> buttons below to lock the item into a rank.
+      </p>
 
-      <!-- Placement buttons -->
-      <div id="placeButtons" class="place-buttons" aria-label="Place into rank" hidden>
-        <button class="btn btn--pill btn--accent" data-rank="1">Place in #1</button>
-        <button class="btn btn--pill btn--accent" data-rank="2">Place in #2</button>
-        <button class="btn btn--pill btn--accent" data-rank="3">Place in #3</button>
-        <button class="btn btn--pill btn--accent" data-rank="4">Place in #4</button>
-        <button class="btn btn--pill btn--accent" data-rank="5">Place in #5</button>
+      <!-- Placement buttons: single row desktop, 2 columns on mobile -->
+      <div id="placeButtons" class="place-buttons" aria-label="Place into rank">
+        <button class="btn btn--pill btn--accent place" data-rank="1">Place in #1</button>
+        <button class="btn btn--pill btn--accent place" data-rank="2">Place in #2</button>
+        <button class="btn btn--pill btn--accent place" data-rank="3">Place in #3</button>
+        <button class="btn btn--pill btn--accent place" data-rank="4">Place in #4</button>
+        <button class="btn btn--pill btn--accent place" data-rank="5">Place in #5</button>
       </div>
     </section>
 
-    <!-- Right: Ranks -->
+    <!-- Ranks (right) -->
     <section class="ranks" aria-label="Ranking slots">
       <ol class="rank-list" role="listbox" aria-label="Rankings 1 to 5">
         <li class="rank-slot" data-rank="1" role="option" aria-selected="false" tabindex="0">
           <div class="slot-label">#1</div>
-          <div class="slot-dropzone" aria-label="Drop here for rank 1"></div>
+          <div class="slot-dropzone" aria-label="Rank 1"></div>
         </li>
         <li class="rank-slot" data-rank="2" role="option" aria-selected="false" tabindex="0">
           <div class="slot-label">#2</div>
-          <div class="slot-dropzone" aria-label="Drop here for rank 2"></div>
+          <div class="slot-dropzone" aria-label="Rank 2"></div>
         </li>
         <li class="rank-slot" data-rank="3" role="option" aria-selected="false" tabindex="0">
           <div class="slot-label">#3</div>
-          <div class="slot-dropzone" aria-label="Drop here for rank 3"></div>
+          <div class="slot-dropzone" aria-label="Rank 3"></div>
         </li>
         <li class="rank-slot" data-rank="4" role="option" aria-selected="false" tabindex="0">
           <div class="slot-label">#4</div>
-          <div class="slot-dropzone" aria-label="Drop here for rank 4"></div>
+          <div class="slot-dropzone" aria-label="Rank 4"></div>
         </li>
         <li class="rank-slot" data-rank="5" role="option" aria-selected="false" tabindex="0">
           <div class="slot-label">#5</div>
-          <div class="slot-dropzone" aria-label="Drop here for rank 5"></div>
+          <div class="slot-dropzone" aria-label="Rank 5"></div>
         </li>
       </ol>
 
       <div id="results" class="results" aria-live="polite"></div>
       <div class="actions">
-        <button id="reshuffleBtn" class="btn btn--pill btn--muted">Reshuffle</button>
-        <button id="nextTopicBtn" class="btn btn--pill btn--primary">New Topic</button>
-        <button id="newGameBtn" class="btn btn--pill btn--muted">Start Over</button>
+        <!-- New Topic: soft green accent -->
+        <button id="nextTopicBtn" class="btn btn--pill btn--success">New Topic</button>
+        <!-- Start Over: disabled after 3 placements (tooltip explains why) -->
+        <button
+          id="newGameBtn"
+          class="btn btn--pill btn--accent"
+          title="Start Over is locked after 3 placements to keep it fair"
+        >Start Over</button>
       </div>
     </section>
   </main>
@@ -80,6 +92,9 @@
   <footer class="app-footer">
     <small>Images via TMDB / Wikipedia where applicable.</small>
   </footer>
+
+  <!-- Confetti overlay -->
+  <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
 
   <script src="config.js"></script>
   <script src="topics.js"></script>
