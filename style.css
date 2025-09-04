@@ -1,182 +1,170 @@
-/* -------------------------------------------------------
-   Flat, modern, bold. Dark with vivid accent pops.
-   Award-y vibes: big type, tight rhythm, zero gradients.
-------------------------------------------------------- */
-
+/* ===== Design Tokens ===== */
 :root{
-  /* Palette */
-  --bg:        #0b0d0b;   /* page */
-  --surface:   #101310;   /* panels */
-  --surface-2: #0f120f;   /* list items / slots */
-  --ink:       #eff4ee;   /* main text */
-  --muted:     #9aa69a;   /* secondary text */
+  /* Base */
+  --bg: #0b0c0b;          /* page */
+  --surface: #111311;     /* panels/cards */
+  --surface-2: #0f110f;   /* rows/slots */
+  --ink: #f2f6f1;         /* main text */
+  --muted: #97a197;       /* secondary text */
+  --line: #232823;        /* borders / separators */
 
-  /* Accents (tweak freely) */
-  --accent:    #c6ff55;   /* neon green */
-  --accent-2:  #ffd84d;   /* warm yellow */
+  /* Accent — swap these to rebrand fast */
+  --accent: #7c5cff;      /* electric indigo */
+  --accent-ink: #07090e;  /* text on accent */
+  --accent-2: #22d3ee;    /* cyan pop used sparingly */
 
-  /* Structural */
-  --border:    #242a24;
-  --radius-lg: 16px;
-  --radius-sm: 12px;
+  /* Radii / spacing */
+  --r-lg: 16px;
+  --r-sm: 12px;
+  --gap: 16px;
 
   /* Type */
-  --weight-heavy: 1000;
-  --weight-bold:   800;
+  --heavy: 800;
+  --black: 900;
 
   /* Focus */
-  --focus:     0 0 0 3px rgba(198,255,85,.55);
+  --focus: 0 0 0 3px rgba(124, 92, 255, .5);
 }
 
+/* ===== Base ===== */
 *{ box-sizing:border-box }
 html,body{ height:100% }
 body{
   margin:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color:var(--ink);
-  background: var(--bg); /* solid */
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header: text-only brand */
+/* ===== Header ===== */
 .app-header{
   display:flex; align-items:center; justify-content:flex-start;
-  padding:20px 24px;
-  border-bottom:1px solid var(--border);
-  background: var(--surface); /* solid */
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 .brand{
   margin:0;
-  font-weight: var(--weight-heavy);
-  letter-spacing: 1.2px;
+  font-weight: var(--black);
+  letter-spacing: .04em;
   font-size: clamp(28px, 5vw, 64px);
-  color: var(--ink); /* pure text, no gradient */
+  color: var(--ink);
 }
 
-/* Layout */
+/* ===== Layout ===== */
 .layout{
-  display:grid; grid-template-columns: 1.2fr 1fr; gap:24px; padding:20px;
-  max-width: 1400px; margin: 0 auto;
+  display:grid; grid-template-columns: 1.2fr 1fr; gap: 24px; padding: 20px;
+  max-width: 1280px; margin: 0 auto;
 }
-@media (max-width: 980px){
-  .layout{ grid-template-columns:1fr; gap:16px; padding:14px }
-}
+@media (max-width: 980px){ .layout{ grid-template-columns:1fr; gap:16px; padding:14px }}
 
-/* Stage (left) */
+/* ===== Stage (left) ===== */
 .stage{
   background: var(--surface);
-  border:1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding:16px;
-  display:flex; flex-direction:column; gap:14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--gap);
+  display:flex; flex-direction:column; gap: var(--gap);
 }
 
-/* Top bar: topic + new topic — identical pills */
 .stage-bar{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:10px; width:100%;
+  display:flex; align-items:center; justify-content:space-between; gap: 10px;
 }
 
-/* Buttons */
+/* Buttons (pill, consistent) */
 .btn{
-  --btn-bg: #222; --btn-fg: #000; --btn-border: transparent;
+  --bg: #1b1f1b; --fg: var(--ink);
   appearance:none; border:none; cursor:pointer;
-  padding:12px 16px; color:var(--btn-fg); background:var(--btn-bg);
-  border:2px solid var(--btn-border); font-weight: var(--weight-heavy);
-  letter-spacing:.3px; font-size:16px;
+  padding: 12px 16px; border-radius: var(--r-lg);
+  background: var(--bg); color: var(--fg);
+  font-weight: var(--black); letter-spacing:.2px; font-size: 16px;
   transition: transform .06s ease, opacity .15s ease;
 }
 .btn:active{ transform: translateY(1px) }
-.btn:focus-visible{ outline: none; box-shadow: var(--focus) }
-
+.btn:focus-visible{ outline:none; box-shadow: var(--focus) }
 .btn--pill{ border-radius: 999px }
-
-/* Variants (all flat/solid) */
-.btn--primary{ --btn-bg: var(--accent); --btn-fg: #0a0f07 }
-.btn--accent{  --btn-bg: var(--accent-2); --btn-fg: #0a0a08 }
-.btn--muted{   --btn-bg: #1a1e1a; --btn-fg: var(--ink) }
-
-/* “Label” pill (same shape/height as buttons) */
+.btn--primary{ --bg: var(--accent); --fg: var(--accent-ink) }
+.btn--accent{  --bg: var(--accent-2); --fg: #041014 }
+.btn--muted{   --bg: #1a1e1a; --fg: var(--ink) }
 .is-label{ cursor: default }
 
-/* Big title above the image */
 .item-title{
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   text-align:center;
-  font-weight: var(--weight-heavy);
-  font-size: clamp(24px, 5.5vw, 44px);
+  font-weight: var(--black);
+  font-size: clamp(24px, 5.6vw, 44px);
 }
 
-/* Image card — the star */
+/* Image card — hero */
 .card{
-  width:min(920px, 100%);
-  aspect-ratio: 16 / 9;
-  background: #0d120d;
-  border:2px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow:hidden;
-  will-change: transform; /* helps DnD */
+  width: min(920px, 100%); aspect-ratio: 16 / 9;
+  background: #0e120e;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  will-change: transform;
 }
 .card-photo{
   width:100%; height:100%;
   background-size: cover; background-position:center;
 }
 
-/* Help text */
-.help{
-  margin:0; text-align:center; color: var(--muted); font-size:14px;
-}
+/* Help */
+.help{ margin:0; text-align:center; color: var(--muted); font-size:14px }
 
-/* Placement buttons (large tap targets) */
-.place-buttons{
-  display:flex; flex-wrap:wrap; gap:10px; justify-content:center; width:100%;
-}
+/* Placement buttons */
+.place-buttons{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center }
 
-/* Ranks (right) */
+/* ===== Ranks (right) ===== */
 .ranks{
   background: var(--surface);
-  border:1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding:16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--gap);
 }
 .rank-list{ margin:0; padding:0; list-style:none; display:grid; gap:12px }
 
-/* Slots — flat, bold numbers */
+/* Slots — bold, clean (no dashed borders) */
 .rank-slot{
-  display:grid; grid-template-columns: 94px 1fr; align-items:stretch;
+  display:grid; grid-template-columns: 96px 1fr; align-items:stretch;
   background: var(--surface-2);
-  border:2px dashed var(--border); border-radius: var(--radius-sm);
-  min-height:110px; outline:none; transition: border-color .12s ease, transform .08s ease;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  min-height: 112px; outline:none;
+  transition: border-color .12s ease, transform .08s ease, background .12s ease;
 }
+.rank-slot:hover{ background: #121512 }
 .rank-slot:focus{ box-shadow: var(--focus) }
 
 .slot-label{
   display:flex; align-items:center; justify-content:center;
-  font-weight: var(--weight-heavy); font-size: 30px; color:#0b0b09;
-  background: var(--accent-2); /* vivid pop */
+  font-weight: var(--black); font-size: 32px; color: #060708;
+  background: var(--accent);
+  border-right: 1px solid var(--line);
 }
 .slot-dropzone{
-  min-height:110px; padding:12px; display:grid; align-items:center;
+  min-height:112px; padding: 12px; display:grid; align-items:center;
 }
 .slot-dropzone.empty::before{
-  content:"Drop here"; color:#7f8a7f; font-weight: var(--weight-bold); font-size:13px; letter-spacing:.4px;
+  content:"Drop here"; color:#818a81; font-weight: var(--heavy); font-size:13px; letter-spacing:.3px;
 }
 
 /* Drag hover (perf-friendly) */
 .slot-dropzone.is-hovered{
-  outline:3px solid var(--accent);
-  outline-offset:-3px;
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
 }
 
 /* Slot content */
 .slot-item{
-  display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;
-  background: #121612; border:2px solid var(--border); border-radius:10px; overflow:hidden;
+  display:grid; grid-template-columns: 140px 1fr; gap: 12px; align-items:center;
+  background: #131713; border: 1px solid var(--line);
+  border-radius: 10px; overflow:hidden;
 }
 .slot-thumb{ width:100%; height:100%; min-height:104px; background-size:cover; background-position:center }
-.slot-meta{ padding:10px 12px }
-.slot-meta .title{ margin:0 0 2px; font-weight: var(--weight-heavy); font-size:18px }
+.slot-meta{ padding: 10px 12px }
+.slot-meta .title{ margin:0 0 2px; font-weight: var(--black); font-size: 18px }
 .slot-meta .topic{ font-size:12px; color: var(--muted) }
 
 /* Actions */
@@ -186,26 +174,26 @@ body{
 /* Footer */
 .app-footer{
   display:flex; align-items:center; justify-content:center;
-  padding:16px; border-top:1px solid var(--border); color: var(--muted);
-  background: var(--surface);
+  padding:16px; border-top:1px solid var(--line);
+  background: var(--surface); color: var(--muted);
 }
 
-/* Mobile */
+/* ===== Mobile ===== */
 @media (max-width: 640px){
   .brand{ font-size: clamp(26px, 7vw, 40px) }
   .item-title{ font-size: clamp(22px, 7vw, 36px) }
   .rank-slot{ grid-template-columns: 84px 1fr; min-height: 96px }
-  .slot-label{ font-size:26px }
+  .slot-label{ font-size: 26px }
   .slot-item{ grid-template-columns: 110px 1fr }
-  .slot-thumb{ min-height:92px }
-  /* sticky placement for easy tapping */
+  .slot-thumb{ min-height: 92px }
   .place-buttons{
     position: sticky; bottom: 8px; z-index: 5;
-    background: var(--surface); padding: 8px; border-radius: var(--radius-sm); border:1px solid var(--border);
+    background: var(--surface);
+    padding: 8px; border-radius: var(--r-sm); border:1px solid var(--line);
   }
 }
 
-/* Reduced motion */
+/* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce){
   .rank-slot, .btn{ transition: none }
 }
