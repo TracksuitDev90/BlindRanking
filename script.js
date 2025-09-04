@@ -1,8 +1,8 @@
 "use strict";
 
 /* =========================================================
-   Blind Rankings — progressive images, prefetch, SW caching,
-   stable flow, face/character focus, idempotent events.
+   Blind Rankings — stable flow, progressive images + loaders,
+   prefetch, SW cache, face focus, idempotent events.
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -23,9 +23,7 @@ function escapeHtml(str){
   }[s]));
 }
 function tokenize(s){
-  return String(s||"").toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu," ")
-    .split(" ").filter(Boolean);
+  return String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").split(" ").filter(Boolean);
 }
 const STOP = new Set(["the","a","an","of","and","&","in","on","at","to","for"]);
 function scoreMatch(query, candidate){
@@ -73,8 +71,21 @@ async function loadProgressive(el, highUrl, faceFocus=false){
   if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
 }
 
+/* Loading state (disables placements, shows overlay) */
+let isLoading = false;
+const placeButtons = $("#placeButtons");
+const cardLoading  = $("#cardLoading");
+function setLoading(on){
+  isLoading = !!on;
+  if (cardLoading) cardLoading.hidden = !on;
+  if (placeButtons){
+    placeButtons.setAttribute("aria-busy", on ? "true" : "false");
+    $$("button", placeButtons).forEach(b => b.disabled = on);
+  }
+}
+
 /* ---------- Image providers & fallbacks ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v9";
+const IMG_CACHE_KEY = "blind-rank:imageCache:v10";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
@@ -212,7 +223,7 @@ async function pexelsPhoto(query){
   return p?.src?.large2x || p?.src?.large || p?.src?.medium || null;
 }
 
-/* Heuristics for face/character focus */
+/* Face/character focus helpers */
 const PERSON_HINTS = [
   "artist","artists","singer","singers","musician","musicians","people","players",
   "athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers",
@@ -238,7 +249,7 @@ function contextSuffix(topicName){
   return "";
 }
 
-/** Unified resolver: ordered fallbacks + timeouts + relevance */
+/** Unified resolver */
 async function resolveImages(topic, item){
   if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl };
 
@@ -281,7 +292,7 @@ async function resolveImages(topic, item){
     if (itMovie) out = { main: itMovie, thumb: itMovie };
   }
 
-  // 3) Generic fallback with small context hint
+  // 3) Generic fallback with context hint
   if (!out){
     const suffix = contextSuffix(topic.name);
     const pxb = await pixabayPhoto(item.label + suffix);
@@ -312,17 +323,15 @@ let placed       = {};    // rank -> item
 let currentItem  = null;
 let didCelebrate = false;
 
-const SESSION_KEY = "blind-rank:session:v6";
+const SESSION_KEY = "blind-rank:session:v7";
 
 const topicTag     = $("#topicTag");
 const cardImg      = $("#cardImg");
 const itemTitle    = $("#itemTitle");
 const helpText     = $("#cardHelp");
-const placeButtons = $("#placeButtons");
 const rankSlots    = $$(".rank-slot");
 const resultsEl    = $("#results");
 const nextTopicBtn = $("#nextTopicBtn");
-const newGameBtn   = $("#newGameBtn");
 const confettiEl   = $("#confetti");
 const nextTopicCta = $("#nextTopicCta");
 
@@ -346,7 +355,7 @@ function saveSession(){
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 6,
+      version: 7,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -388,7 +397,6 @@ function restoreSession(){
     updateResults();
     didCelebrate = false;
     paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
-    updateStartOverLock();
     wireControls();
     return true;
   }catch(_){ return false; }
@@ -409,12 +417,15 @@ async function paintCurrent(){
     updateUIAfterState();
     return;
   }
+  setLoading(true);
   const { main } = await resolveImages(currentTopic, currentItem);
   const face = topicPrefersFace(currentTopic) || labelPrefersFace(currentItem.label);
   if (cardImg){
     await loadProgressive(cardImg, main, face);
     cardImg.alt = currentItem.label;
   }
+  setLoading(false);
+
   itemTitle && (itemTitle.textContent = currentItem.label);
   if (helpText) {
     helpText.innerHTML = `
@@ -429,8 +440,7 @@ async function prefetchNext(n=2){
   const peek = itemsQueue.slice(0, n);
   for (const it of peek){
     const { main } = await resolveImages(currentTopic, it);
-    const img = new Image();
-    img.decoding = "async";
+    const img = new Image(); img.decoding = "async";
     img.src = tmdbLowRes(main) || main;
   }
 }
@@ -462,14 +472,13 @@ function loadTopicByOrderIndex(orderIdx){
   topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
   clearSlots();
   updateResults();
-  updateStartOverLock();
   paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
   saveSession();
 }
 
 async function placeCurrentItemInto(rank){
   rank = Number(rank);
-  if (!currentItem) return;
+  if (!currentItem || isLoading) return;
   if (placed[rank]) return;
 
   const slot = $(`.rank-slot[data-rank="${rank}"]`);
@@ -482,7 +491,6 @@ async function placeCurrentItemInto(rank){
   currentItem = itemsQueue.shift() || null;
 
   updateResults();
-  updateStartOverLock();
   saveSession();
 
   paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
@@ -493,7 +501,7 @@ async function renderSlotInto(slot, item, topic){
   dz.classList.remove("empty");
   dz.innerHTML = `
     <div class="slot-item">
-      <div class="slot-thumb" style="background-image:url('https://placehold.co/320x200?text=...')"></div>
+      <div class="slot-thumb skeleton"></div>
       <div class="slot-meta">
         <p class="title">${escapeHtml(item.label)}</p>
         <p class="topic">${escapeHtml(topic.name || "")}</p>
@@ -501,11 +509,12 @@ async function renderSlotInto(slot, item, topic){
     </div>
   `;
   const { thumb } = await resolveImages(topic, item);
-  const imgOk = await (new Promise(res=>{ const im=new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src=thumb; }));
-  const finalThumb = imgOk ? thumb : `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
+  const imageOk = await (new Promise(res=>{ const im=new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src=thumb; }));
+  const finalThumb = imageOk ? thumb : `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
   const face = topicPrefersFace(topic) || labelPrefersFace(item.label);
   const thumbEl = $(".slot-thumb", dz);
   if (thumbEl){
+    thumbEl.classList.remove("skeleton");
     thumbEl.style.backgroundImage   = `url('${finalThumb}')`;
     thumbEl.style.backgroundPosition = face ? "center 20%" : "center";
   }
@@ -517,23 +526,9 @@ function updateResults(){
   resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
 }
 
-/* Start Over locking: disabled after 3 placements */
-function updateStartOverLock(){
-  const filled = Object.keys(placed).length;
-  if (!newGameBtn) return;
-  if (filled >= 3){
-    newGameBtn.disabled = true;
-    newGameBtn.title = "Start Over is locked after 3 placements to keep it fair";
-    newGameBtn.setAttribute("aria-disabled","true");
-  } else {
-    newGameBtn.disabled = false;
-    newGameBtn.title = "Start Over (resets this topic)";
-    newGameBtn.removeAttribute("aria-disabled");
-  }
-}
-
 /* ---------- Controls (idempotent wiring) ---------- */
 function gotoNextTopic(){
+  // Always allow moving to the next topic
   const next = (currentTopicIndex + 1) % topicOrder.length;
   loadTopicByOrderIndex(next);
 }
@@ -550,8 +545,9 @@ function addRipple(btn, evt){
   setTimeout(()=> ripple.remove(), 800);
 }
 function wireControls(){
-  if (placeButtons && !placeButtons.__wired){
-    placeButtons.addEventListener("click",(e)=>{
+  const pb = $("#placeButtons");
+  if (pb && !pb.__wired){
+    pb.addEventListener("click",(e)=>{
       const btn = e.target.closest("[data-rank]");
       if (!btn) return;
       addRipple(btn, e);
@@ -561,7 +557,7 @@ function wireControls(){
       );
       placeCurrentItemInto(btn.dataset.rank);
     });
-    placeButtons.__wired = true;
+    pb.__wired = true;
   }
   if (nextTopicBtn && !nextTopicBtn.__wired){
     nextTopicBtn.addEventListener("click", gotoNextTopic);
@@ -571,25 +567,10 @@ function wireControls(){
     nextTopicCta.addEventListener("click", gotoNextTopic);
     nextTopicCta.__wired = true;
   }
-  if (newGameBtn && !newGameBtn.__wired){
-    newGameBtn.addEventListener("click", ()=>{
-      if (newGameBtn.disabled) return;
-      placed = {};
-      itemsQueue = shuffle((currentTopic.items || []).slice());
-      currentItem = itemsQueue.shift() || null;
-      clearSlots();
-      updateResults();
-      updateStartOverLock();
-      didCelebrate = false;
-      saveSession();
-      paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
-    });
-    newGameBtn.__wired = true;
-  }
 }
 wireControls();
 
-/* ---------- Confetti (lighter) ---------- */
+/* ---------- Confetti (lightweight) ---------- */
 function celebrate(){
   const filled = Object.keys(placed).length;
   if (filled !== 5 || didCelebrate || !confettiEl) return;
