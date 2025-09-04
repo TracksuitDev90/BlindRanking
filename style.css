@@ -1,4 +1,4 @@
-/* Flat, modern, bold. No header background. Strong ripple. */
+/* Flat, bold, fast. Strong ripple; header has no background. */
 :root{
   --bg: #0b0c0b;
   --surface: #111311;
@@ -8,7 +8,7 @@
   --line: #232823;
 
   --accent:  #7c5cff;  /* purple */
-  --success: #22c55e;  /* green for "new" / next */
+  --success: #22c55e;  /* green for Next/New */
   --accent-ink: #07090e;
 
   --r-lg: 16px;
@@ -35,7 +35,7 @@ body{
 .app-header{
   display:flex; align-items:center; justify-content:flex-start;
   padding: 22px 24px;
-  background: transparent; /* no bg at top */
+  background: transparent;
 }
 .brand{
   margin:0;
@@ -93,26 +93,26 @@ body{
 }
 .card-photo{
   width:100%; height:100%;
-  background-size: cover;         /* JS may adjust background-position */
-  background-position: center;
+  background-size: cover;
+  background-position: center; /* JS may adjust to 'center 20%' for faces */
 }
 
-/* CTA that replaces photo when complete */
+/* CTA that replaces photo when complete (sits above confetti) */
 .next-topic-cta{
   position:absolute; inset:0;
   margin:auto; height:56px; width:min(320px, 70%);
   display:flex; align-items:center; justify-content:center;
+  z-index: 40; /* above confetti */
   box-shadow: 0 8px 26px rgba(34,197,94,.25);
 }
 
-/* Help line with info icon (fixed size) */
+/* Help line with compact info icon */
 .help{
   margin:0; display:flex; align-items:center; justify-content:center; gap:8px;
   color: var(--muted); font-size:14px; text-align:center;
 }
 .info-icon{
-  width:18px; height:18px; display:inline-block; flex:0 0 18px;
-  vertical-align: -2px;
+  width:18px; height:18px; display:inline-block; flex:0 0 18px; vertical-align: -2px;
 }
 .info-icon circle{ fill: #1b1f1b }
 .info-icon path{ fill: var(--ink) }
@@ -125,9 +125,9 @@ body{
   .place-buttons{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
 }
 
-/* Buttons (solid) + stronger ripple */
+/* Buttons (solid) + strong ripple */
 .btn{
-  position: relative; overflow: hidden; /* needed for ripple */
+  position: relative; overflow: hidden;
   appearance:none; border:none; cursor:pointer;
   padding: 12px 16px; border-radius: var(--r-lg);
   background: #1b1f1b; color: var(--ink);
@@ -141,14 +141,14 @@ body{
 .btn--accent{  background: var(--accent);  color: var(--accent-ink) }
 .btn--success{ background: var(--success); color: #05130a }
 
-/* Ripple: bigger, brighter, longer */
+/* Ripple: bigger, brighter, longer; perf-friendly (transform/opacity) */
 .btn .ripple{
   position:absolute; border-radius:50%;
-  transform: scale(0.15); opacity:.45; pointer-events:none;
+  transform: scale(0.15); opacity:.5; pointer-events:none;
   background: rgba(255,255,255,.95);
   filter: blur(0.5px);
-  animation: ripple-expand .65s cubic-bezier(.2,.8,.2,1) forwards;
   mix-blend-mode: screen;
+  animation: ripple-expand .65s cubic-bezier(.2,.8,.2,1) forwards;
 }
 @keyframes ripple-expand{
   60%{ transform: scale(8); opacity:.35 }
@@ -164,7 +164,6 @@ body{
 }
 .rank-list{ margin:0; padding:0; list-style:none; display:grid; gap:12px }
 
-/* Slots: clean, bold */
 .rank-slot{
   display:grid; grid-template-columns: 96px 1fr; align-items:stretch;
   background: var(--surface-2);
@@ -204,10 +203,10 @@ body{
 .results{ margin-top:8px; color: var(--muted); font-size:14px }
 .actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
 
-/* Confetti canvas */
+/* Confetti canvas (under CTA) */
 .confetti{
-  position: fixed; inset: 0; pointer-events: none; z-index: 50;
-  display: none; /* toggled on when celebrating */
+  position: fixed; inset: 0; pointer-events: none; z-index: 30;
+  display: none;
 }
 
 /* Footer */
