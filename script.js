@@ -1,22 +1,22 @@
 "use strict";
 
 /* =========================================================
-   FIRESIDE Blind Rankings — robust image accuracy + perf
-   - Class-aware image sourcing (team/brand/person/movie/tv/place/food/group/game/book/album/song/generic)
-   - Wikidata P31 validation + P154 (logo) preference for teams/brands
-   - TMDB stricter acceptance for short/ambiguous titles (e.g., “It”, “Up”)
-   - Provider race (parallel) with timeouts; first valid wins
-   - Cancel stale paints to avoid wrong image flashes
-   - Loader only when actually loading/decoding the hero image
-   - Prefetch next topic’s first item when 4/5 placed
-   - LocalStorage resume
-   - Idempotent event wiring
+   FIRESIDE Blind Rankings — accuracy-first build
+   - Class-aware image sourcing with Wikidata P31 validation
+   - Teams/brands prefer P154 logos
+   - Foods/places resolve via Wikidata entity search (no stock)
+   - TMDB stricter acceptance for short/ambiguous titles
+   - Provider race (parallel) + timeouts; first valid wins
+   - Cancel stale paints to avoid wrong flashes
+   - Loader only while fetching/decoding
+   - Prefetch next topic’s first item at 4/5 placed
+   - LocalStorage resume; idempotent listeners; confetti
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* ---------- Basic utils ---------- */
+/* ---------- utils ---------- */
 function shuffle(arr){
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -50,7 +50,7 @@ function strictTitleMatch(query, candidate){
   return c === q || norm(c) === norm(q) || c.includes(q);
 }
 
-/* ---------- Fetch with timeout ---------- */
+/* ---------- fetch with timeout ---------- */
 async function fetchJson(url, opts = {}, timeoutMs = 8000){
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -63,7 +63,7 @@ async function fetchJson(url, opts = {}, timeoutMs = 8000){
   finally{ clearTimeout(id); }
 }
 
-/* ---------- Progressive image loading ---------- */
+/* ---------- progressive image ---------- */
 function tmdbLowRes(url){
   return url && url.includes("image.tmdb.org/t/p/")
     ? url.replace(/\/w(1280|780|500)\//, "/w342/")
@@ -86,7 +86,7 @@ async function loadProgressive(el, highUrl, faceFocus=false){
   if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
 }
 
-/* ---------- Loading overlay control ---------- */
+/* ---------- loading overlay ---------- */
 const cardLoading  = $("#cardLoading");
 const placeButtons = $("#placeButtons");
 function setLoading(on){
@@ -94,35 +94,35 @@ function setLoading(on){
   if (placeButtons) $$("button", placeButtons).forEach(b=> b.disabled = !!on);
 }
 
-/* ---------- Image cache ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v13";
+/* ---------- cache ---------- */
+const IMG_CACHE_KEY = "blind-rank:imageCache:v14";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
 const cacheSet = (k,v)=>{ imageCache[k] = v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){} };
 
-/* ---------- Provider constants ---------- */
+/* ---------- provider consts ---------- */
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
-/* ---------- Classification & Wikidata class guards ---------- */
+/* ---------- classification & class guards ---------- */
 const P31_ALLOW = {
-  team   : new Set(["Q12973014","Q13393265","Q847017"]),                            // sports team, basketball team, NBA team
-  brand  : new Set(["Q431289","Q4830453"]),                                         // brand, business
-  person : new Set(["Q5"]),                                                         // human
-  group  : new Set(["Q215380","Q2088357"]),                                         // band / musical group
-  movie  : new Set(["Q11424"]),                                                     // film
-  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),                  // tv series / miniseries / animated series / anime tv
-  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]), // city, settlement, country, nat'l park, island, mountain, museum
-  food   : new Set(["Q2095","Q746549","Q18593264"]),                                 // food / prepared food / dish
-  game   : new Set(["Q7889"]),                                                      // video game
-  book   : new Set(["Q571","Q8261"]),                                               // book / novel
-  album  : new Set(["Q482994"]),                                                    // album
-  song   : new Set(["Q7366"]),                                                      // song
+  team   : new Set(["Q12973014","Q13393265","Q847017"]),
+  brand  : new Set(["Q431289","Q4830453"]),
+  person : new Set(["Q5"]),
+  group  : new Set(["Q215380","Q2088357"]),
+  movie  : new Set(["Q11424"]),
+  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),
+  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]),
+  food   : new Set(["Q2095","Q746549","Q18593264"]), // food / prepared food / dish
+  game   : new Set(["Q7889"]),
+  book   : new Set(["Q571","Q8261"]),
+  album  : new Set(["Q482994"]),
+  song   : new Set(["Q7366"]),
   generic: null
 };
 function p31MatchesClass(p31Values, cls){
-  if (!cls || !P31_ALLOW[cls]) return true; // unconstrained
+  if (!cls || !P31_ALLOW[cls]) return true;
   const allow = P31_ALLOW[cls];
   if (!Array.isArray(p31Values) || p31Values.length === 0) return false;
   return p31Values.some(qid => allow.has(qid));
@@ -160,7 +160,10 @@ function classifyEntity(topicName, label){
   return "generic";
 }
 
-/* ---------- Wikipedia / Wikidata (class-aware) ---------- */
+/* ---------- Wikipedia / Wikidata helpers ---------- */
+const commonsFileUrl = (fileName, width=1400) =>
+  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=${width}`;
+
 // Prefer P154 (logo) for team/brand; otherwise P18/photo. Validate P31 class.
 async function wikiLogoOrImageForClass(title, cls){
   const page = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&redirects=1&titles=${encodeURIComponent(title)}&origin=*`);
@@ -184,24 +187,15 @@ async function wikiLogoOrImageForClass(title, cls){
 
     if (cls === "team" || cls === "brand"){
       const logo = logos[0]?.mainsnak?.datavalue?.value;
-      if (logo){
-        const file = encodeURIComponent(logo);
-        return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: true };
-      }
+      if (logo) return { url: commonsFileUrl(logo), isLogo: true };
       if (pageThumb) return { url: pageThumb, isLogo: false };
       const p18 = p18s[0]?.mainsnak?.datavalue?.value;
-      if (p18){
-        const file = encodeURIComponent(p18);
-        return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: false };
-      }
+      if (p18) return { url: commonsFileUrl(p18), isLogo: false };
       return null;
     }
 
     const p18 = p18s[0]?.mainsnak?.datavalue?.value;
-    if (p18){
-      const file = encodeURIComponent(p18);
-      return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: false };
-    }
+    if (p18) return { url: commonsFileUrl(p18), isLogo: false };
     if (pageThumb) return { url: pageThumb, isLogo: false };
   }
 
@@ -228,7 +222,44 @@ async function wikiLogoOrImageForClass(title, cls){
   return null;
 }
 
-// Wikipedia search → try top matches until P31 fits our class
+// Wikidata entity search → accept only items whose P31 fits the class.
+// Use P154 for team/brand logos, else P18, else enwiki pageimage.
+async function wikidataFindImageByClass(label, cls){
+  const search = await fetchJson(
+    `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(label)}&language=en&type=item&limit=8&format=json&origin=*`
+  );
+  const hits = search?.search || [];
+  for (const h of hits){
+    const id = h.id;
+    const ent = await fetchJson(
+      `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${id}&props=claims|sitelinks&format=json&origin=*`
+    );
+    const obj = ent?.entities?.[id];
+    if (!obj) continue;
+
+    const claims = obj.claims || {};
+    const p31s = (claims.P31 || []).map(c=>c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
+    if (!p31MatchesClass(p31s, cls)) continue;
+
+    // Preferred images
+    if ((cls === "team" || cls === "brand") && claims.P154?.[0]?.mainsnak?.datavalue?.value){
+      return { url: commonsFileUrl(claims.P154[0].mainsnak.datavalue.value), isLogo: true };
+    }
+    if (claims.P18?.[0]?.mainsnak?.datavalue?.value){
+      return { url: commonsFileUrl(claims.P18[0].mainsnak.datavalue.value), isLogo: false };
+    }
+
+    // Fallback to enwiki pageimage
+    const title = obj.sitelinks?.enwiki?.title;
+    if (title){
+      const r = await wikiLogoOrImageForClass(title, cls);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+// Wikipedia search → try top matches until class fits
 async function wikiResolveWithSearch(title, cls){
   const search = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title)}&srlimit=6&format=json&origin=*`);
   const hits = search?.query?.search || [];
@@ -236,11 +267,10 @@ async function wikiResolveWithSearch(title, cls){
     const r = await wikiLogoOrImageForClass(h.title, cls);
     if (r) return r;
   }
-  // final attempt with the raw title
   return wikiLogoOrImageForClass(title, cls);
 }
 
-/* ---------- TMDB / TVMaze / OMDb / Music / Stock ---------- */
+/* ---------- TMDB / TVMaze / OMDb / Music ---------- */
 async function tmdbSearchImages(query, mediaType = "movie"){
   const key = window.BR_CONFIG?.TMDB_API_KEY || "";
   if (!key) return null;
@@ -257,11 +287,10 @@ async function tmdbSearchImages(query, mediaType = "movie"){
     const title = r.title || r.name || "";
     const tn = norm(title);
     let s = scoreMatch(query, title);
-    if (tn === qn || strictTitleMatch(query, title)) s += 0.25; // prefer exact/near-exact
+    if (tn === qn || strictTitleMatch(query, title)) s += 0.25;
     if (s > bestScore){ bestScore = s; best = r; }
   }
-
-  const min = qn.length <= 3 ? 0.75 : 0.35; // Short titles need stronger proof
+  const min = qn.length <= 3 ? 0.75 : 0.35;
   if (!best || bestScore < min) return null;
 
   if (mediaType === "person"){
@@ -290,7 +319,7 @@ async function omdbPoster(query){
   return (p && p !== "N/A") ? p : null;
 }
 
-/* iTunes */
+/* iTunes + music sources */
 function upscaleItunes(url){ return url ? url.replace(/\/\d+x\d+bb\.jpg/, '/1200x1200bb.jpg') : null; }
 async function itunesArtistImage(query){
   const d = await fetchJson(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=musicArtist&limit=3`);
@@ -304,8 +333,6 @@ async function itunesMoviePoster(query){
   let best=null,score=0; for(const r of arr){ const t=r.trackName||r.collectionName||""; const s=scoreMatch(query,t); if(s>score){score=s; best=upscaleItunes(r.artworkUrl100);} }
   return score>=0.35?best:null;
 }
-
-/* TheAudioDB + Last.fm */
 async function audioDbArtistImage(query){
   const key = window.BR_CONFIG?.AUDIODB_API_KEY || "1";
   const d = await fetchJson(`https://www.theaudiodb.com/api/v1/json/${encodeURIComponent(key)}/search.php?s=${encodeURIComponent(query)}`);
@@ -321,38 +348,7 @@ async function lastfmArtistImage(query){
   return url || null;
 }
 
-/* Stock (optional, restricted) */
-async function pixabayPhoto(query){
-  const key = window.BR_CONFIG?.PIXABAY_API_KEY;
-  if (!key) return null;
-  const d = await fetchJson(`https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(query)}&image_type=photo&per_page=3&safesearch=true`);
-  const h = d?.hits?.[0];
-  return h?.largeImageURL || h?.webformatURL || null;
-}
-async function unsplashPhoto(query){
-  const key = window.BR_CONFIG?.UNSPLASH_ACCESS_KEY;
-  if (!key) return null;
-  const r = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1`, {
-    headers: { Authorization: `Client-ID ${key}` }
-  }).catch(()=>null);
-  if (!r || !r.ok) return null;
-  const d = await r.json().catch(()=>null);
-  const p = d?.results?.[0];
-  return p?.urls?.regular || p?.urls?.full || p?.urls?.small || null;
-}
-async function pexelsPhoto(query){
-  const key = window.BR_CONFIG?.PEXELS_API_KEY;
-  if (!key) return null;
-  const r = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
-    headers: { Authorization: key }
-  }).catch(()=>null);
-  if (!r || !r.ok) return null;
-  const d = await r.json().catch(()=>null);
-  const p = d?.photos?.[0];
-  return p?.src?.large2x || p?.src?.large || p?.src?.medium || null;
-}
-
-/* ---------- Person/face preferences ---------- */
+/* ---------- face preferences ---------- */
 function topicPrefersFace(topic){
   const PERSON_HINTS = [
     "artist","artists","singer","singers","musician","musicians","people","players",
@@ -368,16 +364,8 @@ function labelPrefersFace(label){
   return /\b(man|woman|girl|boy|kid|hero|princess|queen|king)\b/.test(s) ||
          /iron man|batman|spider-man|spider man|superman|captain america|wonder woman|hulk|thor|black widow|goku|naruto|luffy|pikachu/.test(s);
 }
-function contextSuffix(topicName){
-  const s = (topicName||"").toLowerCase();
-  if (s.includes("foods") || s.includes("food")) return " food";
-  if (s.includes("cars") || s.includes("vehicles")) return " car";
-  if (s.includes("animals") || s.includes("pets")) return " animal";
-  if (s.includes("cities") || s.includes("places")) return " city";
-  return "";
-}
 
-/* ---------- Provider race helper ---------- */
+/* ---------- provider race ---------- */
 async function firstTruthy(promises){
   return new Promise((resolve) => {
     let settled = false;
@@ -389,7 +377,13 @@ async function firstTruthy(promises){
   });
 }
 
-/* ---------- Unified resolver (class-aware + parallel) ---------- */
+/* ---------- unified resolver ---------- */
+function contextSuffix(topicName){
+  const s = (topicName||"").toLowerCase();
+  if (s.includes("cities") || s.includes("places")) return " city";
+  return "";
+}
+
 async function resolveImages(topic, item){
   if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo: false };
 
@@ -403,15 +397,18 @@ async function resolveImages(topic, item){
 
   const tasks = [];
 
-  // Teams/brands: logo/photo via Wikidata/Wikipedia with P31 validation
+  // Teams/brands → logos/photos via Wikidata/Wikipedia (validated)
   if (cls === "team" || cls === "brand"){
     tasks.push((async()=> {
-      const r = await wikiResolveWithSearch(item.label, cls);
-      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
+      // Try exact-page route first, then entity search
+      const direct = await wikiLogoOrImageForClass(item.label, cls);
+      if (direct) return { main: direct.url, thumb: direct.url, isLogo: !!direct.isLogo };
+      const viaWd = await wikidataFindImageByClass(item.label, cls);
+      return viaWd ? { main: viaWd.url, thumb: viaWd.url, isLogo: !!viaWd.isLogo } : null;
     })());
   }
 
-  // Movie/TV/Person → TMDB first, in parallel with validated Wikipedia / TVMaze / music sources
+  // Movies / TV / Person → TMDB + validated Wikipedia/TV/music
   if (cls === "movie" || mediaType === "movie"){
     tasks.push((async()=> {
       const tm = await tmdbSearchImages(item.label, "movie");
@@ -420,6 +417,10 @@ async function resolveImages(topic, item){
     tasks.push((async()=> {
       const r = await wikiResolveWithSearch(item.label, "movie");
       return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
+    })());
+    tasks.push((async()=> {
+      const it = await itunesMoviePoster(item.label);
+      return it ? { main: it, thumb: it, isLogo: false } : null;
     })());
   }
   if (cls === "tv" || mediaType === "tv"){
@@ -455,7 +456,7 @@ async function resolveImages(topic, item){
     })());
   }
 
-  // Musical groups
+  // Groups (bands)
   if (cls === "group"){
     tasks.push((async()=> {
       const a1 = await audioDbArtistImage(item.label);
@@ -472,27 +473,29 @@ async function resolveImages(topic, item){
     })());
   }
 
-  // Places / foods / generic / game / book / album / song → Wikipedia validated
-  const wikiClasses = ["place","food","generic","game","book","album","song"];
-  if (wikiClasses.includes(cls) || provider === "wiki"){
+  // Places / Foods → Wikidata entity search FIRST, then validated Wikipedia.
+  if (cls === "place" || cls === "food"){
     tasks.push((async()=> {
-      const r = await wikiResolveWithSearch(item.label, cls);
+      const viaWd = await wikidataFindImageByClass(item.label, cls);
+      return viaWd ? { main: viaWd.url, thumb: viaWd.url, isLogo: !!viaWd.isLogo } : null;
+    })());
+    tasks.push((async()=> {
+      const viaWp = await wikiResolveWithSearch(item.label, cls);
+      return viaWp ? { main: viaWp.url, thumb: viaWp.url, isLogo: !!viaWp.isLogo } : null;
+    })());
+  }
+
+  // Generic → Wikipedia only (no stock to avoid randomness)
+  if (cls === "generic" || provider === "wiki"){
+    tasks.push((async()=> {
+      const r = await wikiResolveWithSearch(item.label, "generic");
       return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
     })());
   }
 
-  // Stock is ONLY allowed for food/generic to prevent mismatches
-  if (cls === "food" || cls === "generic"){
-    tasks.push((async()=> {
-      const suffix = contextSuffix(topic.name);
-      const pxb = await pixabayPhoto(item.label + suffix);
-      if (pxb) return { main: pxb, thumb: pxb, isLogo: false };
-      const uns = await unsplashPhoto(item.label + suffix);
-      if (uns) return { main: uns, thumb: uns, isLogo: false };
-      const pex = await pexelsPhoto(item.label + suffix);
-      return pex ? { main: pex, thumb: pex, isLogo: false } : null;
-    })());
-  }
+  // IMPORTANT: we NO LONGER use stock for foods (and places).
+  // Stock caused the “Chow Mein → dog” class of errors.
+  // We prefer a neutral placeholder to a wrong image.
 
   let out = await firstTruthy(tasks);
 
@@ -506,7 +509,7 @@ async function resolveImages(topic, item){
   return out;
 }
 
-/* ---------- State & elements ---------- */
+/* ---------- state & elements ---------- */
 const topics = window.BLIND_RANK_TOPICS || [];
 let topicOrder = shuffle(topics.map((_,i)=>i));
 let currentTopicIndex = 0;
@@ -517,7 +520,7 @@ let placed       = {};
 let currentItem  = null;
 let didCelebrate = false;
 
-const SESSION_KEY = "blind-rank:session:v9";
+const SESSION_KEY = "blind-rank:session:v10";
 
 const topicTag     = $("#topicTag");
 const cardImg      = $("#cardImg");
@@ -529,7 +532,7 @@ const nextTopicBtn = $("#nextTopicBtn");
 const confettiEl   = $("#confetti");
 const nextTopicCta = $("#nextTopicCta");
 
-/* ---------- Central UI updater ---------- */
+/* ---------- central UI updater ---------- */
 function updateUIAfterState(){
   if (!currentItem){
     setLoading(false);
@@ -544,13 +547,13 @@ function updateUIAfterState(){
   if (cardImg) cardImg.style.display = "";
 }
 
-/* ---------- Session ---------- */
+/* ---------- session ---------- */
 function saveSession(){
   try{
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 9,
+      version: 10,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -618,10 +621,9 @@ async function paintCurrent(){
 
   setLoading(true);
   const info = await resolveImages(currentTopic, currentItem);
-  if (token !== _paintToken) return; // user moved on; abort applying
+  if (token !== _paintToken) return; // user moved on; abort
 
   if (cardImg){
-    // Logos: contain on neutral bg; photos: cover with optional face bias
     cardImg.style.objectFit = info.isLogo ? "contain" : "cover";
     cardImg.style.background = info.isLogo ? "#0e120e" : "transparent";
     await loadProgressive(cardImg, info.main, !info.isLogo && (info.prefersFace === true));
@@ -640,7 +642,7 @@ async function paintCurrent(){
   }
 }
 
-/* Prefetch next N items (low-res) */
+/* prefetch next N low-res */
 async function prefetchNext(n=2){
   const peek = itemsQueue.slice(0, n);
   for (const it of peek){
@@ -650,7 +652,7 @@ async function prefetchNext(n=2){
   }
 }
 
-/* ---------- Game flow ---------- */
+/* ---------- flow ---------- */
 function startNewSession(){
   if (!Array.isArray(topics) || topics.length === 0) {
     topicTag && (topicTag.textContent = "Add topics to begin");
@@ -685,7 +687,7 @@ function loadTopicByOrderIndex(orderIdx){
 
 async function placeCurrentItemInto(rank){
   rank = Number(rank);
-  if (!currentItem || (cardLoading && !cardLoading.hidden)) return; // don't place during load
+  if (!currentItem || (cardLoading && !cardLoading.hidden)) return;
   if (placed[rank]) return;
 
   const slot = $(`.rank-slot[data-rank="${rank}"]`);
@@ -758,7 +760,7 @@ function updateResults(){
   }
 }
 
-/* ---------- Controls (idempotent) ---------- */
+/* ---------- controls ---------- */
 function gotoNextTopic(){
   const next = (currentTopicIndex + 1) % topicOrder.length;
   setLoading(false);
@@ -802,7 +804,7 @@ function wireControls(){
 }
 wireControls();
 
-/* ---------- Confetti (lightweight) ---------- */
+/* ---------- confetti ---------- */
 function celebrate(){
   const filled = Object.keys(placed).length;
   if (filled !== 5 || didCelebrate || !confettiEl) return;
@@ -829,7 +831,8 @@ function celebrate(){
   let t = 0;
   (function tick(){
     t++;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
     parts.forEach(p=>{
       p.x += p.vx; p.y += p.vy; p.vy += 0.02;
       p.rot += p.vr;
@@ -850,5 +853,5 @@ addEventListener("resize", ()=>{
   confettiEl.height = innerHeight;
 });
 
-/* ---------- Bootstrap ---------- */
+/* ---------- bootstrap ---------- */
 restoreSession() || startNewSession();
