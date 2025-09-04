@@ -1,19 +1,22 @@
 "use strict";
 
 /* =========================================================
-   Blind Rankings — accuracy & perf upgrades:
-   - Entity classification (team/brand/person/movie/tv/place/food/generic)
-   - Wikidata P154 logo preference (teams/brands) via Wikipedia QID
-   - Provider race (parallel) with timeouts, first good wins
-   - Logos render "contain"; faces use top-bias composition
-   - Loader shows only during real fetch/decode
-   - Next-topic warmup when 4 placements done
+   FIRESIDE Blind Rankings — robust image accuracy + perf
+   - Class-aware image sourcing (team/brand/person/movie/tv/place/food/group/game/book/album/song/generic)
+   - Wikidata P31 validation + P154 (logo) preference for teams/brands
+   - TMDB stricter acceptance for short/ambiguous titles (e.g., “It”, “Up”)
+   - Provider race (parallel) with timeouts; first valid wins
+   - Cancel stale paints to avoid wrong image flashes
+   - Loader only when actually loading/decoding the hero image
+   - Prefetch next topic’s first item when 4/5 placed
+   - LocalStorage resume
+   - Idempotent event wiring
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* ---------- Utils ---------- */
+/* ---------- Basic utils ---------- */
 function shuffle(arr){
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -39,9 +42,16 @@ function scoreMatch(query, candidate){
   const recall = hit/qt.size, precis = hit/ct.size;
   return 0.65*recall + 0.35*precis;
 }
+function strictTitleMatch(query, candidate){
+  const q = String(query||"").toLowerCase().trim();
+  const c = String(candidate||"").toLowerCase().trim();
+  if (!q || !c) return false;
+  const norm = s => s.replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  return c === q || norm(c) === norm(q) || c.includes(q);
+}
 
-/* Fetch with timeout */
-async function fetchJson(url, opts = {}, timeoutMs = 7000){
+/* ---------- Fetch with timeout ---------- */
+async function fetchJson(url, opts = {}, timeoutMs = 8000){
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try{
@@ -53,7 +63,7 @@ async function fetchJson(url, opts = {}, timeoutMs = 7000){
   finally{ clearTimeout(id); }
 }
 
-/* Progressive image helpers */
+/* ---------- Progressive image loading ---------- */
 function tmdbLowRes(url){
   return url && url.includes("image.tmdb.org/t/p/")
     ? url.replace(/\/w(1280|780|500)\//, "/w342/")
@@ -76,8 +86,8 @@ async function loadProgressive(el, highUrl, faceFocus=false){
   if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
 }
 
-/* Loading state (strictly around hero image fetch/decode) */
-const cardLoading = $("#cardLoading");
+/* ---------- Loading overlay control ---------- */
+const cardLoading  = $("#cardLoading");
 const placeButtons = $("#placeButtons");
 function setLoading(on){
   if (cardLoading) cardLoading.hidden = !on;
@@ -85,64 +95,182 @@ function setLoading(on){
 }
 
 /* ---------- Image cache ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v11";
+const IMG_CACHE_KEY = "blind-rank:imageCache:v13";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
 const cacheSet = (k,v)=>{ imageCache[k] = v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){} };
 
-/* ---------- Providers ---------- */
+/* ---------- Provider constants ---------- */
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
-async function tmdbSearchImages(query, mediaType = "movie"){
-  const key = window.BR_CONFIG?.TMDB_API_KEY || "";
-  if (!key) return null;
-  const url = `${TMDB_BASE}/search/${mediaType}?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
-  const data = await fetchJson(url);
-  if (!data?.results?.length) return null;
-
-  const results = data.results.map(r => ({
-    raw: r, title: r.title || r.name || "", score: scoreMatch(query, r.title || r.name || "")
-  })).sort((a,b)=> b.score - a.score);
-
-  const best = results[0];
-  if (!best || best.score < 0.35) return null;
-
-  const r = best.raw;
-  if (mediaType === "person"){
-    const profile = r.profile_path ? `${TMDB_IMG}/w780${r.profile_path}` : null;
-    if (!profile) return null;
-    return { main: profile, thumb: profile };
-  }
-  const main  = r.backdrop_path ? `${TMDB_IMG}/w1280${r.backdrop_path}` : (r.poster_path ? `${TMDB_IMG}/w780${r.poster_path}` : null);
-  const thumb = r.poster_path   ? `${TMDB_IMG}/w500${r.poster_path}`   : (r.backdrop_path ? `${TMDB_IMG}/w780${r.backdrop_path}` : null);
-  if (!main && !thumb) return null;
-  return { main, thumb };
+/* ---------- Classification & Wikidata class guards ---------- */
+const P31_ALLOW = {
+  team   : new Set(["Q12973014","Q13393265","Q847017"]),                            // sports team, basketball team, NBA team
+  brand  : new Set(["Q431289","Q4830453"]),                                         // brand, business
+  person : new Set(["Q5"]),                                                         // human
+  group  : new Set(["Q215380","Q2088357"]),                                         // band / musical group
+  movie  : new Set(["Q11424"]),                                                     // film
+  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),                  // tv series / miniseries / animated series / anime tv
+  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]), // city, settlement, country, nat'l park, island, mountain, museum
+  food   : new Set(["Q2095","Q746549","Q18593264"]),                                 // food / prepared food / dish
+  game   : new Set(["Q7889"]),                                                      // video game
+  book   : new Set(["Q571","Q8261"]),                                               // book / novel
+  album  : new Set(["Q482994"]),                                                    // album
+  song   : new Set(["Q7366"]),                                                      // song
+  generic: null
+};
+function p31MatchesClass(p31Values, cls){
+  if (!cls || !P31_ALLOW[cls]) return true; // unconstrained
+  const allow = P31_ALLOW[cls];
+  if (!Array.isArray(p31Values) || p31Values.length === 0) return false;
+  return p31Values.some(qid => allow.has(qid));
 }
 
-/* Wikipedia + Wikidata: prefer P154 (logo), then P18 (photo) */
-async function wikiLogoOrImage(title){
-  const page = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&titles=${encodeURIComponent(title)}&origin=*`);
+const TEAM_HINTS = [
+  "nba","nfl","mlb","nhl","ncaa","soccer","club","fc","united","city",
+  "boston celtics","los angeles lakers","yankees","dodgers","patriots","packers","cowboys",
+  "red sox","warriors","heat","bulls","knicks"
+];
+const BRAND_HINTS = ["inc","ltd","corp","company","brand","™","®","llc","gmbh"];
+const PLACE_HINTS = ["city","country","park","mount","mountain","lake","river","island","national park","monument","museum","tower","bridge","palace","cathedral"];
+const FOOD_HINTS  = ["pizza","burger","taco","sandwich","soup","salad","pasta","roll","cheese","sauce","noodle","ramen","sushi","steak","curry","dessert"];
+
+function hasWord(haystack, arr){
+  const s = String(haystack||"").toLowerCase();
+  return arr.some(w => s.includes(w));
+}
+function classifyEntity(topicName, label){
+  const t = (topicName||"").toLowerCase();
+  const l = (label||"").toLowerCase();
+
+  if (hasWord(t,["boy bands","girl groups","bands","band","groups","k-pop","kpop","musical groups"]) || hasWord(l,[" band"," boyz","*nsync","bts","blackpink"])) return "group";
+  if (hasWord(t,["actor","actress","people","artists","singers","musicians","person"]) || hasWord(l,[" jr"," sr"," iii"])) return "person";
+  if (hasWord(t,["movie","film","films","movies"]) || hasWord(l,[" the movie"," (film)"])) return "movie";
+  if (hasWord(t,["tv","show","series","anime","cartoons"]) || hasWord(l,[" season"," (tv series)"])) return "tv";
+  if (hasWord(t,["video games","games","game"]) || hasWord(l,[" (video game)"])) return "game";
+  if (hasWord(t,["books","novels","book"]) || hasWord(l,[" (novel)"," (book)"])) return "book";
+  if (hasWord(t,["albums"]) || hasWord(l,[" (album)"])) return "album";
+  if (hasWord(t,["songs","tracks"]) || hasWord(l,[" (song)"])) return "song";
+  if (hasWord(t,["team","teams","club","soccer","football","basketball","baseball","hockey"]) || hasWord(l, TEAM_HINTS)) return "team";
+  if (hasWord(t,["brand","company"]) || hasWord(l, BRAND_HINTS)) return "brand";
+  if (hasWord(t,["city","places","landmarks","parks","countries"]) || hasWord(l, PLACE_HINTS)) return "place";
+  if (hasWord(t,["food","foods","dishes","cuisine","toppings"]) || hasWord(l, FOOD_HINTS)) return "food";
+  return "generic";
+}
+
+/* ---------- Wikipedia / Wikidata (class-aware) ---------- */
+// Prefer P154 (logo) for team/brand; otherwise P18/photo. Validate P31 class.
+async function wikiLogoOrImageForClass(title, cls){
+  const page = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&redirects=1&titles=${encodeURIComponent(title)}&origin=*`);
   const first = Object.values(page?.query?.pages || {})[0];
-  const qid = first?.pageprops?.wikibase_item;
+  if (!first) return null;
+  if (first?.pageprops?.disambiguation !== undefined) return null; // ignore disambiguation
+
+  const canonicalTitle = first?.title || title;
+  const qid = first?.pageprops?.wikibase_item || null;
   const pageThumb = first?.thumbnail?.source || null;
 
   if (qid){
-    const wd = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${qid}&property=P154|P18&format=json&origin=*`);
-    const logo = wd?.claims?.P154?.[0]?.mainsnak?.datavalue?.value;
-    const p18  = wd?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
-    if (logo){
-      const file = encodeURIComponent(logo);
-      return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: true };
+    const wd = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${qid}&property=P154|P18|P31&format=json&origin=*`);
+    const logos = wd?.claims?.P154 || [];
+    const p18s  = wd?.claims?.P18 || [];
+    const p31s  = (wd?.claims?.P31 || []).map(c=>c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
+
+    if (!p31MatchesClass(p31s, cls)) {
+      if (!(strictTitleMatch(title, canonicalTitle) && pageThumb)) return null;
     }
+
+    if (cls === "team" || cls === "brand"){
+      const logo = logos[0]?.mainsnak?.datavalue?.value;
+      if (logo){
+        const file = encodeURIComponent(logo);
+        return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: true };
+      }
+      if (pageThumb) return { url: pageThumb, isLogo: false };
+      const p18 = p18s[0]?.mainsnak?.datavalue?.value;
+      if (p18){
+        const file = encodeURIComponent(p18);
+        return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: false };
+      }
+      return null;
+    }
+
+    const p18 = p18s[0]?.mainsnak?.datavalue?.value;
     if (p18){
       const file = encodeURIComponent(p18);
       return { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`, isLogo: false };
     }
+    if (pageThumb) return { url: pageThumb, isLogo: false };
   }
+
   if (pageThumb) return { url: pageThumb, isLogo: false };
+
+  // REST summary fallback — quick description sanity
+  const sum = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true&origin=*`);
+  const img = sum?.originalimage?.source || sum?.thumbnail?.source;
+  const desc = (sum?.description || "").toLowerCase();
+  if (img){
+    if (cls==="team"  && desc.includes("team")) return { url: img, isLogo:false };
+    if (cls==="brand" && (desc.includes("company")||desc.includes("brand"))) return { url: img, isLogo:false };
+    if (cls==="place" && (desc.includes("city")||desc.includes("country")||desc.includes("park"))) return { url: img, isLogo:false };
+    if (cls==="movie" && (desc.includes("film")||desc.includes("movie"))) return { url: img, isLogo:false };
+    if (cls==="tv" && (desc.includes("television")||desc.includes("tv"))) return { url: img, isLogo:false };
+    if (cls==="food" && (desc.includes("food")||desc.includes("dish")||desc.includes("cuisine"))) return { url: img, isLogo:false };
+    if (cls==="group" && (desc.includes("band")||desc.includes("group"))) return { url: img, isLogo:false };
+    if (cls==="game" && desc.includes("video game")) return { url: img, isLogo:false };
+    if (cls==="book" && (desc.includes("book")||desc.includes("novel"))) return { url: img, isLogo:false };
+    if (cls==="album" && desc.includes("album")) return { url: img, isLogo:false };
+    if (cls==="song" && desc.includes("song")) return { url: img, isLogo:false };
+    if (!cls || cls==="generic") return { url: img, isLogo:false };
+  }
   return null;
+}
+
+// Wikipedia search → try top matches until P31 fits our class
+async function wikiResolveWithSearch(title, cls){
+  const search = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title)}&srlimit=6&format=json&origin=*`);
+  const hits = search?.query?.search || [];
+  for (const h of hits){
+    const r = await wikiLogoOrImageForClass(h.title, cls);
+    if (r) return r;
+  }
+  // final attempt with the raw title
+  return wikiLogoOrImageForClass(title, cls);
+}
+
+/* ---------- TMDB / TVMaze / OMDb / Music / Stock ---------- */
+async function tmdbSearchImages(query, mediaType = "movie"){
+  const key = window.BR_CONFIG?.TMDB_API_KEY || "";
+  if (!key) return null;
+
+  const url = `${TMDB_BASE}/search/${mediaType}?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
+  const data = await fetchJson(url);
+  if (!data?.results?.length) return null;
+
+  const norm = s => String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  const qn = norm(query);
+
+  let best = null, bestScore = 0;
+  for (const r of data.results){
+    const title = r.title || r.name || "";
+    const tn = norm(title);
+    let s = scoreMatch(query, title);
+    if (tn === qn || strictTitleMatch(query, title)) s += 0.25; // prefer exact/near-exact
+    if (s > bestScore){ bestScore = s; best = r; }
+  }
+
+  const min = qn.length <= 3 ? 0.75 : 0.35; // Short titles need stronger proof
+  if (!best || bestScore < min) return null;
+
+  if (mediaType === "person"){
+    const profile = best.profile_path ? `${TMDB_IMG}/w780${best.profile_path}` : null;
+    return profile ? { main: profile, thumb: profile } : null;
+  }
+  const main  = best.backdrop_path ? `${TMDB_IMG}/w1280${best.backdrop_path}` : (best.poster_path ? `${TMDB_IMG}/w780${best.poster_path}` : null);
+  const thumb = best.poster_path   ? `${TMDB_IMG}/w500${best.poster_path}`   : (best.backdrop_path ? `${TMDB_IMG}/w780${best.backdrop_path}` : null);
+  return (main || thumb) ? { main, thumb } : null;
 }
 
 async function tvmazeShowImage(query){
@@ -193,7 +321,7 @@ async function lastfmArtistImage(query){
   return url || null;
 }
 
-/* Stock (optional) */
+/* Stock (optional, restricted) */
 async function pixabayPhoto(query){
   const key = window.BR_CONFIG?.PIXABAY_API_KEY;
   if (!key) return null;
@@ -224,47 +352,7 @@ async function pexelsPhoto(query){
   return p?.src?.large2x || p?.src?.large || p?.src?.medium || null;
 }
 
-/* ---------- Entity classification ---------- */
-const TEAM_HINTS = [
-  "nba","nfl","mlb","nhl","ncaa","soccer","club","fc","cf","sc","united","city",
-  "boston celtics","los angeles lakers","yankees","dodgers","patriots","packers","cowboys",
-  "red sox","warriors","heat","bulls","knicks"
-];
-const BRAND_HINTS = ["inc","ltd","corp","company","brand","™","®","llc","gmbh"];
-const PLACE_HINTS = ["city","country","park","mount","mountain","lake","river","island","national park","monument","museum","tower","bridge","palace","cathedral"];
-const FOOD_HINTS  = ["pizza","burger","taco","sandwich","soup","salad","pasta","roll","cheese","sauce","noodle","ramen","sushi","steak","curry","dessert"];
-
-function hasWord(haystack, arr){
-  const s = String(haystack||"").toLowerCase();
-  return arr.some(w => s.includes(w));
-}
-function classifyEntity(topicName, label){
-  const t = (topicName||"").toLowerCase();
-  const l = (label||"").toLowerCase();
-
-  if (hasWord(t,["actor","actress","people","artists","singers","musicians","person"]) || hasWord(l,[" jr"," sr"," iii"])) return "person";
-  if (hasWord(t,["movie","film"]) || hasWord(l,["the movie"])) return "movie";
-  if (hasWord(t,["tv","show","series","anime"]) || hasWord(l,["season"])) return "tv";
-  if (hasWord(t,["team","teams","club","soccer","football","basketball","baseball","hockey"]) || hasWord(l, TEAM_HINTS)) return "team";
-  if (hasWord(t,["brand","company"]) || hasWord(l, BRAND_HINTS)) return "brand";
-  if (hasWord(t,["city","places","landmarks","parks","countries"]) || hasWord(l, PLACE_HINTS)) return "place";
-  if (hasWord(t,["food","foods","dishes","cuisine"]) || hasWord(l, FOOD_HINTS)) return "food";
-  return "generic";
-}
-
-/* ---------- Provider race helper ---------- */
-async function firstTruthy(promises){
-  return new Promise((resolve) => {
-    let settled = false;
-    const done = (val) => { if (!settled && val) { settled = true; resolve(val); } };
-    promises.forEach(async (p) => {
-      try { done(await p); } catch {}
-    });
-    Promise.allSettled(promises).then(() => !settled && resolve(null));
-  });
-}
-
-/* ---------- Unified resolver (class-aware + parallel) ---------- */
+/* ---------- Person/face preferences ---------- */
 function topicPrefersFace(topic){
   const PERSON_HINTS = [
     "artist","artists","singer","singers","musician","musicians","people","players",
@@ -289,6 +377,19 @@ function contextSuffix(topicName){
   return "";
 }
 
+/* ---------- Provider race helper ---------- */
+async function firstTruthy(promises){
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (val) => { if (!settled && val) { settled = true; resolve(val); } };
+    promises.forEach(async (p) => {
+      try { done(await p); } catch {}
+    });
+    Promise.allSettled(promises).then(() => !settled && resolve(null));
+  });
+}
+
+/* ---------- Unified resolver (class-aware + parallel) ---------- */
 async function resolveImages(topic, item){
   if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo: false };
 
@@ -302,52 +403,44 @@ async function resolveImages(topic, item){
 
   const tasks = [];
 
-  // Team/Brand: prefer logos (Wikidata P154)
+  // Teams/brands: logo/photo via Wikidata/Wikipedia with P31 validation
   if (cls === "team" || cls === "brand"){
     tasks.push((async()=> {
-      const r = await wikiLogoOrImage(item.label);
+      const r = await wikiResolveWithSearch(item.label, cls);
       return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
     })());
   }
 
-  // TMDB for movie/tv/person
-  if (provider === "tmdb" || cls === "movie" || cls === "tv" || cls === "person"){
-    tasks.push((async()=> {
-      const kind = mediaType || (cls === "movie" ? "movie" : cls === "tv" ? "tv" : cls === "person" ? "person" : "movie");
-      const tm = await tmdbSearchImages(item.label, kind);
-      if (tm?.main || tm?.thumb){
-        return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false };
-      }
-      return null;
-    })());
-  }
-
-  // Wikipedia photo/logo (good for place/food/generic)
-  if (provider === "wiki" || cls === "place" || cls === "food" || cls === "generic"){
-    tasks.push((async()=> {
-      const r = await wikiLogoOrImage(item.label);
-      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
-    })());
-  }
-
-  // TVMaze (tv)
-  if (cls === "tv" || mediaType === "tv"){
-    tasks.push((async()=> {
-      const u = await tvmazeShowImage(item.label);
-      return u ? { main: u, thumb: u, isLogo: false } : null;
-    })());
-  }
-
-  // OMDb (movie)
+  // Movie/TV/Person → TMDB first, in parallel with validated Wikipedia / TVMaze / music sources
   if (cls === "movie" || mediaType === "movie"){
     tasks.push((async()=> {
-      const u = await omdbPoster(item.label);
-      return u ? { main: u, thumb: u, isLogo: false } : null;
+      const tm = await tmdbSearchImages(item.label, "movie");
+      return (tm?.main || tm?.thumb) ? { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false } : null;
+    })());
+    tasks.push((async()=> {
+      const r = await wikiResolveWithSearch(item.label, "movie");
+      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
     })());
   }
-
-  // Music person
-  if (cls === "person"){
+  if (cls === "tv" || mediaType === "tv"){
+    tasks.push((async()=> {
+      const tm = await tmdbSearchImages(item.label, "tv");
+      return (tm?.main || tm?.thumb) ? { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false } : null;
+    })());
+    tasks.push((async()=> {
+      const tvm = await tvmazeShowImage(item.label);
+      return tvm ? { main: tvm, thumb: tvm, isLogo: false } : null;
+    })());
+    tasks.push((async()=> {
+      const r = await wikiResolveWithSearch(item.label, "tv");
+      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
+    })());
+  }
+  if (cls === "person" || mediaType === "person"){
+    tasks.push((async()=> {
+      const tm = await tmdbSearchImages(item.label, "person");
+      return (tm?.main || tm?.thumb) ? { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false } : null;
+    })());
     tasks.push((async()=> {
       const a1 = await audioDbArtistImage(item.label);
       if (a1) return { main: a1, thumb: a1, isLogo: false };
@@ -356,17 +449,39 @@ async function resolveImages(topic, item){
       const a3 = await itunesArtistImage(item.label);
       return a3 ? { main: a3, thumb: a3, isLogo: false } : null;
     })());
-  }
-
-  // iTunes backups for movie posters
-  if (cls === "movie" || mediaType === "movie"){
     tasks.push((async()=> {
-      const u = await itunesMoviePoster(item.label);
-      return u ? { main: u, thumb: u, isLogo: false } : null;
+      const r = await wikiResolveWithSearch(item.label, "person");
+      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
     })());
   }
 
-  // Generic stock ONLY for food/generic (avoid for team/brand/place)
+  // Musical groups
+  if (cls === "group"){
+    tasks.push((async()=> {
+      const a1 = await audioDbArtistImage(item.label);
+      if (a1) return { main: a1, thumb: a1, isLogo: false };
+      const a2 = await lastfmArtistImage(item.label);
+      if (a2) return { main: a2, thumb: a2, isLogo: false };
+      const it = await itunesArtistImage(item.label);
+      if (it) return { main: it, thumb: it, isLogo: false };
+      return null;
+    })());
+    tasks.push((async()=> {
+      const r = await wikiResolveWithSearch(item.label, "group");
+      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
+    })());
+  }
+
+  // Places / foods / generic / game / book / album / song → Wikipedia validated
+  const wikiClasses = ["place","food","generic","game","book","album","song"];
+  if (wikiClasses.includes(cls) || provider === "wiki"){
+    tasks.push((async()=> {
+      const r = await wikiResolveWithSearch(item.label, cls);
+      return r ? { main: r.url, thumb: r.url, isLogo: !!r.isLogo } : null;
+    })());
+  }
+
+  // Stock is ONLY allowed for food/generic to prevent mismatches
   if (cls === "food" || cls === "generic"){
     tasks.push((async()=> {
       const suffix = contextSuffix(topic.name);
@@ -402,7 +517,7 @@ let placed       = {};
 let currentItem  = null;
 let didCelebrate = false;
 
-const SESSION_KEY = "blind-rank:session:v8";
+const SESSION_KEY = "blind-rank:session:v9";
 
 const topicTag     = $("#topicTag");
 const cardImg      = $("#cardImg");
@@ -435,7 +550,7 @@ function saveSession(){
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 8,
+      version: 9,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -492,23 +607,30 @@ function clearSlots(){
   });
 }
 
+let _paintToken = 0;
 async function paintCurrent(){
   if (!currentItem){
     setLoading(false);
     updateUIAfterState();
     return;
   }
+  const token = ++_paintToken;
+
   setLoading(true);
   const info = await resolveImages(currentTopic, currentItem);
+  if (token !== _paintToken) return; // user moved on; abort applying
+
   if (cardImg){
     // Logos: contain on neutral bg; photos: cover with optional face bias
     cardImg.style.objectFit = info.isLogo ? "contain" : "cover";
     cardImg.style.background = info.isLogo ? "#0e120e" : "transparent";
     await loadProgressive(cardImg, info.main, !info.isLogo && (info.prefersFace === true));
+    if (token !== _paintToken) return;
     cardImg.alt = currentItem.label;
   }
   setLoading(false);
 
+  if (token !== _paintToken) return;
   itemTitle && (itemTitle.textContent = currentItem.label);
   if (helpText) {
     helpText.innerHTML = `
@@ -622,7 +744,7 @@ function updateResults(){
   const remain = Math.max(0, 5 - filled);
   resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
 
-  // Warm up the first image of the NEXT topic when we hit 4 placements
+  // Warm up first image of NEXT topic when we hit 4 placements
   if (filled === 4) {
     const nextIdx = (currentTopicIndex + 1) % topicOrder.length;
     const nextTopic = topics[topicOrder[nextIdx]];
