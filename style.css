@@ -1,4 +1,4 @@
-/* Flat, modern, bold. No header background. */
+/* Flat, modern, bold. No header background. Material-style button ripple. */
 :root{
   --bg: #0b0c0b;
   --surface: #111311;
@@ -7,7 +7,8 @@
   --muted: #97a197;
   --line: #232823;
 
-  --accent: #7c5cff;   /* keep/change to rebrand */
+  --accent:  #7c5cff;  /* purple */
+  --success: #22c55e;  /* soft green for "new" */
   --accent-ink: #07090e;
 
   --r-lg: 16px;
@@ -34,8 +35,7 @@ body{
 .app-header{
   display:flex; align-items:center; justify-content:flex-start;
   padding: 22px 24px;
-  background: transparent;        /* no bg at top */
-  border-bottom: none;            /* no line at top */
+  background: transparent; /* no bg at top */
 }
 .brand{
   margin:0;
@@ -64,7 +64,7 @@ body{
   display:flex; align-items:center; justify-content:flex-start; gap:10px;
 }
 
-/* Category chip (unique style, compact, fixed height) */
+/* Category chip */
 .chip{
   display:inline-flex; align-items:center; justify-content:center;
   height: 36px; padding: 0 14px; border-radius: 999px;
@@ -89,45 +89,59 @@ body{
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   overflow:hidden;
-  touch-action: none;             /* for pointer drag */
-  will-change: transform;
 }
-.card.dragging{ cursor: grabbing; transform: scale(1.02) }
 .card-photo{
   width:100%; height:100%;
-  background-size: cover;         /* cover, we’ll adjust position via JS */
-  background-position: center;    /* default, overridden per item */
+  background-size: cover;         /* cover; JS may adjust background-position */
+  background-position: center;
 }
 
-/* Help */
-.help{ margin:0; text-align:center; color: var(--muted); font-size:14px }
+/* Help line with info icon */
+.help{
+  margin:0; display:flex; align-items:center; justify-content:center; gap:8px;
+  color: var(--muted); font-size:14px; text-align:center;
+}
+.info-icon{
+  width:18px; height:18px; flex:0 0 18px; display:block;
+  fill: none; stroke: none;
+}
+.info-icon circle{ fill: #1b1f1b }
+.info-icon path{ fill: var(--ink) }
 
-/* Placement buttons: one row desktop, two columns mobile */
+/* Placement buttons: single row desktop, 2 columns mobile */
 .place-buttons{
-  width:100%;
-  display:flex; gap:10px; justify-content:center; flex-wrap:nowrap; /* single row desktop */
+  width:100%; display:flex; gap:10px; justify-content:center; flex-wrap:nowrap;
 }
 @media (max-width: 640px){
-  .place-buttons{
-    display:grid; grid-template-columns: 1fr 1fr; gap:10px;  /* two cols mobile */
-  }
+  .place-buttons{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
 }
 
-/* Buttons (solid) */
+/* Buttons (solid) + ripple */
 .btn{
-  --bg: #1b1f1b; --fg: var(--ink);
+  position: relative; overflow: hidden; /* needed for ripple */
   appearance:none; border:none; cursor:pointer;
   padding: 12px 16px; border-radius: var(--r-lg);
-  background: var(--bg); color: var(--fg);
+  background: #1b1f1b; color: var(--ink);
   font-weight: var(--black); letter-spacing:.2px; font-size: 16px;
   transition: transform .06s ease, opacity .15s ease;
+  will-change: transform;
 }
 .btn:active{ transform: translateY(1px) }
 .btn:focus-visible{ outline:none; box-shadow: var(--focus) }
 .btn--pill{ border-radius: 999px }
-.btn--primary{ --bg: var(--accent); --fg: var(--accent-ink) }
-.btn--accent{  --bg: var(--accent); --fg: var(--accent-ink) }
-.btn--muted{   --bg: #1a1e1a;       --fg: var(--ink) }
+.btn--accent{  background: var(--accent);  color: var(--accent-ink) }
+.btn--success{ background: var(--success); color: #05130a }
+
+/* Material-like ripple element */
+.btn .ripple{
+  position:absolute; border-radius:50%;
+  transform: scale(0); opacity:.35; pointer-events:none;
+  background: rgba(255,255,255,.9);
+  animation: ripple-expand .45s ease-out forwards;
+}
+@keyframes ripple-expand{
+  to{ transform: scale(6); opacity:0 }
+}
 
 /* Ranks (right) */
 .ranks{
@@ -145,7 +159,7 @@ body{
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   min-height: 112px; outline:none;
-  transition: border-color .12s ease, transform .08s ease, background .12s ease;
+  transition: background .12s ease;
 }
 .rank-slot:hover{ background: #121512 }
 .rank-slot:focus{ box-shadow: var(--focus) }
@@ -161,9 +175,6 @@ body{
 }
 .slot-dropzone.empty::before{
   content:"Drop here"; color:#818a81; font-weight: var(--heavy); font-size:13px; letter-spacing:.3px;
-}
-.slot-dropzone.is-hovered{
-  outline: 3px solid var(--accent); outline-offset: -3px;
 }
 
 /* Slot content */
@@ -181,14 +192,14 @@ body{
 .results{ margin-top:8px; color: var(--muted); font-size:14px }
 .actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
 
+/* Confetti canvas */
+.confetti{
+  position: fixed; inset: 0; pointer-events: none; z-index: 50;
+  display: none; /* toggled on when celebrating */
+}
+
 /* Footer */
 .app-footer{
   display:flex; align-items:center; justify-content:center;
-  padding:16px; border-top:1px solid var(--line);
-  background: var(--surface); color: var(--muted);
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .rank-slot, .btn{ transition: none }
+  padding:16px; color: var(--muted);
 }
