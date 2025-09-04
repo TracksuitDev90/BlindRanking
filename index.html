@@ -5,32 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Blind Rankings</title>
   <meta name="color-scheme" content="dark" />
+  <!-- Modern, bold type -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header (simple, text-only brand) -->
+  <!-- Header: text-only brand -->
   <header class="app-header">
     <h1 class="brand" aria-label="Blind Rankings">BLIND RANKINGS</h1>
   </header>
 
   <main class="layout">
-    <!-- Left: Stage -->
+    <!-- Stage (left) -->
     <section class="stage" aria-labelledby="topicTag">
       <div class="stage-bar">
-        <!-- Category + New Topic = identical pill buttons -->
+        <!-- Identical pill buttons for topic + new topic -->
         <button id="topicTag" class="btn btn--pill btn--primary is-label" disabled>Topic</button>
-        <button id="nextTopicBtn" class="btn btn--pill btn--primary" aria-label="Load a new topic">New Topic</button>
+        <button id="nextTopicBtn" class="btn btn--pill btn--primary" aria-label="Load a new topic">
+          New Topic
+        </button>
       </div>
 
-      <!-- Clear, centered “what/who is this” -->
+      <!-- Clear, centered “what / who is this” -->
       <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
 
-      <!-- Image card (image only; text sits above) -->
+      <!-- Image card (the star) -->
       <article id="currentCard" class="card" draggable="true" aria-grabbed="false" aria-describedby="cardHelp">
         <div id="cardPhoto" class="card-photo" role="img" aria-label=""></div>
       </article>
 
-      <p id="cardHelp" class="help">Tap a button to place this into a rank.</p>
+      <p id="cardHelp" class="help">Drag the card into a rank or use the buttons below.</p>
 
       <!-- Solid placement buttons -->
       <div id="placeButtons" class="place-buttons" aria-label="Place into rank" hidden>
@@ -42,7 +47,7 @@
       </div>
     </section>
 
-    <!-- Right: Ranks -->
+    <!-- Ranks (right) -->
     <section class="ranks" aria-label="Ranking slots">
       <ol class="rank-list" role="listbox" aria-label="Rankings 1 to 5">
         <li class="rank-slot" data-rank="1" role="option" aria-selected="false" tabindex="0">
@@ -68,26 +73,21 @@
       </ol>
 
       <div id="results" class="results" aria-live="polite"></div>
+
       <div class="actions">
         <button id="reshuffleBtn" class="btn btn--pill btn--muted">Reshuffle</button>
-        <!-- Start Over moved here (out of header) -->
         <button id="newGameBtn" class="btn btn--pill btn--muted">Start Over</button>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <small>Demo • HTML/CSS/JS only • Images via TMDB/Wikipedia when configured.</small>
+    <small>Images via TMDB/Wikipedia when configured.</small>
   </footer>
 
   <!-- Scripts -->
   <script src="config.js"></script>
   <script src="topics.js"></script>
   <script src="script.js"></script>
-
-  <noscript>
-    <style>.layout{display:none}</style>
-    <p style="padding:1rem">Please enable JavaScript to play.</p>
-  </noscript>
 </body>
 </html>
