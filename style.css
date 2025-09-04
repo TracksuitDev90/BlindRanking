@@ -19,6 +19,9 @@
   --focus: 0 0 0 3px rgba(124,92,255,.5);
 }
 
+/* Ensure anything with [hidden] is truly hidden */
+[hidden]{ display:none !important; }
+
 *{ box-sizing:border-box }
 html,body{ height:100% }
 body{
@@ -57,9 +60,7 @@ body{
   padding: 16px;
   display:flex; flex-direction:column; gap: 14px;
 }
-.stage-bar{
-  display:flex; align-items:center; justify-content:flex-start; gap:10px;
-}
+.stage-bar{ display:flex; align-items:center; gap:10px }
 
 /* Category chip */
 .chip{
@@ -68,10 +69,9 @@ body{
   background: #1b1f1b; color: var(--ink);
   border: 1px solid var(--line);
   font-weight: var(--heavy); letter-spacing:.2px; font-size: 14px;
-  white-space: nowrap;
 }
 
-/* Title above image */
+/* Title */
 .item-title{
   margin: 2px 0 0;
   text-align:center;
@@ -79,7 +79,7 @@ body{
   font-size: clamp(24px, 5.6vw, 44px);
 }
 
-/* Image card with loading overlay */
+/* Card */
 .card{
   position: relative;
   width:min(920px, 100%); aspect-ratio: 16/9;
@@ -91,11 +91,11 @@ body{
 .card-img{
   width:100%; height:100%;
   object-fit: cover;
-  object-position: center; /* JS may set to 'center 20%' for faces */
+  object-position: center; /* JS may set to 'center 20%' */
   display:block;
 }
 
-/* Loading overlay (centered spinner) */
+/* Loading overlay */
 .card-loading{
   position:absolute; inset:0; display:grid; place-items:center;
   background: linear-gradient(0deg, rgba(7,8,7,.35), rgba(7,8,7,.35));
@@ -110,7 +110,7 @@ body{
 }
 @keyframes spin{ to { transform: rotate(360deg) } }
 
-/* CTA centered in the card, above confetti & loader */
+/* CTA centered */
 .next-topic-cta{
   position:absolute; left:50%; top:50%; transform: translate(-50%, -50%);
   height:56px; width:min(320px, 70%);
@@ -119,16 +119,16 @@ body{
   box-shadow: 0 8px 26px rgba(34,197,94,.25);
 }
 
-/* Help line with compact info icon */
+/* Help */
 .help{
   margin:0; display:flex; align-items:center; justify-content:center; gap:8px;
   color: var(--muted); font-size:14px; text-align:center;
 }
-.info-icon{ width:18px; height:18px; display:inline-block; flex:0 0 18px; vertical-align:-2px }
-.info-icon circle{ fill: #1b1f1b }
+.info-icon{ width:18px; height:18px; flex:0 0 18px; }
+.info-icon circle{ fill: #1b1b1b }
 .info-icon path{ fill: var(--ink) }
 
-/* Placement buttons: single row desktop, 2 columns mobile */
+/* Place buttons */
 .place-buttons{
   width:100%; display:flex; gap:10px; justify-content:center; flex-wrap:nowrap;
 }
@@ -136,7 +136,7 @@ body{
   .place-buttons{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
 }
 
-/* Buttons (solid) + strong ripple */
+/* Buttons */
 .btn{
   position: relative; overflow: hidden;
   appearance:none; border:none; cursor:pointer;
@@ -144,7 +144,6 @@ body{
   background: #1b1f1b; color: var(--ink);
   font-weight: var(--black); letter-spacing:.2px; font-size: 16px;
   transition: transform .06s ease, opacity .15s ease, filter .15s ease;
-  will-change: transform;
 }
 .btn:active{ transform: translateY(1px) }
 .btn:disabled{ opacity:.6; cursor:not-allowed; filter:saturate(.6) }
@@ -153,12 +152,11 @@ body{
 .btn--accent{  background: var(--accent);  color: var(--accent-ink) }
 .btn--success{ background: var(--success); color: #05130a }
 
-/* Ripple (prominent, perf-friendly) */
+/* Ripple */
 .btn .ripple{
   position:absolute; border-radius:50%;
   transform: scale(0.15); opacity:.5; pointer-events:none;
   background: rgba(255,255,255,.95);
-  filter: blur(0.5px);
   mix-blend-mode: screen;
   animation: ripple-expand .65s cubic-bezier(.2,.8,.2,1) forwards;
 }
@@ -174,6 +172,7 @@ body{
   border-radius: var(--r-lg);
   padding: 16px;
 }
+.actions-top{ margin-bottom: 12px; display:flex; gap:10px; flex-wrap:wrap }
 .rank-list{ margin:0; padding:0; list-style:none; display:grid; gap:12px }
 
 .rank-slot{
@@ -211,9 +210,7 @@ body{
 .slot-meta .title{ margin:0 0 2px; font-weight: var(--black); font-size: 18px }
 .slot-meta .topic{ font-size:12px; color: var(--muted) }
 
-.skeleton{
-  position: relative; overflow: hidden; background: #1a1d1a;
-}
+.skeleton{ position: relative; overflow: hidden; background: #1a1d1a }
 .skeleton::after{
   content:""; position:absolute; inset:0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
@@ -222,11 +219,10 @@ body{
 }
 @keyframes shimmer{ to { transform: translateX(100%) } }
 
-/* Actions */
-.results{ margin-top:8px; color: var(--muted); font-size:14px }
-.actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
+/* Results */
+.results{ margin-top:12px; color: var(--muted); font-size:14px }
 
-/* Confetti canvas (under CTA) */
+/* Confetti */
 .confetti{
   position: fixed; inset: 0; pointer-events: none; z-index: 30;
   display: none;
@@ -240,7 +236,6 @@ body{
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
-  .rank-slot, .btn{ transition: none }
   .spinner{ animation: none }
   .skeleton::after{ animation: none }
 }
