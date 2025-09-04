@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet">
 
-  <!-- Preconnects to image/API CDNs for faster first byte -->
+  <!-- Preconnects to image/API CDNs -->
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://en.wikipedia.org" crossorigin>
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header aligned with main container (no background) -->
+  <!-- Header aligned with content container (no background) -->
   <header class="app-header">
     <div class="container">
       <h1 class="brand" aria-label="FIRESIDE Blind Rankings">FIRESIDE Blind Rankings</h1>
@@ -43,8 +43,11 @@
 
       <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
 
-      <!-- Card area: <img> enables progressive loading & decode scheduling -->
+      <!-- Card area: <img> for progressive decode + a loading overlay -->
       <article id="currentCard" class="card" aria-describedby="cardHelp">
+        <div id="cardLoading" class="card-loading" hidden aria-hidden="true">
+          <div class="spinner" role="status" aria-label="Loading image"></div>
+        </div>
         <img id="cardImg" class="card-img" alt="" decoding="async" fetchpriority="high" loading="eager">
         <button id="nextTopicCta" class="next-topic-cta btn btn--pill btn--success" hidden>
           Next Topic
@@ -97,11 +100,7 @@
       <div id="results" class="results" aria-live="polite"></div>
       <div class="actions">
         <button id="nextTopicBtn" class="btn btn--pill btn--success">New Topic</button>
-        <button
-          id="newGameBtn"
-          class="btn btn--pill btn--accent"
-          title="Start Over is locked after 3 placements to keep it fair"
-        >Start Over</button>
+        <!-- Start Over removed entirely -->
       </div>
     </section>
   </main>
