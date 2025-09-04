@@ -3,46 +3,42 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Blind Rank</title>
+  <title>Blind Rankings</title>
   <meta name="color-scheme" content="dark" />
-  <!-- Flat, bold styles live in style.css -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header -->
+  <!-- Header (simple, text-only brand) -->
   <header class="app-header">
-    <h1 class="brand" aria-label="Blind Rank">BLIND RANK</h1>
-    <!-- Optional: quick reset button is kept so script.js doesn't error -->
-    <button id="newGameBtn" class="btn secondary" aria-label="Start a new session">Start Over</button>
+    <h1 class="brand" aria-label="Blind Rankings">BLIND RANKINGS</h1>
   </header>
 
-  <!-- Main layout -->
   <main class="layout">
-    <!-- Left: Stage (topic, title, image, placement buttons) -->
+    <!-- Left: Stage -->
     <section class="stage" aria-labelledby="topicTag">
-      <!-- Topic + New Topic button -->
-      <div class="stage-header">
-        <div class="topic-chip" id="topicTag" aria-live="polite">Topic</div>
-        <button id="nextTopicBtn" class="btn primary" aria-label="Load a new topic">New Topic</button>
+      <div class="stage-bar">
+        <!-- Category + New Topic = identical pill buttons -->
+        <button id="topicTag" class="btn btn--pill btn--primary is-label" disabled>Topic</button>
+        <button id="nextTopicBtn" class="btn btn--pill btn--primary" aria-label="Load a new topic">New Topic</button>
       </div>
 
-      <!-- Big, centered "what / who is this" -->
+      <!-- Clear, centered “what/who is this” -->
       <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
 
-      <!-- Photo card only (image is the star) -->
+      <!-- Image card (image only; text sits above) -->
       <article id="currentCard" class="card" draggable="true" aria-grabbed="false" aria-describedby="cardHelp">
-        <div class="card-photo" id="cardPhoto" role="img" aria-label=""></div>
+        <div id="cardPhoto" class="card-photo" role="img" aria-label=""></div>
       </article>
 
       <p id="cardHelp" class="help">Tap a button to place this into a rank.</p>
 
       <!-- Solid placement buttons -->
       <div id="placeButtons" class="place-buttons" aria-label="Place into rank" hidden>
-        <button class="btn place solid" data-rank="1">Place in #1</button>
-        <button class="btn place solid" data-rank="2">Place in #2</button>
-        <button class="btn place solid" data-rank="3">Place in #3</button>
-        <button class="btn place solid" data-rank="4">Place in #4</button>
-        <button class="btn place solid" data-rank="5">Place in #5</button>
+        <button class="btn btn--pill btn--accent" data-rank="1">Place in #1</button>
+        <button class="btn btn--pill btn--accent" data-rank="2">Place in #2</button>
+        <button class="btn btn--pill btn--accent" data-rank="3">Place in #3</button>
+        <button class="btn btn--pill btn--accent" data-rank="4">Place in #4</button>
+        <button class="btn btn--pill btn--accent" data-rank="5">Place in #5</button>
       </div>
     </section>
 
@@ -73,17 +69,18 @@
 
       <div id="results" class="results" aria-live="polite"></div>
       <div class="actions">
-        <button id="reshuffleBtn" class="btn secondary">Reshuffle Items</button>
+        <button id="reshuffleBtn" class="btn btn--pill btn--muted">Reshuffle</button>
+        <!-- Start Over moved here (out of header) -->
+        <button id="newGameBtn" class="btn btn--pill btn--muted">Start Over</button>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="app-footer">
-    <small>Demo • HTML/CSS/JS only • TMDB/Wikipedia images when configured.</small>
+    <small>Demo • HTML/CSS/JS only • Images via TMDB/Wikipedia when configured.</small>
   </footer>
 
-  <!-- Config (optional TMDB key), your topics, then app logic -->
+  <!-- Scripts -->
   <script src="config.js"></script>
   <script src="topics.js"></script>
   <script src="script.js"></script>
