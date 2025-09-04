@@ -1,8 +1,8 @@
 "use strict";
 
 /* =========================================================
-   Blind Rankings — buttons-only placement, ripple feedback,
-   face/top focus, localStorage resume, confetti celebration.
+   Buttons-only placement, stronger ripple, face/top focus,
+   TMDB→Wikipedia→Wikidata fallback, resume, confetti + CTA.
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -30,8 +30,8 @@ function preloadImage(src){
   });
 }
 
-/* ------------------ Providers & image helpers ------------------ */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v5";
+/* ------------------ Image providers ------------------ */
+const IMG_CACHE_KEY = "blind-rank:imageCache:v6";
 let imageCache = {};
 try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
 const cacheGet = (k)=> imageCache[k];
@@ -40,6 +40,7 @@ const cacheSet = (k,v)=>{ imageCache[k] = v; try{ localStorage.setItem(IMG_CACHE
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
+/** TMDB (movie/tv) */
 async function tmdbSearchImages(query, mediaType = "movie"){
   const key = (window.BR_CONFIG && window.BR_CONFIG.TMDB_API_KEY) || "";
   if (!key) return null;
@@ -55,21 +56,39 @@ async function tmdbSearchImages(query, mediaType = "movie"){
     return { main, thumb, title: first.title || first.name || query };
   }catch(_){ return null; }
 }
-async function wikiLeadImage(title){
-  const endpoint = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1200&titles=${encodeURIComponent(title)}&origin=*`;
+
+/** Wikipedia PageImages + Wikidata P18 fallback */
+async function wikiBestImage(title){
+  // first: Wikipedia pageimages + wikibase item id
+  const endpoint = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&titles=${encodeURIComponent(title)}&origin=*`;
   try{
     const r = await fetch(endpoint);
-    if (!r.ok) return null;
+    if (!r.ok) throw new Error("wiki fail");
     const data = await r.json();
-    const pages = data.query && data.query.pages;
-    if (!pages) return null;
+    const pages = data?.query?.pages || {};
     const firstPage = Object.values(pages)[0];
-    const url = firstPage && firstPage.thumbnail && firstPage.thumbnail.source;
-    return url || null;
-  }catch(_){ return null; }
+    const direct = firstPage?.thumbnail?.source || null;
+    if (direct) return direct;
+
+    // fallback: Wikidata P18 (image) → Commons file path
+    const qid = firstPage?.pageprops?.wikibase_item;
+    if (qid){
+      const wd = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${qid}&property=P18&format=json&origin=*`);
+      if (wd.ok){
+        const claims = await wd.json();
+        const p18 = claims?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        if (p18){
+          // Build a non-thumb redirected path to the full image, with width hint
+          const file = encodeURIComponent(p18);
+          return `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1400`;
+        }
+      }
+    }
+  }catch{}
+  return null;
 }
 
-/* People-first focus heuristic */
+/** Unified resolver with fallbacks */
 const PERSON_HINTS = [
   "artist","artists","singer","singers","musician","musicians","people","players",
   "athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers",
@@ -90,20 +109,23 @@ async function resolveImages(topic, item){
   if (hit) return hit;
 
   let out = null;
+
+  // Provider-first, then fall back
   if (provider === "tmdb" && (mediaType === "movie" || mediaType === "tv")){
-    const res = await tmdbSearchImages(item.label, mediaType);
-    if (res) out = {
-      main:  res.main  || res.thumb || `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`,
-      thumb: res.thumb || res.main  || `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`
-    };
-  } else if (provider === "wiki"){
-    const url = await wikiLeadImage(item.label);
-    if (url) out = { main: url, thumb: url };
+    const t = await tmdbSearchImages(item.label, mediaType);
+    if (t) out = { main: t.main || t.thumb, thumb: t.thumb || t.main };
   }
+
+  if (!out){
+    const w = await wikiBestImage(item.label);
+    if (w) out = { main: w, thumb: w };
+  }
+
   if (!out){
     const ph = `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`;
     out = { main: ph, thumb: ph };
   }
+
   cacheSet(cacheKey, out);
   return out;
 }
@@ -118,7 +140,7 @@ let itemsQueue   = [];
 let placed       = {};    // rank -> item
 let currentItem  = null;
 
-const SESSION_KEY = "blind-rank:session:v2";
+const SESSION_KEY = "blind-rank:session:v3";
 
 const topicTag     = $("#topicTag");
 const cardPhoto    = $("#cardPhoto");
@@ -130,6 +152,7 @@ const resultsEl    = $("#results");
 const nextTopicBtn = $("#nextTopicBtn");
 const newGameBtn   = $("#newGameBtn");
 const confettiEl   = $("#confetti");
+const nextTopicCta = $("#nextTopicCta");
 
 /* ------------------ Init ------------------ */
 restoreSession() || startNewSession();
@@ -140,7 +163,7 @@ function saveSession(){
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 2,
+      version: 3,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -196,11 +219,17 @@ function clearSlots(){
   });
 }
 async function paintCurrent(){
+  // Reset CTA vs photo each time
+  if (nextTopicCta) nextTopicCta.hidden = true;
+  if (cardPhoto)   cardPhoto.style.display = "";
+
   if (!currentItem){
-    if (cardPhoto) cardPhoto.style.backgroundImage = "none";
+    // Completed: show CTA in card area
     if (itemTitle) itemTitle.textContent = "All items placed!";
-    if (helpText)  helpText.textContent  = "Great job — pick a new topic to continue.";
-    celebrate(); // trigger confetti
+    if (helpText)  helpText.textContent  = "Great job — tap Next Topic to continue.";
+    if (cardPhoto) cardPhoto.style.display = "none";
+    if (nextTopicCta) nextTopicCta.hidden = false;
+    celebrate();
     return;
   }
   const { main } = await resolveImages(currentTopic, currentItem);
@@ -211,9 +240,11 @@ async function paintCurrent(){
   cardPhoto && (cardPhoto.style.backgroundImage  = `url('${bg}')`);
   cardPhoto && (cardPhoto.style.backgroundPosition = faceFocus ? "center 20%" : "center");
   itemTitle && (itemTitle.textContent = currentItem.label);
+
+  // help text (with compact icon; size controlled by CSS)
   if (helpText) {
     helpText.innerHTML = `
-      <svg class="info-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path></svg>
+      <svg class="info-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path></svg>
       Use the <strong>Place</strong> buttons below to lock the item into a rank.
     `;
   }
@@ -294,7 +325,7 @@ function updateResults(){
   resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
 }
 
-/* Start Over locking: allowed until 3 placements, then disabled to keep it fair */
+/* Start Over locking: disabled after 3 placements to keep it fair */
 function updateStartOverLock(){
   const filled = Object.keys(placed).length;
   if (!newGameBtn) return;
@@ -317,17 +348,17 @@ if (placeButtons){
     addRipple(btn, e);
     btn.animate(
       [{ transform: "translateY(0)" },{ transform: "translateY(1px)" },{ transform: "translateY(0)" }],
-      { duration: 120, easing: "ease-out" }
+      { duration: 140, easing: "ease-out" }
     );
     placeCurrentItemInto(btn.dataset.rank);
   });
 }
-if (nextTopicBtn){
-  nextTopicBtn.addEventListener("click", ()=>{
-    const next = (currentTopicIndex + 1) % topicOrder.length;
-    loadTopicByOrderIndex(next);
-  });
+function gotoNextTopic(){
+  const next = (currentTopicIndex + 1) % topicOrder.length;
+  loadTopicByOrderIndex(next);
 }
+if (nextTopicBtn){ nextTopicBtn.addEventListener("click", gotoNextTopic); }
+if (nextTopicCta){ nextTopicCta.addEventListener("click", gotoNextTopic); }
 if (newGameBtn){
   newGameBtn.addEventListener("click", ()=>{
     if (newGameBtn.disabled) return;
@@ -343,18 +374,18 @@ if (newGameBtn){
   });
 }
 
-/* ------------------ Ripple (Material-inspired) ------------------ */
+/* ------------------ Ripple (stronger) ------------------ */
 function addRipple(btn, evt){
   const rect = btn.getBoundingClientRect();
   const ripple = document.createElement("span");
   ripple.className = "ripple";
-  const size = Math.max(rect.width, rect.height);
-  const x = (evt.clientX ?? (rect.left + rect.width/2)) - rect.left - size/2;
-  const y = (evt.clientY ?? (rect.top + rect.height/2)) - rect.top  - size/2;
-  ripple.style.width = ripple.style.height = `${size*1.2}px`;
+  const size = Math.max(rect.width, rect.height) * 1.25; // bigger
+  const x = ((evt.clientX ?? (rect.left + rect.width/2)) - rect.left) - size/2;
+  const y = ((evt.clientY ?? (rect.top + rect.height/2)) - rect.top)  - size/2;
+  ripple.style.width = ripple.style.height = `${size * 1.4}px`;
   ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
   btn.appendChild(ripple);
-  setTimeout(()=> ripple.remove(), 450);
+  setTimeout(()=> ripple.remove(), 700);
 }
 
 /* ------------------ Confetti celebration ------------------ */
@@ -370,7 +401,7 @@ function celebrate(){
 
   const ctx = canvas.getContext("2d");
   const colors = ["#FFD84D","#7C5CFF","#22C55E","#F472B6","#38BDF8"];
-  const parts = Array.from({length: 160}).map(()=>({
+  const parts = Array.from({length: 180}).map(()=>({
     x: Math.random()*canvas.width,
     y: -20 - Math.random()*canvas.height*0.3,
     r: 4 + Math.random()*6,
@@ -395,7 +426,7 @@ function celebrate(){
       ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
       ctx.restore();
     });
-    if (t < 220) requestAnimationFrame(tick);
+    if (t < 240) requestAnimationFrame(tick);
     else canvas.style.display = "none";
   }
   tick();
@@ -405,9 +436,3 @@ window.addEventListener("resize", ()=>{
   confettiEl.width = window.innerWidth;
   confettiEl.height = window.innerHeight;
 });
-
-/* ------------------ Start / first topic ------------------ */
-if (!restoreSession()) {
-  // ensure buttons usable if no session existed
-  updateStartOverLock();
-}
