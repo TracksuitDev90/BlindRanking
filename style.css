@@ -1,32 +1,24 @@
-/* ===== Design Tokens ===== */
+/* Flat, modern, bold. No header background. */
 :root{
-  /* Base */
-  --bg: #0b0c0b;          /* page */
-  --surface: #111311;     /* panels/cards */
-  --surface-2: #0f110f;   /* rows/slots */
-  --ink: #f2f6f1;         /* main text */
-  --muted: #97a197;       /* secondary text */
-  --line: #232823;        /* borders / separators */
+  --bg: #0b0c0b;
+  --surface: #111311;
+  --surface-2: #0f110f;
+  --ink: #f2f6f1;
+  --muted: #97a197;
+  --line: #232823;
 
-  /* Accent — swap these to rebrand fast */
-  --accent: #7c5cff;      /* electric indigo */
-  --accent-ink: #07090e;  /* text on accent */
-  --accent-2: #22d3ee;    /* cyan pop used sparingly */
+  --accent: #7c5cff;   /* keep/change to rebrand */
+  --accent-ink: #07090e;
 
-  /* Radii / spacing */
   --r-lg: 16px;
   --r-sm: 12px;
-  --gap: 16px;
 
-  /* Type */
   --heavy: 800;
   --black: 900;
 
-  /* Focus */
-  --focus: 0 0 0 3px rgba(124, 92, 255, .5);
+  --focus: 0 0 0 3px rgba(124,92,255,.5);
 }
 
-/* ===== Base ===== */
 *{ box-sizing:border-box }
 html,body{ height:100% }
 body{
@@ -34,15 +26,16 @@ body{
   font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color: var(--ink);
   background: var(--bg);
-  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===== Header ===== */
+/* Header: no background */
 .app-header{
   display:flex; align-items:center; justify-content:flex-start;
   padding: 22px 24px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: transparent;        /* no bg at top */
+  border-bottom: none;            /* no line at top */
 }
 .brand{
   margin:0;
@@ -52,27 +45,75 @@ body{
   color: var(--ink);
 }
 
-/* ===== Layout ===== */
+/* Layout */
 .layout{
   display:grid; grid-template-columns: 1.2fr 1fr; gap: 24px; padding: 20px;
   max-width: 1280px; margin: 0 auto;
 }
 @media (max-width: 980px){ .layout{ grid-template-columns:1fr; gap:16px; padding:14px }}
 
-/* ===== Stage (left) ===== */
+/* Stage (left) */
 .stage{
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: var(--gap);
-  display:flex; flex-direction:column; gap: var(--gap);
+  padding: 16px;
+  display:flex; flex-direction:column; gap: 14px;
 }
-
 .stage-bar{
-  display:flex; align-items:center; justify-content:space-between; gap: 10px;
+  display:flex; align-items:center; justify-content:flex-start; gap:10px;
 }
 
-/* Buttons (pill, consistent) */
+/* Category chip (unique style, compact, fixed height) */
+.chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  height: 36px; padding: 0 14px; border-radius: 999px;
+  background: #1b1f1b; color: var(--ink);
+  border: 1px solid var(--line);
+  font-weight: var(--heavy); letter-spacing:.2px; font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Title above image */
+.item-title{
+  margin: 2px 0 0;
+  text-align:center;
+  font-weight: var(--black);
+  font-size: clamp(24px, 5.6vw, 44px);
+}
+
+/* Image card */
+.card{
+  width:min(920px, 100%); aspect-ratio: 16/9;
+  background: #0e120e;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow:hidden;
+  touch-action: none;             /* for pointer drag */
+  will-change: transform;
+}
+.card.dragging{ cursor: grabbing; transform: scale(1.02) }
+.card-photo{
+  width:100%; height:100%;
+  background-size: cover;         /* cover, we’ll adjust position via JS */
+  background-position: center;    /* default, overridden per item */
+}
+
+/* Help */
+.help{ margin:0; text-align:center; color: var(--muted); font-size:14px }
+
+/* Placement buttons: one row desktop, two columns mobile */
+.place-buttons{
+  width:100%;
+  display:flex; gap:10px; justify-content:center; flex-wrap:nowrap; /* single row desktop */
+}
+@media (max-width: 640px){
+  .place-buttons{
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px;  /* two cols mobile */
+  }
+}
+
+/* Buttons (solid) */
 .btn{
   --bg: #1b1f1b; --fg: var(--ink);
   appearance:none; border:none; cursor:pointer;
@@ -85,47 +126,19 @@ body{
 .btn:focus-visible{ outline:none; box-shadow: var(--focus) }
 .btn--pill{ border-radius: 999px }
 .btn--primary{ --bg: var(--accent); --fg: var(--accent-ink) }
-.btn--accent{  --bg: var(--accent-2); --fg: #041014 }
-.btn--muted{   --bg: #1a1e1a; --fg: var(--ink) }
-.is-label{ cursor: default }
+.btn--accent{  --bg: var(--accent); --fg: var(--accent-ink) }
+.btn--muted{   --bg: #1a1e1a;       --fg: var(--ink) }
 
-.item-title{
-  margin: 2px 0 0;
-  text-align:center;
-  font-weight: var(--black);
-  font-size: clamp(24px, 5.6vw, 44px);
-}
-
-/* Image card — hero */
-.card{
-  width: min(920px, 100%); aspect-ratio: 16 / 9;
-  background: #0e120e;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  will-change: transform;
-}
-.card-photo{
-  width:100%; height:100%;
-  background-size: cover; background-position:center;
-}
-
-/* Help */
-.help{ margin:0; text-align:center; color: var(--muted); font-size:14px }
-
-/* Placement buttons */
-.place-buttons{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center }
-
-/* ===== Ranks (right) ===== */
+/* Ranks (right) */
 .ranks{
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: var(--gap);
+  padding: 16px;
 }
 .rank-list{ margin:0; padding:0; list-style:none; display:grid; gap:12px }
 
-/* Slots — bold, clean (no dashed borders) */
+/* Slots: clean, bold */
 .rank-slot{
   display:grid; grid-template-columns: 96px 1fr; align-items:stretch;
   background: var(--surface-2);
@@ -149,11 +162,8 @@ body{
 .slot-dropzone.empty::before{
   content:"Drop here"; color:#818a81; font-weight: var(--heavy); font-size:13px; letter-spacing:.3px;
 }
-
-/* Drag hover (perf-friendly) */
 .slot-dropzone.is-hovered{
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  outline: 3px solid var(--accent); outline-offset: -3px;
 }
 
 /* Slot content */
@@ -178,22 +188,7 @@ body{
   background: var(--surface); color: var(--muted);
 }
 
-/* ===== Mobile ===== */
-@media (max-width: 640px){
-  .brand{ font-size: clamp(26px, 7vw, 40px) }
-  .item-title{ font-size: clamp(22px, 7vw, 36px) }
-  .rank-slot{ grid-template-columns: 84px 1fr; min-height: 96px }
-  .slot-label{ font-size: 26px }
-  .slot-item{ grid-template-columns: 110px 1fr }
-  .slot-thumb{ min-height: 92px }
-  .place-buttons{
-    position: sticky; bottom: 8px; z-index: 5;
-    background: var(--surface);
-    padding: 8px; border-radius: var(--r-sm); border:1px solid var(--line);
-  }
-}
-
-/* ===== Reduced Motion ===== */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   .rank-slot, .btn{ transition: none }
 }
