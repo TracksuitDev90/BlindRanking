@@ -5,17 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FIRESIDE Blind Rankings</title>
   <meta name="color-scheme" content="dark" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet">
+
+  <!-- Preconnects to image/API CDNs for faster first byte -->
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+  <link rel="preconnect" href="https://en.wikipedia.org" crossorigin>
+  <link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+  <link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
+  <link rel="preconnect" href="https://api.tvmaze.com" crossorigin>
+  <link rel="preconnect" href="https://itunes.apple.com" crossorigin>
+  <link rel="preconnect" href="https://ws.audioscrobbler.com" crossorigin>
+  <link rel="preconnect" href="https://www.theaudiodb.com" crossorigin>
+  <link rel="preconnect" href="https://pixabay.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link rel="preconnect" href="https://images.pexels.com" crossorigin>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header: text-only brand, no background -->
+  <!-- Header aligned with main container (no background) -->
   <header class="app-header">
-    <h1 class="brand" aria-label="FIRESIDE Blind Rankings">FIRESIDE Blind Rankings</h1>
+    <div class="container">
+      <h1 class="brand" aria-label="FIRESIDE Blind Rankings">FIRESIDE Blind Rankings</h1>
+    </div>
   </header>
 
-  <main class="layout">
+  <main class="layout container">
     <!-- Stage (left) -->
     <section class="stage" aria-labelledby="topicTag">
       <div class="stage-bar">
@@ -24,9 +43,9 @@
 
       <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
 
-      <!-- Card area; CTA replaces photo when complete -->
+      <!-- Card area: <img> enables progressive loading & decode scheduling -->
       <article id="currentCard" class="card" aria-describedby="cardHelp">
-        <div id="cardPhoto" class="card-photo" role="img" aria-label=""></div>
+        <img id="cardImg" class="card-img" alt="" decoding="async" fetchpriority="high" loading="eager">
         <button id="nextTopicCta" class="next-topic-cta btn btn--pill btn--success" hidden>
           Next Topic
         </button>
@@ -40,6 +59,7 @@
         Use the <strong>Place</strong> buttons to lock this into a rank. No drag needed.
       </p>
 
+      <!-- Placement buttons: 1 row desktop / 2 columns mobile -->
       <div id="placeButtons" class="place-buttons" aria-label="Place into rank">
         <button class="btn btn--pill btn--accent place" data-rank="1">Place in #1</button>
         <button class="btn btn--pill btn--accent place" data-rank="2">Place in #2</button>
@@ -90,10 +110,17 @@
     <small>images sourced via TMDB / Wikipedia / Wikidata where applicable.</small>
   </footer>
 
-  <!-- Confetti overlay (under the CTA; pointer-events none) -->
+  <!-- Confetti overlay (under CTA) -->
   <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
 
-  <!-- Load order matters -->
+  <!-- Service worker (image cache) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
+  </script>
+
+  <!-- Load order: config -> topics -> app -->
   <script defer src="config.js"></script>
   <script defer src="topics.js"></script>
   <script defer src="script.js"></script>
