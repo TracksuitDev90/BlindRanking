@@ -1,86 +1,122 @@
-/* Flat, solid colors. Photo + placements are the star. */
+/* -------------------------------------------------------
+   Flat, modern, bold. Dark with vivid accent pops.
+   Award-y vibes: big type, tight rhythm, zero gradients.
+------------------------------------------------------- */
+
 :root{
-  --bg: #0b0f0a;
-  --surface: #101410;
-  --panel: #111611;
-  --ink: #f1f6ef;
-  --muted: #9aa69a;
-  --accent: #c6ff55;   /* neon green */
-  --accent2: #ffd84d;  /* yellow */
-  --border: #202720;
-  --ink-dark: #0a1108;
-  --danger: #ff6363;
+  /* Palette */
+  --bg:        #0b0d0b;   /* page */
+  --surface:   #101310;   /* panels */
+  --surface-2: #0f120f;   /* list items / slots */
+  --ink:       #eff4ee;   /* main text */
+  --muted:     #9aa69a;   /* secondary text */
+
+  /* Accents (tweak freely) */
+  --accent:    #c6ff55;   /* neon green */
+  --accent-2:  #ffd84d;   /* warm yellow */
+
+  /* Structural */
+  --border:    #242a24;
+  --radius-lg: 16px;
+  --radius-sm: 12px;
+
+  /* Type */
+  --weight-heavy: 1000;
+  --weight-bold:   800;
+
+  /* Focus */
+  --focus:     0 0 0 3px rgba(198,255,85,.55);
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
+*{ box-sizing:border-box }
+html,body{ height:100% }
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color:var(--ink);
-  background: var(--bg); /* SOLID */
-  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  background: var(--bg); /* solid */
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-/* Header */
+/* Header: text-only brand */
 .app-header{
   display:flex; align-items:center; justify-content:flex-start;
-  padding:18px 22px; border-bottom:1px solid var(--border);
-  background: var(--surface); /* SOLID */
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  background: var(--surface); /* solid */
 }
 .brand{
   margin:0;
-  font-weight:1000;
-  letter-spacing:1.2px;
+  font-weight: var(--weight-heavy);
+  letter-spacing: 1.2px;
   font-size: clamp(28px, 5vw, 64px);
-  color: var(--accent); /* flat neon */
+  color: var(--ink); /* pure text, no gradient */
 }
 
 /* Layout */
 .layout{
   display:grid; grid-template-columns: 1.2fr 1fr; gap:24px; padding:20px;
+  max-width: 1400px; margin: 0 auto;
 }
-@media (max-width: 980px){ .layout{ grid-template-columns:1fr; gap:18px; padding:14px } }
+@media (max-width: 980px){
+  .layout{ grid-template-columns:1fr; gap:16px; padding:14px }
+}
 
-/* Stage */
+/* Stage (left) */
 .stage{
-  background: var(--panel); /* SOLID */
+  background: var(--surface);
   border:1px solid var(--border);
-  border-radius:16px; padding:16px;
-  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  gap:14px;
+  border-radius: var(--radius-lg);
+  padding:16px;
+  display:flex; flex-direction:column; gap:14px;
 }
 
-/* Topic + New Topic button row */
-.stage-header{
-  width:100%;
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-}
-.topic-chip{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 14px; border-radius:999px;
-  background: var(--accent); /* SOLID */
-  color: var(--ink-dark);
-  font-weight:1000; letter-spacing:.6px; font-size:14px;
+/* Top bar: topic + new topic — identical pills */
+.stage-bar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; width:100%;
 }
 
-/* Big, centered “what/who is this” */
+/* Buttons */
+.btn{
+  --btn-bg: #222; --btn-fg: #000; --btn-border: transparent;
+  appearance:none; border:none; cursor:pointer;
+  padding:12px 16px; color:var(--btn-fg); background:var(--btn-bg);
+  border:2px solid var(--btn-border); font-weight: var(--weight-heavy);
+  letter-spacing:.3px; font-size:16px;
+  transition: transform .06s ease, opacity .15s ease;
+}
+.btn:active{ transform: translateY(1px) }
+.btn:focus-visible{ outline: none; box-shadow: var(--focus) }
+
+.btn--pill{ border-radius: 999px }
+
+/* Variants (all flat/solid) */
+.btn--primary{ --btn-bg: var(--accent); --btn-fg: #0a0f07 }
+.btn--accent{  --btn-bg: var(--accent-2); --btn-fg: #0a0a08 }
+.btn--muted{   --btn-bg: #1a1e1a; --btn-fg: var(--ink) }
+
+/* “Label” pill (same shape/height as buttons) */
+.is-label{ cursor: default }
+
+/* Big title above the image */
 .item-title{
-  width:100%; text-align:center;
-  margin:0; padding:4px 8px;
-  font-size: clamp(24px, 5.5vw, 44px); /* larger + bolder */
-  font-weight:1000; letter-spacing:.2px;
-  color: var(--ink);
+  margin: 4px 0 0;
+  text-align:center;
+  font-weight: var(--weight-heavy);
+  font-size: clamp(24px, 5.5vw, 44px);
 }
 
-/* Card (image is the star) */
+/* Image card — the star */
 .card{
-  width:min(900px, 100%);
+  width:min(920px, 100%);
   aspect-ratio: 16 / 9;
-  border-radius:14px; overflow:hidden;
+  background: #0d120d;
   border:2px solid var(--border);
-  background: #0e140e; /* SOLID */
-  will-change: transform; /* smoother dragging */
+  border-radius: var(--radius-lg);
+  overflow:hidden;
+  will-change: transform; /* helps DnD */
 }
 .card-photo{
   width:100%; height:100%;
@@ -88,95 +124,88 @@ body{
 }
 
 /* Help text */
-.help{ color:var(--muted); margin:0; font-size:14px; text-align:center }
-
-/* Buttons — SOLID */
-.btn{
-  font-weight:1000; letter-spacing:.4px;
-  border:2px solid transparent;
-  padding:12px 16px; border-radius:12px; cursor:pointer; font-size:16px;
-  color: var(--ink-dark);
-  transition: transform .05s ease, opacity .15s ease;
+.help{
+  margin:0; text-align:center; color: var(--muted); font-size:14px;
 }
-.btn:active{ transform: translateY(1px) }
-.btn:focus-visible{ outline:2px solid var(--accent2); outline-offset:2px }
 
-.btn.primary{ background: var(--accent) }
-.btn.secondary{ background: var(--accent2) }
-.btn.solid{ background: var(--accent) }
-
+/* Placement buttons (large tap targets) */
 .place-buttons{
-  display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
-  width:100%;
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:center; width:100%;
 }
 
-/* Ranks panel */
+/* Ranks (right) */
 .ranks{
-  background: var(--panel);
+  background: var(--surface);
   border:1px solid var(--border);
-  border-radius:16px; padding:16px;
+  border-radius: var(--radius-lg);
+  padding:16px;
 }
 .rank-list{ margin:0; padding:0; list-style:none; display:grid; gap:12px }
 
-/* BIGGER + BOLDER numbers */
+/* Slots — flat, bold numbers */
 .rank-slot{
-  display:grid; grid-template-columns: 98px 1fr; align-items:stretch;
-  background: var(--surface);
-  border:2px dashed var(--border); border-radius:12px; overflow:hidden; min-height:110px; outline:none;
-  transition: border-color .12s ease, transform .08s ease;
+  display:grid; grid-template-columns: 94px 1fr; align-items:stretch;
+  background: var(--surface-2);
+  border:2px dashed var(--border); border-radius: var(--radius-sm);
+  min-height:110px; outline:none; transition: border-color .12s ease, transform .08s ease;
 }
-.rank-slot:focus{ outline:2px solid var(--accent2) }
+.rank-slot:focus{ box-shadow: var(--focus) }
 
 .slot-label{
   display:flex; align-items:center; justify-content:center;
-  font-weight:1000; font-size:32px; /* bigger */
-  color: var(--ink-dark);
-  background: var(--accent2); /* SOLID */
+  font-weight: var(--weight-heavy); font-size: 30px; color:#0b0b09;
+  background: var(--accent-2); /* vivid pop */
 }
 .slot-dropzone{
   min-height:110px; padding:12px; display:grid; align-items:center;
 }
 .slot-dropzone.empty::before{
-  content:"Drop here"; color:#7f8a7f; font-weight:900; font-size:14px; letter-spacing:.5px;
+  content:"Drop here"; color:#7f8a7f; font-weight: var(--weight-bold); font-size:13px; letter-spacing:.4px;
 }
 
-/* Active drop highlight (class-based for perf) */
+/* Drag hover (perf-friendly) */
 .slot-dropzone.is-hovered{
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  outline:3px solid var(--accent);
+  outline-offset:-3px;
 }
 
-/* Slot item card — flat */
+/* Slot content */
 .slot-item{
   display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;
-  background:#0f160f; border:2px solid var(--border); border-radius:10px; overflow:hidden;
+  background: #121612; border:2px solid var(--border); border-radius:10px; overflow:hidden;
 }
 .slot-thumb{ width:100%; height:100%; min-height:104px; background-size:cover; background-position:center }
 .slot-meta{ padding:10px 12px }
-.slot-meta .title{ font-weight:1000; margin:0 0 2px; font-size:18px }
-.slot-meta .topic{ font-size:12px; color:var(--muted) }
+.slot-meta .title{ margin:0 0 2px; font-weight: var(--weight-heavy); font-size:18px }
+.slot-meta .topic{ font-size:12px; color: var(--muted) }
 
-/* Meta & actions */
-.results{ margin-top:10px; color:var(--muted); font-size:14px }
-.actions{ display:flex; gap:10px; margin-top:12px }
+/* Actions */
+.results{ margin-top:8px; color: var(--muted); font-size:14px }
+.actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
 
-/* Mobile optimizations */
+/* Footer */
+.app-footer{
+  display:flex; align-items:center; justify-content:center;
+  padding:16px; border-top:1px solid var(--border); color: var(--muted);
+  background: var(--surface);
+}
+
+/* Mobile */
 @media (max-width: 640px){
-  .item-title{ font-size: clamp(22px, 6.5vw, 36px) }
+  .brand{ font-size: clamp(26px, 7vw, 40px) }
+  .item-title{ font-size: clamp(22px, 7vw, 36px) }
   .rank-slot{ grid-template-columns: 84px 1fr; min-height: 96px }
-  .slot-label{ font-size:28px }
+  .slot-label{ font-size:26px }
   .slot-item{ grid-template-columns: 110px 1fr }
-  .slot-thumb{ min-height: 92px }
-  /* Sticky placement bar on mobile for easier tapping */
+  .slot-thumb{ min-height:92px }
+  /* sticky placement for easy tapping */
   .place-buttons{
-    position: sticky; bottom: 8px; z-index: 10;
-    background: var(--panel);
-    padding: 8px; border-radius: 12px; border:1px solid var(--border);
+    position: sticky; bottom: 8px; z-index: 5;
+    background: var(--surface); padding: 8px; border-radius: var(--radius-sm); border:1px solid var(--border);
   }
 }
 
-/* Reduce motion */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce){
-  .btn{ transition: none }
-  .rank-slot{ transition: none }
+  .rank-slot, .btn{ transition: none }
 }
