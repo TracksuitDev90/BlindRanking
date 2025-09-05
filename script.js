@@ -1,33 +1,28 @@
 "use strict";
 
 /* =========================================================
-   FIRESIDE Blind Rankings — accuracy-first sourcing
-   - Class-aware, high-confidence image selection only
-   - Wikidata P31 validation + P154 (logo) for teams/brands
-   - Movies/TV/Person via TMDB with strict acceptance
-   - Foods/Places via Wikidata entity search (no stock)
-   - Devices/Products (e.g., smartwatches) require brand token
-   - Reject suspicious images (animals/cars) for non-matching classes
-   - Loader only while actually fetching/decoding
-   - Cancel stale paints, prefetch next, localStorage resume, confetti
+   FIRESIDE Blind Rankings — accuracy + UX hardened build
+   - Context-aware image queries (burger/tea/pizza/device)
+   - Wikidata P31 validation (+ P154 logo for team/brand)
+   - TMDB strict for movies/tv/person; no “short-title drift”
+   - Duplicate-image avoidance within a topic
+   - No stock for risky classes (food/place/device/team/brand)
+   - Loader gates disable ALL buttons only during image load
+   - Stronger ripple (mobile-friendly)
+   - Cancel stale paints; prefetch next; localStorage resume; confetti
    ========================================================= */
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* ---------- small utils ---------- */
+/* ---------- tiny utils ---------- */
 function shuffle(arr){
   const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+  for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
 function escapeHtml(str){
-  return String(str).replace(/[&<>\"']/g, s => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-  }[s]));
+  return String(str).replace(/[&<>\"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
 }
 function tokenize(s){
   return String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").split(" ").filter(Boolean);
@@ -37,7 +32,7 @@ function scoreMatch(query, candidate){
   const qt = new Set(tokenize(query).filter(w=>!STOP.has(w)));
   const ct = new Set(tokenize(candidate).filter(w=>!STOP.has(w)));
   if (!qt.size || !ct.size) return 0;
-  let hit = 0; qt.forEach(t=>{ if (ct.has(t)) hit++; });
+  let hit=0; qt.forEach(t=>{ if(ct.has(t)) hit++; });
   const recall = hit/qt.size, precis = hit/ct.size;
   return 0.65*recall + 0.35*precis;
 }
@@ -52,9 +47,9 @@ function strictTitleMatch(query, candidate){
 /* ---------- fetch with timeout ---------- */
 async function fetchJson(url, opts = {}, timeoutMs = 9000){
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
+  const id = setTimeout(()=>controller.abort(), timeoutMs);
   try{
-    const r = await fetch(url, { ...opts, signal: controller.signal });
+    const r = await fetch(url, {...opts, signal: controller.signal});
     if (!r.ok) return null;
     const ct = r.headers.get("content-type") || "";
     return ct.includes("application/json") ? r.json() : r.text();
@@ -69,10 +64,7 @@ function tmdbLowRes(url){
     : url;
 }
 function decodeWithTimeout(img, ms=3500){
-  return Promise.race([
-    img.decode().catch(()=>{}),
-    new Promise(res => setTimeout(res, ms))
-  ]);
+  return Promise.race([ img.decode().catch(()=>{}), new Promise(res=>setTimeout(res,ms)) ]);
 }
 async function loadProgressive(el, highUrl, faceFocus=false){
   const low = tmdbLowRes(highUrl) || highUrl;
@@ -85,20 +77,27 @@ async function loadProgressive(el, highUrl, faceFocus=false){
   if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
 }
 
-/* ---------- loading overlay ---------- */
+/* ---------- loading overlay + control gating ---------- */
 const cardLoading  = $("#cardLoading");
 const placeButtons = $("#placeButtons");
+const newTopicBtn  = $("#nextTopicBtn");
+const nextTopicCta = $("#nextTopicCta");
+
 function setLoading(on){
   if (cardLoading) cardLoading.hidden = !on;
-  if (placeButtons) $$("button", placeButtons).forEach(b=> b.disabled = !!on);
+  // gate all relevant buttons only while loading
+  const toggle = (btn)=>{ if (btn) btn.disabled = !!on; };
+  $$("#placeButtons button").forEach(toggle);
+  toggle(newTopicBtn);
+  toggle(nextTopicCta);
 }
 
 /* ---------- cache ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v16";
+const IMG_CACHE_KEY = "blind-rank:imageCache:v18";
 let imageCache = {};
-try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_) {}
+try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_){}
 const cacheGet = (k)=> imageCache[k];
-const cacheSet = (k,v)=>{ imageCache[k] = v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){} };
+const cacheSet = (k,v)=>{ imageCache[k]=v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){ } };
 
 /* ---------- constants ---------- */
 const TMDB_BASE = "https://api.themoviedb.org/3";
@@ -106,19 +105,19 @@ const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
 /* ---------- classification ---------- */
 const P31_ALLOW = {
-  team   : new Set(["Q12973014","Q13393265","Q847017"]),                            // sports team / basketball team / NBA team
-  brand  : new Set(["Q431289","Q4830453"]),                                         // brand / business
-  person : new Set(["Q5"]),                                                         // human
-  group  : new Set(["Q215380","Q2088357"]),                                         // band / musical group
-  movie  : new Set(["Q11424"]),                                                     // film
-  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),                  // tv series / miniseries / animated series / anime tv
-  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]), // city, settlement, country, park, island, mountain, museum
-  food   : new Set(["Q2095","Q746549","Q18593264"]),                                 // food / prepared food / dish
+  team   : new Set(["Q12973014","Q13393265","Q847017"]),
+  brand  : new Set(["Q431289","Q4830453"]),
+  person : new Set(["Q5"]),
+  group  : new Set(["Q215380","Q2088357"]),
+  movie  : new Set(["Q11424"]),
+  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),
+  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]),
+  food   : new Set(["Q2095","Q746549","Q18593264"]),
   game   : new Set(["Q7889"]),
   book   : new Set(["Q571","Q8261"]),
   album  : new Set(["Q482994"]),
   song   : new Set(["Q7366"]),
-  device : new Set(["Q838948","Q1972349","Q3249551"]), // wristwatch, smartwatch, electronic device (broad)
+  device : new Set(["Q838948","Q1972349","Q3249551"]), // wristwatch/smartwatch/electronic device
   generic: null
 };
 function p31MatchesClass(p31Values, cls){
@@ -128,23 +127,15 @@ function p31MatchesClass(p31Values, cls){
   return p31Values.some(qid => allow.has(qid));
 }
 
-const TEAM_HINTS = [
-  "nba","nfl","mlb","nhl","ncaa","soccer","club","fc","united","city",
-  "boston celtics","los angeles lakers","yankees","dodgers","patriots","packers","cowboys",
-  "red sox","warriors","heat","bulls","knicks"
-];
+const TEAM_HINTS = ["nba","nfl","mlb","nhl","ncaa","soccer","club","fc","united","city","boston celtics","lakers","yankees","dodgers","patriots","packers","cowboys","red sox","warriors","heat","bulls","knicks"];
 const BRAND_HINTS = ["inc","ltd","corp","company","brand","™","®","llc","gmbh"];
 const PLACE_HINTS = ["city","country","park","mount","mountain","lake","river","island","national park","monument","museum","tower","bridge","palace","cathedral"];
 const FOOD_HINTS  = ["pizza","burger","taco","sandwich","soup","salad","pasta","roll","cheese","sauce","noodle","ramen","sushi","steak","curry","dessert"];
+const DEVICE_HINTS= ["watch","smartwatch","fitbit","garmin","forerunner","apple","versa","galaxy","pixel","huawei","mi band","amazfit"];
 
-function hasWord(haystack, arr){
-  const s = String(haystack||"").toLowerCase();
-  return arr.some(w => s.includes(w));
-}
+function hasWord(h, arr){ const s=String(h||"").toLowerCase(); return arr.some(w=>s.includes(w)); }
 function classifyEntity(topicName, label){
-  const t = (topicName||"").toLowerCase();
-  const l = (label||"").toLowerCase();
-
+  const t=(topicName||"").toLowerCase(), l=(label||"").toLowerCase();
   if (hasWord(t,["boy bands","girl groups","bands","band","groups","k-pop","kpop","musical groups"]) || hasWord(l,[" band"," boyz","*nsync","bts","blackpink"])) return "group";
   if (hasWord(t,["actor","actress","people","artists","singers","musicians","person"]) || hasWord(l,[" jr"," sr"," iii"])) return "person";
   if (hasWord(t,["movie","film","films","movies"]) || hasWord(l,[" the movie"," (film)"])) return "movie";
@@ -155,60 +146,118 @@ function classifyEntity(topicName, label){
   if (hasWord(t,["songs","tracks"]) || hasWord(l,[" (song)"])) return "song";
   if (hasWord(t,["team","teams","club","soccer","football","basketball","baseball","hockey"]) || hasWord(l, TEAM_HINTS)) return "team";
   if (hasWord(t,["brand","company"]) || hasWord(l, BRAND_HINTS)) return "brand";
-  if (hasWord(t,["smartwatches","phones","devices","gadgets","cameras","laptops","wearables"]) || hasWord(l,["fitbit","watch","iphone","galaxy","garmin","pixel","asus","lenovo","sony","versA"])) return "device";
+  if (hasWord(t,["smartwatches","devices","gadgets","phones","wearables"]) || hasWord(l, DEVICE_HINTS)) return "device";
   if (hasWord(t,["city","places","landmarks","parks","countries"]) || hasWord(l, PLACE_HINTS)) return "place";
-  if (hasWord(t,["food","foods","dishes","cuisine","toppings"]) || hasWord(l, FOOD_HINTS)) return "food";
+  if (hasWord(t,["food","foods","dishes","cuisine","toppings","burger","pizza"]) || hasWord(l, FOOD_HINTS)) return "food";
   return "generic";
 }
 
 /* ---------- content safety / acceptance gates ---------- */
 const ANIMAL_WORDS = ["dog","puppy","cat","kitten","horse","cow","pig","goat","sheep","monkey"];
-const CAR_WORDS    = ["car","sedan","hatchback","suv","coupe","truck","nissan","bmw","toyota","mercedes","ford","chevy"];
-function urlHas(url, words){ const u = String(url||"").toLowerCase(); return words.some(w=>u.includes(w)); }
+const CAR_WORDS    = [" car"," sedan"," hatchback"," suv"," coupe"," truck"," nissan"," bmw"," toyota"," mercedes"," ford"," chevy"," kia"," hyundai"];
+function urlHas(url, words){ const u=String(url||"").toLowerCase(); return words.some(w=>u.includes(w.trim())); }
 
-function acceptanceForClass(meta, cls, label, brandToken){
-  // meta: {title, desc, url, isLogo, p31Ok}
+function acceptanceForClass(meta, cls, label, topicName, brandToken){
   const title = (meta.title||"").toLowerCase();
   const desc  = (meta.desc||"").toLowerCase();
   const url   = (meta.url||"").toLowerCase();
   const lab   = (label||"").toLowerCase();
+  const topic = (topicName||"").toLowerCase();
 
-  // reject obviously wrong content for certain classes
+  // block obvious mismatches
   if ((cls==="food" || cls==="device" || cls==="movie" || cls==="tv" || cls==="group" || cls==="person") && urlHas(url, ANIMAL_WORDS)) return false;
-  if ((cls==="food" || cls==="team"  || cls==="brand" || cls==="place") && urlHas(url, CAR_WORDS)) return false;
+  if ((cls==="food" || cls==="team"  || cls==="brand" || cls==="place" || cls==="device") && urlHas(url, CAR_WORDS)) return false;
 
-  // class-specific guards
+  // additional topic-specific constraints
+  const isBurgerContext = topic.includes("burger");
+  const isPizzaContext  = topic.includes("pizza");
+  const isTeaContext    = topic.includes("tea");
+
   if (cls==="food"){
     if (!meta.p31Ok) return false; // must be a food/dish entity
-    if (!(title.includes(lab) || desc.includes(lab) || strictTitleMatch(label, meta.title))) {
-      // Allow generic “Cheese” for “Extra cheese”, etc.
-      if (!(lab.includes("cheese") && (title.includes("cheese")||desc.includes("cheese")))) return false;
+    // burger variants: require "burger" in title/desc for specific items
+    if (isBurgerContext){
+      const hasBurgerWord = title.includes("burger") || desc.includes("burger") || lab.includes("burger");
+      // allow “cheeseburger”, “bacon cheeseburger”, “mushroom swiss burger”, etc.
+      if (!hasBurgerWord) return false;
+      // ensure label tokens are present loosely
+      const toks = tokenize(lab).filter(w=>!STOP.has(w));
+      const okToks = toks.some(w => title.includes(w) || desc.includes(w));
+      if (!okToks) return false;
+    }
+    if (isPizzaContext){
+      // allow generic “cheese” etc, but prefer entries mentioning pizza/topping
+      const pizzaish = title.includes("pizza") || desc.includes("pizza") || desc.includes("topping");
+      const cheeseOK = lab.includes("cheese");
+      if (!pizzaish && !cheeseOK) return false;
+    }
+    if (isTeaContext){
+      if (!(title.includes("tea") || desc.includes("tea"))) return false;
     }
     return true;
   }
 
   if (cls==="place"){
-    return meta.p31Ok; // type-validated place
+    return meta.p31Ok;
   }
 
   if (cls==="team" || cls==="brand"){
-    return meta.p31Ok; // type-validated; logos are fine
+    return meta.p31Ok; // P31-validated; logos are fine
   }
 
   if (cls==="device"){
-    // must contain brand token and device-y terms
     const watchy = ["watch","smartwatch","wearable","fitness","tracker"];
     const hasDeviceWord = watchy.some(w=>title.includes(w)||desc.includes(w));
     const hasBrand = brandToken ? (title.includes(brandToken)||desc.includes(brandToken)) : true;
     return hasDeviceWord && hasBrand && !urlHas(url, CAR_WORDS);
   }
 
-  if (cls==="movie" || cls==="tv" || cls==="person" || cls==="group" || cls==="book" || cls==="album" || cls==="song" || cls==="game"){
-    // rely on provider match; meta.p31Ok may be undefined here
-    return true;
-  }
-
+  // media & people rely on upstream providers
   return !!meta.url;
+}
+
+/* ---------- canonicalization helpers ---------- */
+const TOPPING_ALIASES = {
+  "extra cheese":"Cheese",
+  "three cheese":"Cheese",
+  "cheese":"Cheese",
+  "bbq chicken":"Barbecue chicken",
+  "bbq sauce":"Barbecue sauce",
+  "green peppers":"Bell pepper",
+  "peppers":"Bell pepper",
+  "mushrooms":"Mushroom",
+  "black olives":"Olive",
+  "ham":"Ham",
+  "bacon":"Bacon",
+  "sausage":"Sausage",
+  "pepperoni":"Pepperoni",
+  "pineapple":"Pineapple",
+  "anchovies":"Anchovy",
+  "spinach":"Spinach",
+  "onions":"Onion",
+  "jalapeños":"Jalapeño",
+  "jalapenos":"Jalapeño"
+};
+function canonicalizeFoodLabel(topicName, label){
+  const t = (topicName||"").toLowerCase();
+  let l = label.trim();
+  const lower = l.toLowerCase();
+  if (t.includes("pizza")) {
+    if (TOPPING_ALIASES[lower]) l = TOPPING_ALIASES[lower];
+  }
+  if (t.includes("burger")){
+    // normalize common composed burgers
+    const L = lower.replace("–","-").replace("—","-");
+    if (L.includes("mushroom") && L.includes("swiss") && !L.includes("burger")) l = "Mushroom Swiss burger";
+    if (L.includes("bacon") && L.includes("cheese") && !L.includes("burger")) l = "Bacon cheeseburger";
+    if (L.endsWith(" burger") === false && !L.includes("burger")) l = `${l} burger`;
+  }
+  if (t.includes("tea") && !lower.includes("tea")) l = `${l} tea`;
+  return l;
+}
+function extractBrandToken(label){
+  const parts = label.split(/\s+/);
+  return parts.length ? parts[0].toLowerCase() : null;
 }
 
 /* ---------- Wikipedia / Wikidata ---------- */
@@ -243,14 +292,11 @@ async function wikiLogoOrImageForClass(title, cls){
       const logo = logos[0]?.mainsnak?.datavalue?.value;
       if (logo) return { url: commonsFileUrl(logo), isLogo: true, title: page.title, desc:"", p31Ok };
     }
-    if (p18s[0]?.mainsnak?.datavalue?.value){
-      const file = p18s[0].mainsnak.datavalue.value;
-      return { url: commonsFileUrl(file), isLogo: false, title: page.title, desc:"", p31Ok };
-    }
+    const p18 = p18s[0]?.mainsnak?.datavalue?.value;
+    if (p18) return { url: commonsFileUrl(p18), isLogo:false, title: page.title, desc:"", p31Ok };
   }
   if (page.thumb) return { url: page.thumb, isLogo:false, title: page.title, desc:"", p31Ok };
 
-  // REST summary fallback
   const sum = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true&origin=*`);
   const img = sum?.originalimage?.source || sum?.thumbnail?.source;
   if (!img) return null;
@@ -259,15 +305,11 @@ async function wikiLogoOrImageForClass(title, cls){
 
 // Wikidata entity search → accept only items whose P31 fits the class.
 async function wikidataFindImageByClass(label, cls){
-  const search = await fetchJson(
-    `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(label)}&language=en&type=item&limit=8&format=json&origin=*`
-  );
+  const search = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(label)}&language=en&type=item&limit=8&format=json&origin=*`);
   const hits = search?.search || [];
   for (const h of hits){
     const id = h.id;
-    const ent = await fetchJson(
-      `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${id}&props=claims|sitelinks|labels|descriptions&languages=en&format=json&origin=*`
-    );
+    const ent = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${id}&props=claims|sitelinks|labels|descriptions&languages=en&format=json&origin=*`);
     const obj = ent?.entities?.[id];
     if (!obj) continue;
 
@@ -276,15 +318,12 @@ async function wikidataFindImageByClass(label, cls){
     const p31Ok = p31MatchesClass(p31s, cls);
     if (!p31Ok) continue;
 
-    // preferred: P154 logo for team/brand
     if ((cls === "team" || cls === "brand") && claims.P154?.[0]?.mainsnak?.datavalue?.value){
       return { url: commonsFileUrl(claims.P154[0].mainsnak.datavalue.value), isLogo: true, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok };
     }
-    // else P18 image
     if (claims.P18?.[0]?.mainsnak?.datavalue?.value){
       return { url: commonsFileUrl(claims.P18[0].mainsnak.datavalue.value), isLogo: false, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok };
     }
-    // fallback to enwiki sitelink
     const enTitle = obj.sitelinks?.enwiki?.title;
     if (enTitle){
       const viaPage = await wikiLogoOrImageForClass(enTitle, cls);
@@ -325,7 +364,7 @@ async function tmdbSearchImages(query, mediaType = "movie"){
     if (tn === qn || strictTitleMatch(query, title)) s += 0.25;
     if (s > bestScore){ bestScore = s; best = r; }
   }
-  const min = qn.length <= 3 ? 0.8 : 0.4; // short titles must be near-exact
+  const min = qn.length <= 3 ? 0.8 : 0.4;
   if (!best || bestScore < min) return null;
 
   if (mediaType === "person"){
@@ -354,77 +393,73 @@ async function omdbPoster(query){
   return (p && p !== "N/A") ? { url: p, title: d?.Title || query, desc: "", p31Ok:true } : null;
 }
 
-/* ---------- pizza topping aliasing / brand token ---------- */
-const TOPPING_ALIASES = {
-  "extra cheese":"Cheese",
-  "three cheese":"Cheese",
-  "cheese":"Cheese",
-  "bbq chicken":"Barbecue chicken",
-  "bbq sauce":"Barbecue sauce",
-  "green peppers":"Bell pepper",
-  "peppers":"Bell pepper",
-  "mushrooms":"Mushroom",
-  "black olives":"Olive",
-  "ham":"Ham",
-  "bacon":"Bacon",
-  "sausage":"Sausage",
-  "pepperoni":"Pepperoni",
-  "pineapple":"Pineapple",
-  "anchovies":"Anchovy",
-  "spinach":"Spinach",
-  "onions":"Onion",
-  "jalapeños":"Jalapeño",
-  "jalapenos":"Jalapeño"
-};
-function canonicalizeFoodLabel(topicName, label){
-  const l = label.toLowerCase().trim();
-  if (TOPPING_ALIASES[l]) return TOPPING_ALIASES[l];
-  if (l.includes("cheese")) return "Cheese";
-  return label;
-}
-function extractBrandToken(label){
-  // First word is a good brand hint for devices (Fitbit Versa, Garmin Forerunner)
-  const parts = label.split(/\s+/);
-  return parts.length ? parts[0].toLowerCase() : null;
+/* ---------- de-dup helper: try contextual variants ---------- */
+async function tryContextualVariants(label, cls, topicName){
+  const t = (topicName||"").toLowerCase();
+  const variants = [label];
+
+  if (cls==="food"){
+    if (t.includes("burger")){
+      if (!/burger/i.test(label)) variants.unshift(`${label} burger`);
+    } else if (t.includes("pizza")){
+      if (!/pizza/i.test(label)) variants.unshift(`${label} pizza`);
+    } else if (t.includes("tea")){
+      if (!/tea/i.test(label)) variants.unshift(`${label} tea`);
+    }
+  }
+  if (cls==="device"){
+    if (!/watch|smartwatch/i.test(label)) variants.unshift(`${label} smartwatch`);
+  }
+
+  // Try wiki page for each variant
+  for (const v of variants){
+    const res = await wikiLogoOrImageForClass(v, cls);
+    if (res && acceptanceForClass(res, cls, label, topicName)) {
+      return { main: res.url, thumb: res.url, isLogo: !!res.isLogo };
+    }
+  }
+  // Then Wikidata entity search
+  const wd = await wikidataFindImageByClass(label, cls);
+  if (wd && acceptanceForClass(wd, cls, label, topicName)) {
+    return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+  }
+  return null;
 }
 
-/* ---------- provider race helper ---------- */
-async function firstTruthy(promises){
-  return new Promise((resolve) => {
-    let settled = false;
-    const done = (val) => { if (!settled && val) { settled = true; resolve(val); } };
-    promises.forEach(async (p) => {
-      try { done(await p); } catch {}
-    });
-    Promise.allSettled(promises).then(() => !settled && resolve(null));
-  });
-}
-
-/* ---------- unified resolver (accuracy-first) ---------- */
+/* ---------- face prefs ---------- */
 function topicPrefersFace(topic){
-  const PERSON_HINTS = [
-    "artist","artists","singer","singers","musician","musicians","people","players",
-    "athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers",
-    "sprinters","tennis","composers","legends","girl groups","boy bands","pop artists","hip-hop",
-    "character","characters","superhero","superheroes","marvel","dc","anime","manga"
-  ];
+  const PERSON_HINTS = ["artist","artists","singer","singers","musician","musicians","people","players","athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers","sprinters","tennis","composers","legends","girl groups","boy bands","pop artists","hip-hop","character","characters","superhero","superheroes","marvel","dc","anime","manga"];
   const name = (topic?.name || "").toLowerCase();
   return PERSON_HINTS.some(h => name.includes(h)) || (topic?.mediaType === "person");
 }
 function labelPrefersFace(label){
   const s = String(label||"").toLowerCase();
-  return /\b(man|woman|girl|boy|kid|hero|princess|queen|king)\b/.test(s) ||
+  return /\b(man|woman|girl|boy|hero|princess|queen|king)\b/.test(s) ||
          /iron man|batman|spider-man|spider man|superman|captain america|wonder woman|hulk|thor|black widow|goku|naruto|luffy|pikachu/.test(s);
 }
 
+/* ---------- provider race ---------- */
+async function firstTruthy(promises){
+  return new Promise((resolve) => {
+    let settled=false;
+    const done = (v)=>{ if(!settled && v){ settled=true; resolve(v);} };
+    promises.forEach(async p=>{ try{ done(await p);}catch{} });
+    Promise.allSettled(promises).then(()=> !settled && resolve(null));
+  });
+}
+
+/* ---------- unified resolver with duplicate-avoidance ---------- */
+let usedImageUrls = new Set(); // reset per topic
+
 async function resolveImages(topic, rawItem){
   const item = { ...rawItem };
-  // Canonicalize some food labels (e.g., “Extra cheese” → “Cheese”)
-  if ((topic.name||"").toLowerCase().includes("pizza") || (topic.name||"").toLowerCase().includes("toppings")){
+
+  // Canonicalize foods (pizza, burger) and tea contexts
+  if (/pizza|topping|burger|tea/i.test(topic.name||"")) {
     item.label = canonicalizeFoodLabel(topic.name, item.label);
   }
 
-  if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo: false };
+  if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo:false };
 
   const provider  = topic.provider || "static";
   const mediaType = topic.mediaType || "";
@@ -437,98 +472,106 @@ async function resolveImages(topic, rawItem){
 
   const tasks = [];
 
-  // TEAMS/BRANDS — logos or page image (validated P31)
+  // Teams/brands (logos or page image; validated)
   if (cls === "team" || cls === "brand"){
-    tasks.push((async()=> {
-      const viaPage = await wikiLogoOrImageForClass(item.label, cls);
-      if (viaPage && acceptanceForClass(viaPage, cls, item.label)) return { main: viaPage.url, thumb: viaPage.url, isLogo: !!viaPage.isLogo };
-      const viaWd   = await wikidataFindImageByClass(item.label, cls);
-      if (viaWd && acceptanceForClass(viaWd, cls, item.label)) return { main: viaWd.url, thumb: viaWd.url, isLogo: !!viaWd.isLogo };
+    tasks.push((async()=>{
+      const page = await wikiLogoOrImageForClass(item.label, cls);
+      if (page && acceptanceForClass(page, cls, item.label, topic.name)) return { main: page.url, thumb: page.url, isLogo: !!page.isLogo };
+      const wd = await wikidataFindImageByClass(item.label, cls);
+      if (wd && acceptanceForClass(wd, cls, item.label, topic.name)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
       return null;
     })());
   }
 
-  // MOVIE/TV/PERSON — TMDB (strict), then validated Wikipedia/TVMaze/OMDb as needed
+  // Movies / TV / Person
   if (cls === "movie" || mediaType === "movie"){
     tasks.push((async()=> {
       const tm = await tmdbSearchImages(item.label, "movie");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false };
+      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
       const om = await omdbPoster(item.label);
-      if (om && acceptanceForClass(om, "movie", item.label)) return { main: om.url, thumb: om.url, isLogo: false };
+      if (om && acceptanceForClass(om, "movie", item.label, topic.name)) return { main: om.url, thumb: om.url, isLogo:false };
       const wp = await wikiResolveWithSearch(item.label, "movie");
-      if (wp && acceptanceForClass(wp, "movie", item.label)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "movie", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
       return null;
     })());
   }
   if (cls === "tv" || mediaType === "tv"){
-    tasks.push((async()=> {
+    tasks.push((async()=>{
       const tm = await tmdbSearchImages(item.label, "tv");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false };
+      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
       const tvm = await tvmazeShowImage(item.label);
-      if (tvm && acceptanceForClass({url:tvm.url,title:tvm.title,desc:"",p31Ok:true}, "tv", item.label)) return { main: tvm.url, thumb: tvm.url, isLogo: false };
+      if (tvm && acceptanceForClass({url:tvm.url,title:tvm.title,desc:"",p31Ok:true}, "tv", item.label, topic.name)) return { main: tvm.url, thumb: tvm.url, isLogo:false };
       const wp = await wikiResolveWithSearch(item.label, "tv");
-      if (wp && acceptanceForClass(wp, "tv", item.label)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "tv", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
       return null;
     })());
   }
   if (cls === "person" || mediaType === "person"){
-    tasks.push((async()=> {
+    tasks.push((async()=>{
       const tm = await tmdbSearchImages(item.label, "person");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo: false };
+      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
       const wp = await wikiResolveWithSearch(item.label, "person");
-      if (wp && acceptanceForClass(wp, "person", item.label)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "person", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
       return null;
     })());
   }
   if (cls === "group"){
-    tasks.push((async()=> {
+    tasks.push((async()=>{
       const wp = await wikiResolveWithSearch(item.label, "group");
-      if (wp && acceptanceForClass(wp, "group", item.label)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "group", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
       return null;
     })());
   }
 
-  // PLACES / FOODS — Wikidata entity search first, then validated Wikipedia. NO STOCK.
+  // Places / Foods (no stock)
   if (cls === "place" || cls === "food"){
-    tasks.push((async()=> {
-      const viaWd = await wikidataFindImageByClass(item.label, cls);
-      if (viaWd && acceptanceForClass(viaWd, cls, item.label)) return { main: viaWd.url, thumb: viaWd.url, isLogo: !!viaWd.isLogo };
-      const viaWp = await wikiResolveWithSearch(item.label, cls);
-      if (viaWp && acceptanceForClass(viaWp, cls, item.label)) return { main: viaWp.url, thumb: viaWp.url, isLogo: !!viaWp.isLogo };
+    tasks.push((async()=>{
+      const wd = await wikidataFindImageByClass(item.label, cls);
+      if (wd && acceptanceForClass(wd, cls, item.label, topic.name)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+      // try contextual variants like "Mushroom Swiss burger", "Earl Grey tea"
+      const alt = await tryContextualVariants(item.label, cls, topic.name);
+      if (alt) return alt;
+      const wp = await wikiResolveWithSearch(item.label, cls);
+      if (wp && acceptanceForClass(wp, cls, item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
       return null;
     })());
   }
 
-  // DEVICES / PRODUCTS — must include brand token + smartwatch/device terms. NO STOCK.
+  // Devices / products (no stock)
   if (cls === "device"){
-    tasks.push((async()=> {
-      // Try Wikipedia page directly and variants with brand token
-      const candidates = [item.label, `${item.label} (smartwatch)`, `${item.label} watch`];
-      for (const t of candidates){
-        const r = await wikiLogoOrImageForClass(t, "device");
-        if (r && acceptanceForClass(r, "device", item.label, brandToken)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
+    tasks.push((async()=>{
+      const variants = [item.label, `${item.label} (smartwatch)`, `${item.label} smartwatch`, `${item.label} watch`];
+      for (const v of variants){
+        const r = await wikiLogoOrImageForClass(v, "device");
+        if (r && acceptanceForClass(r, "device", item.label, topic.name, brandToken)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
       }
-      // Try Wikidata entity search with device class
       const wd = await wikidataFindImageByClass(item.label, "device");
-      if (wd && acceptanceForClass(wd, "device", item.label, brandToken)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+      if (wd && acceptanceForClass(wd, "device", item.label, topic.name, brandToken)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
       return null;
     })());
   }
 
-  // GENERIC — Wikipedia only. If no confident image → placeholder.
+  // Generic → Wikipedia only
   if (cls === "generic" || provider === "wiki"){
-    tasks.push((async()=> {
+    tasks.push((async()=>{
       const r = await wikiResolveWithSearch(item.label, "generic");
-      if (r && acceptanceForClass(r, "generic", item.label)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
+      if (r && acceptanceForClass(r, "generic", item.label, topic.name)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
       return null;
     })());
   }
 
   let out = await firstTruthy(tasks);
 
+  // If nothing acceptable, use neutral placeholder
   if (!out){
     const ph = `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`;
-    out = { main: ph, thumb: ph, isLogo: false };
+    out = { main: ph, thumb: ph, isLogo:false };
+  }
+
+  // Avoid duplicates within the same topic by trying contextual variants
+  if (usedImageUrls.has(out.thumb)) {
+    const alt = await tryContextualVariants(item.label, cls, topic.name);
+    if (alt && !usedImageUrls.has(alt.thumb)) out = alt;
   }
 
   out.prefersFace = (cls === "person") || topicPrefersFace(topic) || labelPrefersFace(item.label);
@@ -547,7 +590,7 @@ let placed       = {};
 let currentItem  = null;
 let didCelebrate = false;
 
-const SESSION_KEY = "blind-rank:session:v11";
+const SESSION_KEY = "blind-rank:session:v12";
 
 const topicTag     = $("#topicTag");
 const cardImg      = $("#cardImg");
@@ -555,11 +598,9 @@ const itemTitle    = $("#itemTitle");
 const helpText     = $("#cardHelp");
 const rankSlots    = $$(".rank-slot");
 const resultsEl    = $("#results");
-const nextTopicBtn = $("#nextTopicBtn");
 const confettiEl   = $("#confetti");
-const nextTopicCta = $("#nextTopicCta");
 
-/* ---------- central UI updater ---------- */
+/* ---------- UI + session ---------- */
 function updateUIAfterState(){
   if (!currentItem){
     setLoading(false);
@@ -574,13 +615,12 @@ function updateUIAfterState(){
   if (cardImg) cardImg.style.display = "";
 }
 
-/* ---------- session ---------- */
 function saveSession(){
   try{
     const placedLabels = {};
     for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
     const payload = {
-      version: 11,
+      version: 12,
       topicOrder,
       currentTopicIndex,
       placedLabels,
@@ -621,6 +661,13 @@ function restoreSession(){
     });
     updateResults();
     didCelebrate = false;
+    usedImageUrls = new Set();
+    // seed used set from already-placed thumbs
+    $$(".slot-thumb").forEach(st=>{
+      const bg = st.style.backgroundImage || "";
+      const url = bg.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
+      if (url) usedImageUrls.add(url);
+    });
     paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
     wireControls();
     return true;
@@ -648,7 +695,7 @@ async function paintCurrent(){
 
   setLoading(true);
   const info = await resolveImages(currentTopic, currentItem);
-  if (token !== _paintToken) return; // user moved on; abort applying
+  if (token !== _paintToken) return; // user advanced; abandon
 
   if (cardImg){
     cardImg.style.objectFit = info.isLogo ? "contain" : "cover";
@@ -674,7 +721,7 @@ async function prefetchNext(n=2){
   const peek = itemsQueue.slice(0, n);
   for (const it of peek){
     const { main } = await resolveImages(currentTopic, it);
-    const img = new Image(); img.decoding = "async";
+    const img = new Image(); img.decoding="async";
     img.src = tmdbLowRes(main) || main;
   }
 }
@@ -704,6 +751,8 @@ function loadTopicByOrderIndex(orderIdx){
   currentItem = itemsQueue.shift() || null;
 
   didCelebrate = false;
+  usedImageUrls = new Set();
+
   topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
   clearSlots();
   updateResults();
@@ -716,7 +765,6 @@ async function placeCurrentItemInto(rank){
   rank = Number(rank);
   if (!currentItem || (cardLoading && !cardLoading.hidden)) return;
   if (placed[rank]) return;
-
   const slot = $(`.rank-slot[data-rank="${rank}"]`);
   if (!slot) return;
 
@@ -746,9 +794,9 @@ async function renderSlotInto(slot, item, topic){
   `;
   const info = await resolveImages(topic, item);
 
-  // Verify the image loads; otherwise fallback text image
+  // Verify loads; else placeholder
   const ok = await new Promise(res => {
-    const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = info.thumb;
+    const im = new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src = info.thumb;
   });
   const finalThumb = ok ? info.thumb : `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
 
@@ -758,53 +806,53 @@ async function renderSlotInto(slot, item, topic){
     thumbEl.classList.remove("skeleton");
     thumbEl.style.backgroundImage   = `url('${finalThumb}')`;
     thumbEl.style.backgroundPosition = face ? "center 20%" : "center";
-    if (info.isLogo){
-      thumbEl.style.backgroundSize  = "contain";
-      thumbEl.style.backgroundColor = "#0e120e";
-    } else {
-      thumbEl.style.backgroundSize  = "cover";
-      thumbEl.style.backgroundColor = "transparent";
-    }
+    thumbEl.style.backgroundSize     = info.isLogo ? "contain" : "cover";
+    thumbEl.style.backgroundColor    = info.isLogo ? "#0e120e" : "transparent";
   }
+
+  // Track used URLs for duplicate avoidance
+  usedImageUrls.add(finalThumb);
 }
 
 function updateResults(){
   const filled = Object.keys(placed).length;
   const remain = Math.max(0, 5 - filled);
-  resultsEl && (resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`);
+  const resultsEl = $("#results");
+  if (resultsEl) resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`;
 
-  // Warm up first image of NEXT topic when we hit 4 placements
   if (filled === 4) {
     const nextIdx = (currentTopicIndex + 1) % topicOrder.length;
     const nextTopic = topics[topicOrder[nextIdx]];
     if (nextTopic?.items?.[0]) {
       resolveImages(nextTopic, nextTopic.items[0]).then(info => {
-        const img = new Image();
-        img.decoding = "async";
-        img.src = tmdbLowRes(info.main) || info.main;
+        const img = new Image(); img.decoding="async"; img.src = tmdbLowRes(info.main) || info.main;
       }).catch(()=>{});
     }
   }
 }
 
-/* ---------- controls ---------- */
+/* ---------- controls (idempotent) ---------- */
 function gotoNextTopic(){
   const next = (currentTopicIndex + 1) % topicOrder.length;
   setLoading(false);
   loadTopicByOrderIndex(next);
 }
+
 function addRipple(btn, evt){
   const rect = btn.getBoundingClientRect();
   const ripple = document.createElement("span");
   ripple.className = "ripple";
-  const size = Math.max(rect.width, rect.height) * 1.25;
+  const size = Math.max(rect.width, rect.height) * 1.6; // stronger/larger ripple
   const x = ((evt.clientX ?? (rect.left + rect.width/2)) - rect.left) - size/2;
   const y = ((evt.clientY ?? (rect.top + rect.height/2)) - rect.top)  - size/2;
-  ripple.style.width = ripple.style.height = `${size * 1.6}px`;
+  ripple.style.width = ripple.style.height = `${size*1.75}px`;
   ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
+  ripple.style.opacity = "0.45";       // more visible on mobile
+  ripple.style.transform = "scale(1)"; // initial
   btn.appendChild(ripple);
-  setTimeout(()=> ripple.remove(), 800);
+  setTimeout(()=> ripple.remove(), 900);
 }
+
 function wireControls(){
   const pb = $("#placeButtons");
   if (pb && !pb.__wired){
@@ -812,17 +860,15 @@ function wireControls(){
       const btn = e.target.closest("[data-rank]");
       if (!btn) return;
       addRipple(btn, e);
-      btn.animate(
-        [{ transform: "translateY(0)" },{ transform: "translateY(1px)" },{ transform: "translateY(0)" }],
-        { duration: 140, easing: "ease-out" }
-      );
+      btn.animate([{transform:"translateY(0)"},{transform:"translateY(1px)"},{transform:"translateY(0)"}],{duration:160,easing:"ease-out"});
       placeCurrentItemInto(btn.dataset.rank);
     });
     pb.__wired = true;
   }
-  if (nextTopicBtn && !nextTopicBtn.__wired){
-    nextTopicBtn.addEventListener("click", gotoNextTopic);
-    nextTopicBtn.__wired = true;
+  const topBtn = $("#nextTopicBtn");
+  if (topBtn && !topBtn.__wired){
+    topBtn.addEventListener("click", gotoNextTopic);
+    topBtn.__wired = true;
   }
   if (nextTopicCta && !nextTopicCta.__wired){
     nextTopicCta.addEventListener("click", gotoNextTopic);
@@ -838,13 +884,12 @@ function celebrate(){
   didCelebrate = true;
 
   const canvas = confettiEl;
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  canvas.width = innerWidth; canvas.height = innerHeight;
   canvas.style.display = "block";
 
   const ctx = canvas.getContext("2d");
   const colors = ["#FFD84D","#7C5CFF","#22C55E","#F472B6","#38BDF8"];
-  const parts = Array.from({length: 100}).map(()=>({
+  const parts = Array.from({length: 110}).map(()=>({
     x: Math.random()*canvas.width,
     y: -20 - Math.random()*canvas.height*0.3,
     r: 4 + Math.random()*6,
@@ -876,8 +921,7 @@ function celebrate(){
 }
 addEventListener("resize", ()=>{
   if (!confettiEl) return;
-  confettiEl.width = innerWidth;
-  confettiEl.height = innerHeight;
+  confettiEl.width = innerWidth; confettiEl.height = innerHeight;
 });
 
 /* ---------- bootstrap ---------- */
