@@ -3,8 +3,10 @@
 /* =========================================================
    FIRESIDE Blind Rankings — accuracy + UX hardened build
    - Context-aware image queries (burger/tea/pizza/device)
+   - Per-topic/per-item RULES + hard PINs (year, animation, tokens)
+   - Strong HQ/building avoidance for brands/teams/places
    - Wikidata P31 validation (+ P154 logo for team/brand)
-   - TMDB strict for movies/tv/person; no “short-title drift”
+   - TMDB strict for movies/tv/person; optional year/animation bias
    - Duplicate-image avoidance within a topic
    - No stock for risky classes (food/place/device/team/brand)
    - Loader gates disable ALL buttons only during image load
@@ -14,6 +16,29 @@
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+/* ========= Granular Rules / Pins =========
+   Add item- or topic-specific constraints without code edits.
+
+   window.BLIND_RANK_RULES = {
+     "Animated Disney Classics": {
+       "Beauty and the Beast": { expectedYear: 1991, requireAnimation: true, forbid: ["Emma Watson","live action"] }
+     },
+     "Burgers": {
+       "Mushroom Swiss burger": { requireAll: ["mushroom","swiss","burger"] }
+     },
+     "Brands": {
+       "Snapchat": { preferLogo: true, forbidHQ: true },
+       "Airbnb":   { preferLogo: true, forbidHQ: true }
+     }
+   };
+
+   window.BLIND_RANK_PINS = {
+     "Brands::Airbnb": "https://…/approved-image.jpg"  // hard pin
+   };
+=========================================== */
+window.BLIND_RANK_RULES = window.BLIND_RANK_RULES || {};
+window.BLIND_RANK_PINS  = window.BLIND_RANK_PINS  || {};
 
 /* ---------- tiny utils ---------- */
 function shuffle(arr){
@@ -42,6 +67,10 @@ function strictTitleMatch(query, candidate){
   if (!q || !c) return false;
   const norm = s => s.replace(/[^\p{L}\p{N}]+/gu," ").trim();
   return c === q || norm(c) === norm(q) || c.includes(q);
+}
+function hasAny(haystack, words){
+  const s = String(haystack || "").toLowerCase();
+  return Array.isArray(words) && words.some(w => s.includes(String(w).toLowerCase()));
 }
 
 /* ---------- fetch with timeout ---------- */
@@ -103,6 +132,11 @@ const cacheSet = (k,v)=>{ imageCache[k]=v; try{ localStorage.setItem(IMG_CACHE_K
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p";
 
+const BUILDING_NEGS = [
+  "headquarters","hq","office","campus","building","storefront",
+  "facade","exterior","aerial","map","floorplan","signage"
+];
+
 /* ---------- classification ---------- */
 const P31_ALLOW = {
   team   : new Set(["Q12973014","Q13393265","Q847017"]),
@@ -157,6 +191,37 @@ const ANIMAL_WORDS = ["dog","puppy","cat","kitten","horse","cow","pig","goat","s
 const CAR_WORDS    = [" car"," sedan"," hatchback"," suv"," coupe"," truck"," nissan"," bmw"," toyota"," mercedes"," ford"," chevy"," kia"," hyundai"];
 function urlHas(url, words){ const u=String(url||"").toLowerCase(); return words.some(w=>u.includes(w.trim())); }
 
+// RULE-driven post filter
+function applyRulePostFilter(meta, cls, label, topicName, rule){
+  if (!rule) return true;
+
+  const title = (meta.title||"").toLowerCase();
+  const desc  = (meta.desc||"").toLowerCase();
+  const url   = (meta.url||"").toLowerCase();
+  const blob  = title + " " + desc + " " + url;
+
+  if (Array.isArray(rule.forbid) && hasAny(blob, rule.forbid)) return false;
+  if (rule.forbidHQ && hasAny(blob, BUILDING_NEGS)) return false;
+
+  if (Array.isArray(rule.requireAll) && rule.requireAll.length){
+    const ok = rule.requireAll.every(tok => blob.includes(String(tok).toLowerCase()));
+    if (!ok) return false;
+  }
+
+  if (rule.requireAnimation){
+    // Prefer animation genre or keywords; allow poster art without explicit tags
+    const animish = blob.includes("animated") || blob.includes("animation") || meta.genreAnimation === true || meta.isPosterArt === true;
+    if (!animish) return false;
+  }
+
+  if (typeof rule.expectedYear === "number" && meta.year){
+    if (Number(meta.year) !== Number(rule.expectedYear)) return false;
+  }
+
+  // preferLogo is used upstream (logo selection path), but doesn't invalidate here.
+  return true;
+}
+
 function acceptanceForClass(meta, cls, label, topicName, brandToken){
   const title = (meta.title||"").toLowerCase();
   const desc  = (meta.desc||"").toLowerCase();
@@ -168,6 +233,11 @@ function acceptanceForClass(meta, cls, label, topicName, brandToken){
   if ((cls==="food" || cls==="device" || cls==="movie" || cls==="tv" || cls==="group" || cls==="person") && urlHas(url, ANIMAL_WORDS)) return false;
   if ((cls==="food" || cls==="team"  || cls==="brand" || cls==="place" || cls==="device") && urlHas(url, CAR_WORDS)) return false;
 
+  // hard-block HQ/buildings unless it's an explicit logo
+  if ((cls === "brand" || cls === "team" || cls === "place") && !meta.isLogo){
+    if (hasAny(title + " " + desc + " " + url, BUILDING_NEGS)) return false;
+  }
+
   // additional topic-specific constraints
   const isBurgerContext = topic.includes("burger");
   const isPizzaContext  = topic.includes("pizza");
@@ -175,18 +245,17 @@ function acceptanceForClass(meta, cls, label, topicName, brandToken){
 
   if (cls==="food"){
     if (!meta.p31Ok) return false; // must be a food/dish entity
-    // burger variants: require "burger" in title/desc for specific items
     if (isBurgerContext){
       const hasBurgerWord = title.includes("burger") || desc.includes("burger") || lab.includes("burger");
-      // allow “cheeseburger”, “bacon cheeseburger”, “mushroom swiss burger”, etc.
       if (!hasBurgerWord) return false;
-      // ensure label tokens are present loosely
+
+      // if label has multiple specifics (e.g., mushroom swiss), require presence
       const toks = tokenize(lab).filter(w=>!STOP.has(w));
-      const okToks = toks.some(w => title.includes(w) || desc.includes(w));
-      if (!okToks) return false;
+      const specific = toks.filter(w => !["burger","cheeseburger"].includes(w));
+      const allPresent = specific.length < 2 || specific.every(w => title.includes(w) || desc.includes(w));
+      if (!allPresent) return false;
     }
     if (isPizzaContext){
-      // allow generic “cheese” etc, but prefer entries mentioning pizza/topping
       const pizzaish = title.includes("pizza") || desc.includes("pizza") || desc.includes("topping");
       const cheeseOK = lab.includes("cheese");
       if (!pizzaish && !cheeseOK) return false;
@@ -246,7 +315,6 @@ function canonicalizeFoodLabel(topicName, label){
     if (TOPPING_ALIASES[lower]) l = TOPPING_ALIASES[lower];
   }
   if (t.includes("burger")){
-    // normalize common composed burgers
     const L = lower.replace("–","-").replace("—","-");
     if (L.includes("mushroom") && L.includes("swiss") && !L.includes("burger")) l = "Mushroom Swiss burger";
     if (L.includes("bacon") && L.includes("cheese") && !L.includes("burger")) l = "Bacon cheeseburger";
@@ -290,17 +358,17 @@ async function wikiLogoOrImageForClass(title, cls){
 
     if (cls === "team" || cls === "brand"){
       const logo = logos[0]?.mainsnak?.datavalue?.value;
-      if (logo) return { url: commonsFileUrl(logo), isLogo: true, title: page.title, desc:"", p31Ok };
+      if (logo) return { url: commonsFileUrl(logo), isLogo: true, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
     }
     const p18 = p18s[0]?.mainsnak?.datavalue?.value;
-    if (p18) return { url: commonsFileUrl(p18), isLogo:false, title: page.title, desc:"", p31Ok };
+    if (p18) return { url: commonsFileUrl(p18), isLogo:false, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
   }
-  if (page.thumb) return { url: page.thumb, isLogo:false, title: page.title, desc:"", p31Ok };
+  if (page.thumb) return { url: page.thumb, isLogo:false, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
 
   const sum = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true&origin=*`);
   const img = sum?.originalimage?.source || sum?.thumbnail?.source;
   if (!img) return null;
-  return { url: img, isLogo:false, title: sum?.title || title, desc: sum?.description || "", p31Ok };
+  return { url: img, isLogo:false, title: sum?.title || title, desc: sum?.description || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
 }
 
 // Wikidata entity search → accept only items whose P31 fits the class.
@@ -319,10 +387,10 @@ async function wikidataFindImageByClass(label, cls){
     if (!p31Ok) continue;
 
     if ((cls === "team" || cls === "brand") && claims.P154?.[0]?.mainsnak?.datavalue?.value){
-      return { url: commonsFileUrl(claims.P154[0].mainsnak.datavalue.value), isLogo: true, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok };
+      return { url: commonsFileUrl(claims.P154[0].mainsnak.datavalue.value), isLogo: true, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
     }
     if (claims.P18?.[0]?.mainsnak?.datavalue?.value){
-      return { url: commonsFileUrl(claims.P18[0].mainsnak.datavalue.value), isLogo: false, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok };
+      return { url: commonsFileUrl(claims.P18[0].mainsnak.datavalue.value), isLogo: false, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
     }
     const enTitle = obj.sitelinks?.enwiki?.title;
     if (enTitle){
@@ -345,11 +413,23 @@ async function wikiResolveWithSearch(title, cls){
 }
 
 /* ---------- TMDB / TVMaze / OMDb ---------- */
-async function tmdbSearchImages(query, mediaType = "movie"){
+async function tmdbSearchImages(query, mediaType = "movie", opts = {}){
   const key = window.BR_CONFIG?.TMDB_API_KEY || "";
   if (!key) return null;
 
-  const url = `${TMDB_BASE}/search/${mediaType}?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
+  const params = new URLSearchParams({
+    api_key: key,
+    query,
+    include_adult: "false",
+    language: "en-US",
+    page: "1"
+  });
+
+  // if year known, TMDB supports 'year' for movies, 'first_air_date_year' for TV
+  if (opts.year && mediaType === "movie") params.set("year", String(opts.year));
+  if (opts.year && mediaType === "tv")    params.set("first_air_date_year", String(opts.year));
+
+  const url = `${TMDB_BASE}/search/${mediaType}?${params.toString()}`;
   const data = await fetchJson(url);
   if (!data?.results?.length) return null;
 
@@ -362,27 +442,50 @@ async function tmdbSearchImages(query, mediaType = "movie"){
     const tn = norm(title);
     let s = scoreMatch(query, title);
     if (tn === qn || strictTitleMatch(query, title)) s += 0.25;
+
+    // prefer expected year exactly if provided
+    const releaseYear = (r.release_date || r.first_air_date || "").slice(0,4);
+    if (opts.year && releaseYear && Number(releaseYear) === Number(opts.year)) s += 0.35;
+
+    // prefer animation if required
+    const isAnim = Array.isArray(r.genre_ids) && r.genre_ids.includes(16);
+    if (opts.requireAnimation && isAnim) s += 0.35;
+    if (opts.requireAnimation && !isAnim) s -= 0.2;
+
     if (s > bestScore){ bestScore = s; best = r; }
   }
   const min = qn.length <= 3 ? 0.8 : 0.4;
   if (!best || bestScore < min) return null;
 
+  // build image + meta
+  const releaseYear = (best.release_date || best.first_air_date || "").slice(0,4) || null;
+  const isAnim = Array.isArray(best.genre_ids) && best.genre_ids.includes(16);
+
   if (mediaType === "person"){
     const profile = best.profile_path ? `${TMDB_IMG}/w780${best.profile_path}` : null;
-    return profile ? { main: profile, thumb: profile, meta: { title: best.name || "", desc: "", p31Ok:true } } : null;
+    return profile ? { main: profile, thumb: profile, meta: { title: best.name || "", desc: "", p31Ok:true, year: null, genreAnimation: false, isPosterArt: false } } : null;
   }
   const main  = best.backdrop_path ? `${TMDB_IMG}/w1280${best.backdrop_path}` : (best.poster_path ? `${TMDB_IMG}/w780${best.poster_path}` : null);
   const thumb = best.poster_path   ? `${TMDB_IMG}/w500${best.poster_path}`   : (best.backdrop_path ? `${TMDB_IMG}/w780${best.backdrop_path}` : null);
-  return (main || thumb) ? { main, thumb, meta: { title: best.title || best.name || "", desc: "", p31Ok:true } } : null;
+  const isPosterArt = !!best.poster_path;
+
+  return (main || thumb) ? {
+    main, thumb,
+    meta: { title: best.title || best.name || "", desc: "", p31Ok:true, year: releaseYear ? Number(releaseYear) : null, genreAnimation: !!isAnim, isPosterArt }
+  } : null;
 }
 
 async function tvmazeShowImage(query){
   const data = await fetchJson(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`);
   if (!Array.isArray(data) || !data.length) return null;
   const ranked = data
-    .map(x => ({ url: x?.show?.image?.original || x?.show?.image?.medium, title: x?.show?.name || "", score: scoreMatch(query, x?.show?.name || "") }))
+    .map(x => ({
+      url: x?.show?.image?.original || x?.show?.image?.medium,
+      title: x?.show?.name || "",
+      score: scoreMatch(query, x?.show?.name || "")
+    }))
     .filter(x => x.url).sort((a,b)=> b.score - a.score);
-  return (ranked[0] && ranked[0].score >= 0.4) ? ranked[0] : null;
+  return (ranked[0] && ranked[0].score >= 0.4) ? { ...ranked[0], meta: { title: ranked[0].title, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false } } : null;
 }
 
 async function omdbPoster(query){
@@ -390,7 +493,8 @@ async function omdbPoster(query){
   if (!key) return null;
   const d = await fetchJson(`https://www.omdbapi.com/?apikey=${encodeURIComponent(key)}&t=${encodeURIComponent(query)}`);
   const p = d?.Poster;
-  return (p && p !== "N/A") ? { url: p, title: d?.Title || query, desc: "", p31Ok:true } : null;
+  const y = d?.Year ? Number(String(d.Year).slice(0,4)) : null;
+  return (p && p !== "N/A") ? { url: p, title: d?.Title || query, desc: "", p31Ok:true, year: y, genreAnimation:false, isPosterArt:true } : null;
 }
 
 /* ---------- de-dup helper: try contextual variants ---------- */
@@ -415,13 +519,13 @@ async function tryContextualVariants(label, cls, topicName){
   for (const v of variants){
     const res = await wikiLogoOrImageForClass(v, cls);
     if (res && acceptanceForClass(res, cls, label, topicName)) {
-      return { main: res.url, thumb: res.url, isLogo: !!res.isLogo };
+      return { main: res.url, thumb: res.url, isLogo: !!res.isLogo, meta: { ...res } };
     }
   }
   // Then Wikidata entity search
   const wd = await wikidataFindImageByClass(label, cls);
   if (wd && acceptanceForClass(wd, cls, label, topicName)) {
-    return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+    return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: { ...wd } };
   }
   return null;
 }
@@ -448,8 +552,15 @@ async function firstTruthy(promises){
   });
 }
 
-/* ---------- unified resolver with duplicate-avoidance ---------- */
+/* ---------- unified resolver with duplicate-avoidance + rules/pins ---------- */
 let usedImageUrls = new Set(); // reset per topic
+
+function getRule(topic, label){
+  return (window.BLIND_RANK_RULES?.[topic?.name] || {})[label] || null;
+}
+function getPin(topic, label){
+  return window.BLIND_RANK_PINS?.[`${topic?.name}::${label}`] || null;
+}
 
 async function resolveImages(topic, rawItem){
   const item = { ...rawItem };
@@ -457,6 +568,16 @@ async function resolveImages(topic, rawItem){
   // Canonicalize foods (pizza, burger) and tea contexts
   if (/pizza|topping|burger|tea/i.test(topic.name||"")) {
     item.label = canonicalizeFoodLabel(topic.name, item.label);
+  }
+
+  // Pinned image (hard override)
+  const pinned = getPin(topic, item.label);
+  if (pinned){
+    return {
+      main: pinned, thumb: pinned, isLogo:false,
+      prefersFace: false,
+      meta: { title: item.label, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false }
+    };
   }
 
   if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo:false };
@@ -470,15 +591,21 @@ async function resolveImages(topic, rawItem){
   const wantsFace = (cls === "person") || topicPrefersFace(topic) || labelPrefersFace(item.label);
   const brandToken = (cls === "device") ? extractBrandToken(item.label) : null;
 
+  const rule = getRule(topic, item.label);
   const tasks = [];
 
   // Teams/brands (logos or page image; validated)
   if (cls === "team" || cls === "brand"){
     tasks.push((async()=>{
+      // if preferLogo, wiki route already tries P154 first
       const page = await wikiLogoOrImageForClass(item.label, cls);
-      if (page && acceptanceForClass(page, cls, item.label, topic.name)) return { main: page.url, thumb: page.url, isLogo: !!page.isLogo };
+      if (page && acceptanceForClass(page, cls, item.label, topic.name) && applyRulePostFilter(page, cls, item.label, topic.name, rule)) {
+        return { main: page.url, thumb: page.url, isLogo: !!page.isLogo, meta: { ...page } };
+      }
       const wd = await wikidataFindImageByClass(item.label, cls);
-      if (wd && acceptanceForClass(wd, cls, item.label, topic.name)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+      if (wd && acceptanceForClass(wd, cls, item.label, topic.name) && applyRulePostFilter(wd, cls, item.label, topic.name, rule)) {
+        return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: { ...wd } };
+      }
       return null;
     })());
   }
@@ -486,39 +613,39 @@ async function resolveImages(topic, rawItem){
   // Movies / TV / Person
   if (cls === "movie" || mediaType === "movie"){
     tasks.push((async()=> {
-      const tm = await tmdbSearchImages(item.label, "movie");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
+      const tm = await tmdbSearchImages(item.label, "movie", { year: rule?.expectedYear, requireAnimation: !!rule?.requireAnimation });
+      if (tm && applyRulePostFilter(tm.meta, "movie", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
       const om = await omdbPoster(item.label);
-      if (om && acceptanceForClass(om, "movie", item.label, topic.name)) return { main: om.url, thumb: om.url, isLogo:false };
+      if (om && acceptanceForClass(om, "movie", item.label, topic.name) && applyRulePostFilter(om, "movie", item.label, topic.name, rule)) return { main: om.url, thumb: om.url, isLogo:false, meta: om };
       const wp = await wikiResolveWithSearch(item.label, "movie");
-      if (wp && acceptanceForClass(wp, "movie", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "movie", item.label, topic.name) && applyRulePostFilter(wp, "movie", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
       return null;
     })());
   }
   if (cls === "tv" || mediaType === "tv"){
     tasks.push((async()=>{
-      const tm = await tmdbSearchImages(item.label, "tv");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
+      const tm = await tmdbSearchImages(item.label, "tv", { year: rule?.expectedYear, requireAnimation: !!rule?.requireAnimation });
+      if (tm && applyRulePostFilter(tm.meta, "tv", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
       const tvm = await tvmazeShowImage(item.label);
-      if (tvm && acceptanceForClass({url:tvm.url,title:tvm.title,desc:"",p31Ok:true}, "tv", item.label, topic.name)) return { main: tvm.url, thumb: tvm.url, isLogo:false };
+      if (tvm && acceptanceForClass({url:tvm.url,title:tvm.title,desc:"",p31Ok:true}, "tv", item.label, topic.name) && applyRulePostFilter(tvm.meta, "tv", item.label, topic.name, rule)) return { main: tvm.url, thumb: tvm.url, isLogo:false, meta: tvm.meta };
       const wp = await wikiResolveWithSearch(item.label, "tv");
-      if (wp && acceptanceForClass(wp, "tv", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "tv", item.label, topic.name) && applyRulePostFilter(wp, "tv", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
       return null;
     })());
   }
   if (cls === "person" || mediaType === "person"){
     tasks.push((async()=>{
       const tm = await tmdbSearchImages(item.label, "person");
-      if (tm) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false };
+      if (tm && applyRulePostFilter(tm.meta, "person", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
       const wp = await wikiResolveWithSearch(item.label, "person");
-      if (wp && acceptanceForClass(wp, "person", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "person", item.label, topic.name) && applyRulePostFilter(wp, "person", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
       return null;
     })());
   }
   if (cls === "group"){
     tasks.push((async()=>{
       const wp = await wikiResolveWithSearch(item.label, "group");
-      if (wp && acceptanceForClass(wp, "group", item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, "group", item.label, topic.name) && applyRulePostFilter(wp, "group", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
       return null;
     })());
   }
@@ -527,12 +654,12 @@ async function resolveImages(topic, rawItem){
   if (cls === "place" || cls === "food"){
     tasks.push((async()=>{
       const wd = await wikidataFindImageByClass(item.label, cls);
-      if (wd && acceptanceForClass(wd, cls, item.label, topic.name)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+      if (wd && acceptanceForClass(wd, cls, item.label, topic.name) && applyRulePostFilter(wd, cls, item.label, topic.name, rule)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: wd };
       // try contextual variants like "Mushroom Swiss burger", "Earl Grey tea"
       const alt = await tryContextualVariants(item.label, cls, topic.name);
-      if (alt) return alt;
+      if (alt && applyRulePostFilter(alt.meta, cls, item.label, topic.name, rule)) return alt;
       const wp = await wikiResolveWithSearch(item.label, cls);
-      if (wp && acceptanceForClass(wp, cls, item.label, topic.name)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo };
+      if (wp && acceptanceForClass(wp, cls, item.label, topic.name) && applyRulePostFilter(wp, cls, item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
       return null;
     })());
   }
@@ -543,10 +670,14 @@ async function resolveImages(topic, rawItem){
       const variants = [item.label, `${item.label} (smartwatch)`, `${item.label} smartwatch`, `${item.label} watch`];
       for (const v of variants){
         const r = await wikiLogoOrImageForClass(v, "device");
-        if (r && acceptanceForClass(r, "device", item.label, topic.name, brandToken)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
+        if (r && acceptanceForClass(r, "device", item.label, topic.name, brandToken) && applyRulePostFilter(r, "device", item.label, topic.name, rule)) {
+          return { main: r.url, thumb: r.url, isLogo: !!r.isLogo, meta: r };
+        }
       }
       const wd = await wikidataFindImageByClass(item.label, "device");
-      if (wd && acceptanceForClass(wd, "device", item.label, topic.name, brandToken)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo };
+      if (wd && acceptanceForClass(wd, "device", item.label, topic.name, brandToken) && applyRulePostFilter(wd, "device", item.label, topic.name, rule)) {
+        return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: wd };
+      }
       return null;
     })());
   }
@@ -555,7 +686,9 @@ async function resolveImages(topic, rawItem){
   if (cls === "generic" || provider === "wiki"){
     tasks.push((async()=>{
       const r = await wikiResolveWithSearch(item.label, "generic");
-      if (r && acceptanceForClass(r, "generic", item.label, topic.name)) return { main: r.url, thumb: r.url, isLogo: !!r.isLogo };
+      if (r && acceptanceForClass(r, "generic", item.label, topic.name) && applyRulePostFilter(r, "generic", item.label, topic.name, rule)) {
+        return { main: r.url, thumb: r.url, isLogo: !!r.isLogo, meta: r };
+      }
       return null;
     })());
   }
@@ -565,13 +698,13 @@ async function resolveImages(topic, rawItem){
   // If nothing acceptable, use neutral placeholder
   if (!out){
     const ph = `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`;
-    out = { main: ph, thumb: ph, isLogo:false };
+    out = { main: ph, thumb: ph, isLogo:false, meta: { title: item.label, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false } };
   }
 
   // Avoid duplicates within the same topic by trying contextual variants
   if (usedImageUrls.has(out.thumb)) {
     const alt = await tryContextualVariants(item.label, cls, topic.name);
-    if (alt && !usedImageUrls.has(alt.thumb)) out = alt;
+    if (alt && !usedImageUrls.has(alt.thumb) && applyRulePostFilter(alt.meta, cls, item.label, topic.name, rule)) out = alt;
   }
 
   out.prefersFace = (cls === "person") || topicPrefersFace(topic) || labelPrefersFace(item.label);
