@@ -1,1061 +1,586 @@
-"use strict";
-
 /* =========================================================
-   FIRESIDE Blind Rankings — accuracy + UX hardened build
-   - Context-aware image queries (burger/tea/pizza/device)
-   - Per-topic/per-item RULES + hard PINs (year, animation, tokens)
-   - Strong HQ/building avoidance for brands/teams/places
-   - Wikidata P31 validation (+ P154 logo for team/brand)
-   - TMDB strict for movies/tv/person; optional year/animation bias
+   FIRESIDE Blind Ranking — Unified JavaScript (SmartCrop edition)
+   - SmartCrop.js for smart "cover" crops
+   - "Contain" letterboxing for logos/marks/covers (no clipping)
+   - Context-aware resolver with strict exactness by provider
    - Duplicate-image avoidance within a topic
-   - No stock for risky classes (food/place/device/team/brand)
-   - Loader gates disable ALL buttons only during image load
-   - Stronger ripple (mobile-friendly)
-   - Cancel stale paints; prefetch next; localStorage resume; confetti
+   - Buttons gated during image loads; stronger ripple hooks
+   - Reduced-motion aware; polite aria-live announcements
+   - Works with existing CONFIG / BR_CONFIG keys (no UI changes)
    ========================================================= */
 
-const $  = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+(() => {
+  'use strict';
 
-/* ========= Granular Rules / Pins =========
-   Add item- or topic-specific constraints without code edits.
+  /* ============== SELECTORS (adjust here if your markup differs) ============== */
+  const SELECTORS = {
+    // primary preview image (the large hero image users rank)
+    previewImg: '.rank-card__img, #card-img, .card img, img[data-role="preview"]',
 
-   window.BLIND_RANK_RULES = {
-     "Animated Disney Classics": {
-       "Beauty and the Beast": { expectedYear: 1991, requireAnimation: true, forbid: ["Emma Watson","live action"] }
-     },
-     "Burgers": {
-       "Mushroom Swiss burger": { requireAll: ["mushroom","swiss","burger"] }
-     },
-     "Brands": {
-       "Snapchat": { preferLogo: true, forbidHQ: true },
-       "Airbnb":   { preferLogo: true, forbidHQ: true }
-     }
-   };
+    // live region for announcements (non-invasive)
+    liveRegion: '[aria-live], .sr-live, #live',
 
-   window.BLIND_RANK_PINS = {
-     "Brands::Airbnb": "https://…/approved-image.jpg"  // hard pin
-   };
-=========================================== */
-window.BLIND_RANK_RULES = window.BLIND_RANK_RULES || {};
-window.BLIND_RANK_PINS  = window.BLIND_RANK_PINS  || {};
+    // UI text
+    topicTitle: '.topic-title, #topic-title, [data-role="topic-title"]',
+    itemLabel:  '.item-label, #item-label, [data-role="item-label"]',
 
-/* ---------- tiny utils ---------- */
-function shuffle(arr){
-  const a = arr.slice();
-  for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
-  return a;
-}
-function escapeHtml(str){
-  return String(str).replace(/[&<>\"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
-}
-function tokenize(s){
-  return String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").split(" ").filter(Boolean);
-}
-const STOP = new Set(["the","a","an","of","and","&","in","on","at","to","for"]);
-function scoreMatch(query, candidate){
-  const qt = new Set(tokenize(query).filter(w=>!STOP.has(w)));
-  const ct = new Set(tokenize(candidate).filter(w=>!STOP.has(w)));
-  if (!qt.size || !ct.size) return 0;
-  let hit=0; qt.forEach(t=>{ if(ct.has(t)) hit++; });
-  const recall = hit/qt.size, precis = hit/ct.size;
-  return 0.65*recall + 0.35*precis;
-}
-function strictTitleMatch(query, candidate){
-  const q = String(query||"").toLowerCase().trim();
-  const c = String(candidate||"").toLowerCase().trim();
-  if (!q || !c) return false;
-  const norm = s => s.replace(/[^\p{L}\p{N}]+/gu," ").trim();
-  return c === q || norm(c) === norm(q) || c.includes(q);
-}
-function hasAny(haystack, words){
-  const s = String(haystack || "").toLowerCase();
-  return Array.isArray(words) && words.some(w => s.includes(String(w).toLowerCase()));
-}
+    // ranking buttons (Place in #1..#5): either container with buttons or direct buttons
+    placeButtonsContainer: '.place-buttons, #place-buttons, [data-role="place-buttons"]',
+    placeButtons:          'button[data-rank], .btn-rank',
 
-/* ---------- fetch with timeout ---------- */
-async function fetchJson(url, opts = {}, timeoutMs = 9000){
-  const controller = new AbortController();
-  const id = setTimeout(()=>controller.abort(), timeoutMs);
-  try{
-    const r = await fetch(url, {...opts, signal: controller.signal});
-    if (!r.ok) return null;
-    const ct = r.headers.get("content-type") || "";
-    return ct.includes("application/json") ? r.json() : r.text();
-  }catch(_){ return null; }
-  finally{ clearTimeout(id); }
-}
+    // next/new topic buttons
+    nextBtn:  '#next-topic, .btn-next, [data-role="next"]',
+    newBtn:   '#new-topic, .btn-new,  [data-role="new"]',
 
-/* ---------- progressive image ---------- */
-function tmdbLowRes(url){
-  return url && url.includes("image.tmdb.org/t/p/")
-    ? url.replace(/\/w(1280|780|500)\//, "/w342/")
-    : url;
-}
-function decodeWithTimeout(img, ms=3500){
-  return Promise.race([ img.decode().catch(()=>{}), new Promise(res=>setTimeout(res,ms)) ]);
-}
-async function loadProgressive(el, highUrl, faceFocus=false){
-  const low = tmdbLowRes(highUrl) || highUrl;
-  el.style.objectPosition = faceFocus ? "center 20%" : "center";
-  el.src = low;
-  const hi = new Image();
-  hi.decoding = "async";
-  hi.src = highUrl;
-  await decodeWithTimeout(hi, 3000);
-  if (hi.complete && hi.naturalWidth > 0) el.src = highUrl;
-}
-
-/* ---------- loading overlay + control gating ---------- */
-const cardLoading  = $("#cardLoading");
-const placeButtons = $("#placeButtons");
-const newTopicBtn  = $("#nextTopicBtn");
-const nextTopicCta = $("#nextTopicCta");
-
-function setLoading(on){
-  if (cardLoading) cardLoading.hidden = !on;
-  // gate all relevant buttons only while loading
-  const toggle = (btn)=>{ if (btn) btn.disabled = !!on; };
-  $$("#placeButtons button").forEach(toggle);
-  toggle(newTopicBtn);
-  toggle(nextTopicCta);
-}
-
-/* ---------- cache ---------- */
-const IMG_CACHE_KEY = "blind-rank:imageCache:v18";
-let imageCache = {};
-try { imageCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(_){}
-const cacheGet = (k)=> imageCache[k];
-const cacheSet = (k,v)=>{ imageCache[k]=v; try{ localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imageCache)); }catch(_){ } };
-
-/* ---------- constants ---------- */
-const TMDB_BASE = "https://api.themoviedb.org/3";
-const TMDB_IMG  = "https://image.tmdb.org/t/p";
-
-const BUILDING_NEGS = [
-  "headquarters","hq","office","campus","building","storefront",
-  "facade","exterior","aerial","map","floorplan","signage"
-];
-
-/* ---------- classification ---------- */
-const P31_ALLOW = {
-  team   : new Set(["Q12973014","Q13393265","Q847017"]),
-  brand  : new Set(["Q431289","Q4830453"]),
-  person : new Set(["Q5"]),
-  group  : new Set(["Q215380","Q2088357"]),
-  movie  : new Set(["Q11424"]),
-  tv     : new Set(["Q5398426","Q1254874","Q581714","Q15709879"]),
-  place  : new Set(["Q515","Q486972","Q6256","Q1549591","Q23413","Q8502","Q3957"]),
-  food   : new Set(["Q2095","Q746549","Q18593264"]),
-  game   : new Set(["Q7889"]),
-  book   : new Set(["Q571","Q8261"]),
-  album  : new Set(["Q482994"]),
-  song   : new Set(["Q7366"]),
-  device : new Set(["Q838948","Q1972349","Q3249551"]), // wristwatch/smartwatch/electronic device
-  generic: null
-};
-function p31MatchesClass(p31Values, cls){
-  if (!cls || !P31_ALLOW[cls]) return true;
-  const allow = P31_ALLOW[cls];
-  if (!Array.isArray(p31Values) || p31Values.length === 0) return false;
-  return p31Values.some(qid => allow.has(qid));
-}
-
-const TEAM_HINTS = ["nba","nfl","mlb","nhl","ncaa","soccer","club","fc","united","city","boston celtics","lakers","yankees","dodgers","patriots","packers","cowboys","red sox","warriors","heat","bulls","knicks"];
-const BRAND_HINTS = ["inc","ltd","corp","company","brand","™","®","llc","gmbh"];
-const PLACE_HINTS = ["city","country","park","mount","mountain","lake","river","island","national park","monument","museum","tower","bridge","palace","cathedral"];
-const FOOD_HINTS  = ["pizza","burger","taco","sandwich","soup","salad","pasta","roll","cheese","sauce","noodle","ramen","sushi","steak","curry","dessert"];
-const DEVICE_HINTS= ["watch","smartwatch","fitbit","garmin","forerunner","apple","versa","galaxy","pixel","huawei","mi band","amazfit"];
-
-function hasWord(h, arr){ const s=String(h||"").toLowerCase(); return arr.some(w=>s.includes(w)); }
-function classifyEntity(topicName, label){
-  const t=(topicName||"").toLowerCase(), l=(label||"").toLowerCase();
-  if (hasWord(t,["boy bands","girl groups","bands","band","groups","k-pop","kpop","musical groups"]) || hasWord(l,[" band"," boyz","*nsync","bts","blackpink"])) return "group";
-  if (hasWord(t,["actor","actress","people","artists","singers","musicians","person"]) || hasWord(l,[" jr"," sr"," iii"])) return "person";
-  if (hasWord(t,["movie","film","films","movies"]) || hasWord(l,[" the movie"," (film)"])) return "movie";
-  if (hasWord(t,["tv","show","series","anime","cartoons"]) || hasWord(l,[" season"," (tv series)"])) return "tv";
-  if (hasWord(t,["video games","games","game"]) || hasWord(l,[" (video game)"])) return "game";
-  if (hasWord(t,["books","novels","book"]) || hasWord(l,[" (novel)"," (book)"])) return "book";
-  if (hasWord(t,["albums"]) || hasWord(l,[" (album)"])) return "album";
-  if (hasWord(t,["songs","tracks"]) || hasWord(l,[" (song)"])) return "song";
-  if (hasWord(t,["team","teams","club","soccer","football","basketball","baseball","hockey"]) || hasWord(l, TEAM_HINTS)) return "team";
-  if (hasWord(t,["brand","company"]) || hasWord(l, BRAND_HINTS)) return "brand";
-  if (hasWord(t,["smartwatches","devices","gadgets","phones","wearables"]) || hasWord(l, DEVICE_HINTS)) return "device";
-  if (hasWord(t,["city","places","landmarks","parks","countries"]) || hasWord(l, PLACE_HINTS)) return "place";
-  if (hasWord(t,["food","foods","dishes","cuisine","toppings","burger","pizza"]) || hasWord(l, FOOD_HINTS)) return "food";
-  return "generic";
-}
-
-/* ---------- content safety / acceptance gates ---------- */
-const ANIMAL_WORDS = ["dog","puppy","cat","kitten","horse","cow","pig","goat","sheep","monkey"];
-const CAR_WORDS    = [" car"," sedan"," hatchback"," suv"," coupe"," truck"," nissan"," bmw"," toyota"," mercedes"," ford"," chevy"," kia"," hyundai"];
-function urlHas(url, words){ const u=String(url||"").toLowerCase(); return words.some(w=>u.includes(w.trim())); }
-
-// RULE-driven post filter
-function applyRulePostFilter(meta, cls, label, topicName, rule){
-  if (!rule) return true;
-
-  const title = (meta.title||"").toLowerCase();
-  const desc  = (meta.desc||"").toLowerCase();
-  const url   = (meta.url||"").toLowerCase();
-  const blob  = title + " " + desc + " " + url;
-
-  if (Array.isArray(rule.forbid) && hasAny(blob, rule.forbid)) return false;
-  if (rule.forbidHQ && hasAny(blob, BUILDING_NEGS)) return false;
-
-  if (Array.isArray(rule.requireAll) && rule.requireAll.length){
-    const ok = rule.requireAll.every(tok => blob.includes(String(tok).toLowerCase()));
-    if (!ok) return false;
-  }
-
-  if (rule.requireAnimation){
-    // Prefer animation genre or keywords; allow poster art without explicit tags
-    const animish = blob.includes("animated") || blob.includes("animation") || meta.genreAnimation === true || meta.isPosterArt === true;
-    if (!animish) return false;
-  }
-
-  if (typeof rule.expectedYear === "number" && meta.year){
-    if (Number(meta.year) !== Number(rule.expectedYear)) return false;
-  }
-
-  // preferLogo is used upstream (logo selection path), but doesn't invalidate here.
-  return true;
-}
-
-function acceptanceForClass(meta, cls, label, topicName, brandToken){
-  const title = (meta.title||"").toLowerCase();
-  const desc  = (meta.desc||"").toLowerCase();
-  const url   = (meta.url||"").toLowerCase();
-  const lab   = (label||"").toLowerCase();
-  const topic = (topicName||"").toLowerCase();
-
-  // block obvious mismatches
-  if ((cls==="food" || cls==="device" || cls==="movie" || cls==="tv" || cls==="group" || cls==="person") && urlHas(url, ANIMAL_WORDS)) return false;
-  if ((cls==="food" || cls==="team"  || cls==="brand" || cls==="place" || cls==="device") && urlHas(url, CAR_WORDS)) return false;
-
-  // hard-block HQ/buildings unless it's an explicit logo
-  if ((cls === "brand" || cls === "team" || cls === "place") && !meta.isLogo){
-    if (hasAny(title + " " + desc + " " + url, BUILDING_NEGS)) return false;
-  }
-
-  // additional topic-specific constraints
-  const isBurgerContext = topic.includes("burger");
-  const isPizzaContext  = topic.includes("pizza");
-  const isTeaContext    = topic.includes("tea");
-
-  if (cls==="food"){
-    if (!meta.p31Ok) return false; // must be a food/dish entity
-    if (isBurgerContext){
-      const hasBurgerWord = title.includes("burger") || desc.includes("burger") || lab.includes("burger");
-      if (!hasBurgerWord) return false;
-
-      // if label has multiple specifics (e.g., mushroom swiss), require presence
-      const toks = tokenize(lab).filter(w=>!STOP.has(w));
-      const specific = toks.filter(w => !["burger","cheeseburger"].includes(w));
-      const allPresent = specific.length < 2 || specific.every(w => title.includes(w) || desc.includes(w));
-      if (!allPresent) return false;
-    }
-    if (isPizzaContext){
-      const pizzaish = title.includes("pizza") || desc.includes("pizza") || desc.includes("topping");
-      const cheeseOK = lab.includes("cheese");
-      if (!pizzaish && !cheeseOK) return false;
-    }
-    if (isTeaContext){
-      if (!(title.includes("tea") || desc.includes("tea"))) return false;
-    }
-    return true;
-  }
-
-  if (cls==="place"){
-    return meta.p31Ok;
-  }
-
-  if (cls==="team" || cls==="brand"){
-    return meta.p31Ok; // P31-validated; logos are fine
-  }
-
-  if (cls==="device"){
-    const watchy = ["watch","smartwatch","wearable","fitness","tracker"];
-    const hasDeviceWord = watchy.some(w=>title.includes(w)||desc.includes(w));
-    const hasBrand = brandToken ? (title.includes(brandToken)||desc.includes(brandToken)) : true;
-    return hasDeviceWord && hasBrand && !urlHas(url, CAR_WORDS);
-  }
-
-  // media & people rely on upstream providers
-  return !!meta.url;
-}
-
-/* ---------- canonicalization helpers ---------- */
-const TOPPING_ALIASES = {
-  "extra cheese":"Cheese",
-  "three cheese":"Cheese",
-  "cheese":"Cheese",
-  "bbq chicken":"Barbecue chicken",
-  "bbq sauce":"Barbecue sauce",
-  "green peppers":"Bell pepper",
-  "peppers":"Bell pepper",
-  "mushrooms":"Mushroom",
-  "black olives":"Olive",
-  "ham":"Ham",
-  "bacon":"Bacon",
-  "sausage":"Sausage",
-  "pepperoni":"Pepperoni",
-  "pineapple":"Pineapple",
-  "anchovies":"Anchovy",
-  "spinach":"Spinach",
-  "onions":"Onion",
-  "jalapeños":"Jalapeño",
-  "jalapenos":"Jalapeño"
-};
-function canonicalizeFoodLabel(topicName, label){
-  const t = (topicName||"").toLowerCase();
-  let l = label.trim();
-  const lower = l.toLowerCase();
-  if (t.includes("pizza")) {
-    if (TOPPING_ALIASES[lower]) l = TOPPING_ALIASES[lower];
-  }
-  if (t.includes("burger")){
-    const L = lower.replace("–","-").replace("—","-");
-    if (L.includes("mushroom") && L.includes("swiss") && !L.includes("burger")) l = "Mushroom Swiss burger";
-    if (L.includes("bacon") && L.includes("cheese") && !L.includes("burger")) l = "Bacon cheeseburger";
-    if (L.endsWith(" burger") === false && !L.includes("burger")) l = `${l} burger`;
-  }
-  if (t.includes("tea") && !lower.includes("tea")) l = `${l} tea`;
-  return l;
-}
-function extractBrandToken(label){
-  const parts = label.split(/\s+/);
-  return parts.length ? parts[0].toLowerCase() : null;
-}
-
-/* ---------- Wikipedia / Wikidata ---------- */
-const commonsFileUrl = (fileName, width=1400) =>
-  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=${width}`;
-
-async function wikiPageBasics(title){
-  const page = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&format=json&pithumbsize=1400&redirects=1&titles=${encodeURIComponent(title)}&origin=*`);
-  const first = Object.values(page?.query?.pages || {})[0];
-  if (!first) return null;
-  if (first?.pageprops?.disambiguation !== undefined) return { disambig:true };
-  return {
-    title: first?.title || title,
-    qid: first?.pageprops?.wikibase_item || null,
-    thumb: first?.thumbnail?.source || null
+    // generic disable-all during loads
+    allButtons: 'button'
   };
-}
 
-async function wikiLogoOrImageForClass(title, cls){
-  const page = await wikiPageBasics(title);
-  if (!page || page.disambig) return null;
-  let p31Ok = null;
+  /* ======================= LITTLE UTILITIES ======================= */
+  const $  = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const on  = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
 
-  if (page.qid){
-    const wd = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${page.qid}&property=P154|P18|P31&format=json&origin=*`);
-    const logos = wd?.claims?.P154 || [];
-    const p18s  = wd?.claims?.P18 || [];
-    const p31s  = (wd?.claims?.P31 || []).map(c=>c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
-    p31Ok = p31MatchesClass(p31s, cls);
+  const delay = (ms) => new Promise(r => setTimeout(r, ms));
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-    if (cls === "team" || cls === "brand"){
-      const logo = logos[0]?.mainsnak?.datavalue?.value;
-      if (logo) return { url: commonsFileUrl(logo), isLogo: true, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-    }
-    const p18 = p18s[0]?.mainsnak?.datavalue?.value;
-    if (p18) return { url: commonsFileUrl(p18), isLogo:false, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-  }
-  if (page.thumb) return { url: page.thumb, isLogo:false, title: page.title, desc:"", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-
-  const sum = await fetchJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true&origin=*`);
-  const img = sum?.originalimage?.source || sum?.thumbnail?.source;
-  if (!img) return null;
-  return { url: img, isLogo:false, title: sum?.title || title, desc: sum?.description || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-}
-
-// Wikidata entity search → accept only items whose P31 fits the class.
-async function wikidataFindImageByClass(label, cls){
-  const search = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(label)}&language=en&type=item&limit=8&format=json&origin=*`);
-  const hits = search?.search || [];
-  for (const h of hits){
-    const id = h.id;
-    const ent = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${id}&props=claims|sitelinks|labels|descriptions&languages=en&format=json&origin=*`);
-    const obj = ent?.entities?.[id];
-    if (!obj) continue;
-
-    const claims = obj.claims || {};
-    const p31s = (claims.P31 || []).map(c=>c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
-    const p31Ok = p31MatchesClass(p31s, cls);
-    if (!p31Ok) continue;
-
-    if ((cls === "team" || cls === "brand") && claims.P154?.[0]?.mainsnak?.datavalue?.value){
-      return { url: commonsFileUrl(claims.P154[0].mainsnak.datavalue.value), isLogo: true, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-    }
-    if (claims.P18?.[0]?.mainsnak?.datavalue?.value){
-      return { url: commonsFileUrl(claims.P18[0].mainsnak.datavalue.value), isLogo: false, title: obj.labels?.en?.value || label, desc: obj.descriptions?.en?.value || "", p31Ok, isPosterArt:false, genreAnimation:false, year:null };
-    }
-    const enTitle = obj.sitelinks?.enwiki?.title;
-    if (enTitle){
-      const viaPage = await wikiLogoOrImageForClass(enTitle, cls);
-      if (viaPage) { viaPage.p31Ok = p31Ok; return viaPage; }
-    }
-  }
-  return null;
-}
-
-// Wikipedia search → try top matches until class fits
-async function wikiResolveWithSearch(title, cls){
-  const search = await fetchJson(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title)}&srlimit=6&format=json&origin=*`);
-  const hits = search?.query?.search || [];
-  for (const h of hits){
-    const r = await wikiLogoOrImageForClass(h.title, cls);
-    if (r) return r;
-  }
-  return wikiLogoOrImageForClass(title, cls);
-}
-
-/* ---------- TMDB / TVMaze / OMDb ---------- */
-async function tmdbSearchImages(query, mediaType = "movie", opts = {}){
-  const key = window.BR_CONFIG?.TMDB_API_KEY || "";
-  if (!key) return null;
-
-  const params = new URLSearchParams({
-    api_key: key,
-    query,
-    include_adult: "false",
-    language: "en-US",
-    page: "1"
-  });
-
-  // if year known, TMDB supports 'year' for movies, 'first_air_date_year' for TV
-  if (opts.year && mediaType === "movie") params.set("year", String(opts.year));
-  if (opts.year && mediaType === "tv")    params.set("first_air_date_year", String(opts.year));
-
-  const url = `${TMDB_BASE}/search/${mediaType}?${params.toString()}`;
-  const data = await fetchJson(url);
-  if (!data?.results?.length) return null;
-
-  const norm = s => String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();
-  const qn = norm(query);
-
-  let best = null, bestScore = 0;
-  for (const r of data.results){
-    const title = r.title || r.name || "";
-    const tn = norm(title);
-    let s = scoreMatch(query, title);
-    if (tn === qn || strictTitleMatch(query, title)) s += 0.25;
-
-    // prefer expected year exactly if provided
-    const releaseYear = (r.release_date || r.first_air_date || "").slice(0,4);
-    if (opts.year && releaseYear && Number(releaseYear) === Number(opts.year)) s += 0.35;
-
-    // prefer animation if required
-    const isAnim = Array.isArray(r.genre_ids) && r.genre_ids.includes(16);
-    if (opts.requireAnimation && isAnim) s += 0.35;
-    if (opts.requireAnimation && !isAnim) s -= 0.2;
-
-    if (s > bestScore){ bestScore = s; best = r; }
-  }
-  const min = qn.length <= 3 ? 0.8 : 0.4;
-  if (!best || bestScore < min) return null;
-
-  // build image + meta
-  const releaseYear = (best.release_date || best.first_air_date || "").slice(0,4) || null;
-  const isAnim = Array.isArray(best.genre_ids) && best.genre_ids.includes(16);
-
-  if (mediaType === "person"){
-    const profile = best.profile_path ? `${TMDB_IMG}/w780${best.profile_path}` : null;
-    return profile ? { main: profile, thumb: profile, meta: { title: best.name || "", desc: "", p31Ok:true, year: null, genreAnimation: false, isPosterArt: false } } : null;
-  }
-  const main  = best.backdrop_path ? `${TMDB_IMG}/w1280${best.backdrop_path}` : (best.poster_path ? `${TMDB_IMG}/w780${best.poster_path}` : null);
-  const thumb = best.poster_path   ? `${TMDB_IMG}/w500${best.poster_path}`   : (best.backdrop_path ? `${TMDB_IMG}/w780${best.backdrop_path}` : null);
-  const isPosterArt = !!best.poster_path;
-
-  return (main || thumb) ? {
-    main, thumb,
-    meta: { title: best.title || best.name || "", desc: "", p31Ok:true, year: releaseYear ? Number(releaseYear) : null, genreAnimation: !!isAnim, isPosterArt }
-  } : null;
-}
-
-async function tvmazeShowImage(query){
-  const data = await fetchJson(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`);
-  if (!Array.isArray(data) || !data.length) return null;
-  const ranked = data
-    .map(x => ({
-      url: x?.show?.image?.original || x?.show?.image?.medium,
-      title: x?.show?.name || "",
-      score: scoreMatch(query, x?.show?.name || "")
-    }))
-    .filter(x => x.url).sort((a,b)=> b.score - a.score);
-  return (ranked[0] && ranked[0].score >= 0.4) ? { ...ranked[0], meta: { title: ranked[0].title, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false } } : null;
-}
-
-async function omdbPoster(query){
-  const key = window.BR_CONFIG?.OMDB_API_KEY;
-  if (!key) return null;
-  const d = await fetchJson(`https://www.omdbapi.com/?apikey=${encodeURIComponent(key)}&t=${encodeURIComponent(query)}`);
-  const p = d?.Poster;
-  const y = d?.Year ? Number(String(d.Year).slice(0,4)) : null;
-  return (p && p !== "N/A") ? { url: p, title: d?.Title || query, desc: "", p31Ok:true, year: y, genreAnimation:false, isPosterArt:true } : null;
-}
-
-/* ---------- de-dup helper: try contextual variants ---------- */
-async function tryContextualVariants(label, cls, topicName){
-  const t = (topicName||"").toLowerCase();
-  const variants = [label];
-
-  if (cls==="food"){
-    if (t.includes("burger")){
-      if (!/burger/i.test(label)) variants.unshift(`${label} burger`);
-    } else if (t.includes("pizza")){
-      if (!/pizza/i.test(label)) variants.unshift(`${label} pizza`);
-    } else if (t.includes("tea")){
-      if (!/tea/i.test(label)) variants.unshift(`${label} tea`);
-    }
-  }
-  if (cls==="device"){
-    if (!/watch|smartwatch/i.test(label)) variants.unshift(`${label} smartwatch`);
-  }
-
-  // Try wiki page for each variant
-  for (const v of variants){
-    const res = await wikiLogoOrImageForClass(v, cls);
-    if (res && acceptanceForClass(res, cls, label, topicName)) {
-      return { main: res.url, thumb: res.url, isLogo: !!res.isLogo, meta: { ...res } };
-    }
-  }
-  // Then Wikidata entity search
-  const wd = await wikidataFindImageByClass(label, cls);
-  if (wd && acceptanceForClass(wd, cls, label, topicName)) {
-    return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: { ...wd } };
-  }
-  return null;
-}
-
-/* ---------- face prefs ---------- */
-function topicPrefersFace(topic){
-  const PERSON_HINTS = ["artist","artists","singer","singers","musician","musicians","people","players","athlete","athletes","actors","actresses","olympian","olympians","drivers","golfers","sprinters","tennis","composers","legends","girl groups","boy bands","pop artists","hip-hop","character","characters","superhero","superheroes","marvel","dc","anime","manga"];
-  const name = (topic?.name || "").toLowerCase();
-  return PERSON_HINTS.some(h => name.includes(h)) || (topic?.mediaType === "person");
-}
-function labelPrefersFace(label){
-  const s = String(label||"").toLowerCase();
-  return /\b(man|woman|girl|boy|hero|princess|queen|king)\b/.test(s) ||
-         /iron man|batman|spider-man|spider man|superman|captain america|wonder woman|hulk|thor|black widow|goku|naruto|luffy|pikachu/.test(s);
-}
-
-/* ---------- provider race ---------- */
-async function firstTruthy(promises){
-  return new Promise((resolve) => {
-    let settled=false;
-    const done = (v)=>{ if(!settled && v){ settled=true; resolve(v);} };
-    promises.forEach(async p=>{ try{ done(await p);}catch{} });
-    Promise.allSettled(promises).then(()=> !settled && resolve(null));
-  });
-}
-
-/* ---------- unified resolver with duplicate-avoidance + rules/pins ---------- */
-let usedImageUrls = new Set(); // reset per topic
-
-function getRule(topic, label){
-  return (window.BLIND_RANK_RULES?.[topic?.name] || {})[label] || null;
-}
-function getPin(topic, label){
-  return window.BLIND_RANK_PINS?.[`${topic?.name}::${label}`] || null;
-}
-
-async function resolveImages(topic, rawItem){
-  const item = { ...rawItem };
-
-  // Canonicalize foods (pizza, burger) and tea contexts
-  if (/pizza|topping|burger|tea/i.test(topic.name||"")) {
-    item.label = canonicalizeFoodLabel(topic.name, item.label);
-  }
-
-  // Pinned image (hard override)
-  const pinned = getPin(topic, item.label);
-  if (pinned){
-    return {
-      main: pinned, thumb: pinned, isLogo:false,
-      prefersFace: false,
-      meta: { title: item.label, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false }
+  function getEl() {
+    // resolve all key elements once (lazily)
+    const els = {
+      img:        $(SELECTORS.previewImg),
+      live:       $(SELECTORS.liveRegion),
+      topicTitle: $(SELECTORS.topicTitle),
+      itemLabel:  $(SELECTORS.itemLabel),
+      placeWrap:  $(SELECTORS.placeButtonsContainer),
+      nextBtn:    $(SELECTORS.nextBtn),
+      newBtn:     $(SELECTORS.newBtn)
     };
+    // place buttons may be in a wrap or loose in DOM
+    els.placeBtns = els.placeWrap ? $$(SELECTORS.placeButtons, els.placeWrap) : $$(SELECTORS.placeButtons);
+    els.allBtns   = $$(SELECTORS.allButtons);
+    return els;
   }
 
-  if (item.imageUrl) return { main: item.imageUrl, thumb: item.imageUrl, isLogo:false };
-
-  const provider  = topic.provider || "static";
-  const mediaType = topic.mediaType || "";
-  const cacheKey  = `${provider}|${mediaType}|${item.label}`;
-  const hit = cacheGet(cacheKey); if (hit) return hit;
-
-  const cls = classifyEntity(topic.name, item.label);
-  const wantsFace = (cls === "person") || topicPrefersFace(topic) || labelPrefersFace(item.label);
-  const brandToken = (cls === "device") ? extractBrandToken(item.label) : null;
-
-  const rule = getRule(topic, item.label);
-  const tasks = [];
-
-  // Teams/brands (logos or page image; validated)
-  if (cls === "team" || cls === "brand"){
-    tasks.push((async()=>{
-      // if preferLogo, wiki route already tries P154 first
-      const page = await wikiLogoOrImageForClass(item.label, cls);
-      if (page && acceptanceForClass(page, cls, item.label, topic.name) && applyRulePostFilter(page, cls, item.label, topic.name, rule)) {
-        return { main: page.url, thumb: page.url, isLogo: !!page.isLogo, meta: { ...page } };
-      }
-      const wd = await wikidataFindImageByClass(item.label, cls);
-      if (wd && acceptanceForClass(wd, cls, item.label, topic.name) && applyRulePostFilter(wd, cls, item.label, topic.name, rule)) {
-        return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: { ...wd } };
-      }
-      return null;
-    })());
+  function normalize(s) {
+    return (s || '')
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[“”"']/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+  function titlesEqual(a, b) { return normalize(a) === normalize(b); }
+  function yearFrom(label) {
+    const m = String(label).match(/\b(19|20)\d{2}\b/);
+    return m ? +m[0] : null;
   }
 
-  // Movies / TV / Person
-  if (cls === "movie" || mediaType === "movie"){
-    tasks.push((async()=> {
-      const tm = await tmdbSearchImages(item.label, "movie", { year: rule?.expectedYear, requireAnimation: !!rule?.requireAnimation });
-      if (tm && applyRulePostFilter(tm.meta, "movie", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
-      const om = await omdbPoster(item.label);
-      if (om && acceptanceForClass(om, "movie", item.label, topic.name) && applyRulePostFilter(om, "movie", item.label, topic.name, rule)) return { main: om.url, thumb: om.url, isLogo:false, meta: om };
-      const wp = await wikiResolveWithSearch(item.label, "movie");
-      if (wp && acceptanceForClass(wp, "movie", item.label, topic.name) && applyRulePostFilter(wp, "movie", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
-      return null;
-    })());
-  }
-  if (cls === "tv" || mediaType === "tv"){
-    tasks.push((async()=>{
-      const tm = await tmdbSearchImages(item.label, "tv", { year: rule?.expectedYear, requireAnimation: !!rule?.requireAnimation });
-      if (tm && applyRulePostFilter(tm.meta, "tv", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
-      const tvm = await tvmazeShowImage(item.label);
-      if (tvm && acceptanceForClass({url:tvm.url,title:tvm.title,desc:"",p31Ok:true}, "tv", item.label, topic.name) && applyRulePostFilter(tvm.meta, "tv", item.label, topic.name, rule)) return { main: tvm.url, thumb: tvm.url, isLogo:false, meta: tvm.meta };
-      const wp = await wikiResolveWithSearch(item.label, "tv");
-      if (wp && acceptanceForClass(wp, "tv", item.label, topic.name) && applyRulePostFilter(wp, "tv", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
-      return null;
-    })());
-  }
-  if (cls === "person" || mediaType === "person"){
-    tasks.push((async()=>{
-      const tm = await tmdbSearchImages(item.label, "person");
-      if (tm && applyRulePostFilter(tm.meta, "person", item.label, topic.name, rule)) return { main: tm.main || tm.thumb, thumb: tm.thumb || tm.main, isLogo:false, meta: tm.meta };
-      const wp = await wikiResolveWithSearch(item.label, "person");
-      if (wp && acceptanceForClass(wp, "person", item.label, topic.name) && applyRulePostFilter(wp, "person", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
-      return null;
-    })());
-  }
-  if (cls === "group"){
-    tasks.push((async()=>{
-      const wp = await wikiResolveWithSearch(item.label, "group");
-      if (wp && acceptanceForClass(wp, "group", item.label, topic.name) && applyRulePostFilter(wp, "group", item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
-      return null;
-    })());
+  function setBusy(state = true) {
+    const { allBtns } = getEl();
+    allBtns.forEach(b => { b.disabled = !!state; });
   }
 
-  // Places / Foods (no stock)
-  if (cls === "place" || cls === "food"){
-    tasks.push((async()=>{
-      const wd = await wikidataFindImageByClass(item.label, cls);
-      if (wd && acceptanceForClass(wd, cls, item.label, topic.name) && applyRulePostFilter(wd, cls, item.label, topic.name, rule)) return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: wd };
-      // try contextual variants like "Mushroom Swiss burger", "Earl Grey tea"
-      const alt = await tryContextualVariants(item.label, cls, topic.name);
-      if (alt && applyRulePostFilter(alt.meta, cls, item.label, topic.name, rule)) return alt;
-      const wp = await wikiResolveWithSearch(item.label, cls);
-      if (wp && acceptanceForClass(wp, cls, item.label, topic.name) && applyRulePostFilter(wp, cls, item.label, topic.name, rule)) return { main: wp.url, thumb: wp.url, isLogo: !!wp.isLogo, meta: wp };
-      return null;
-    })());
+  function pulse(el) {
+    // subtle pulse; respects reduced motion
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !el?.animate) return;
+    el.animate([{ transform: 'scale(0.985)' }, { transform: 'scale(1)' }], { duration: 120, easing: 'ease-out' });
   }
 
-  // Devices / products (no stock)
-  if (cls === "device"){
-    tasks.push((async()=>{
-      const variants = [item.label, `${item.label} (smartwatch)`, `${item.label} smartwatch`, `${item.label} watch`];
-      for (const v of variants){
-        const r = await wikiLogoOrImageForClass(v, "device");
-        if (r && acceptanceForClass(r, "device", item.label, topic.name, brandToken) && applyRulePostFilter(r, "device", item.label, topic.name, rule)) {
-          return { main: r.url, thumb: r.url, isLogo: !!r.isLogo, meta: r };
+  function ariaAnnounce(msg) {
+    const { live } = getEl();
+    if (!live) return;
+    // clear then set to ensure screen readers detect change
+    live.textContent = '';
+    // slight delay so SR picks it up
+    setTimeout(() => { live.textContent = msg; }, 30);
+  }
+
+  /* ========================= CONFIG / KEYS ========================= */
+  const cfg = {
+    TMDB_KEY:   (window.CONFIG && window.CONFIG.TMDB_KEY)   || (window.BR_CONFIG && window.BR_CONFIG.TMDB_KEY)   || '',
+    OMDB_KEY:   (window.CONFIG && window.CONFIG.OMDB_KEY)   || (window.BR_CONFIG && window.BR_CONFIG.OMDB_KEY)   || '',
+    LASTFM_KEY: (window.CONFIG && window.CONFIG.LASTFM_KEY) || (window.BR_CONFIG && window.BR_CONFIG.LASTFM_KEY) || '',
+    AUDIO_KEY:  (window.CONFIG && window.CONFIG.AUDIO_KEY)  || (window.BR_CONFIG && window.BR_CONFIG.AUDIO_KEY)  || '',
+    PIXABAY_KEY:(window.CONFIG && window.CONFIG.PIXABAY_KEY)|| (window.BR_CONFIG && window.BR_CONFIG.PIXABAY_KEY)|| ''
+  };
+
+  // expose simple init if you ever want to override keys at runtime
+  window.BR = window.BR || {};
+  window.BR.init = function init(overrides = {}) { Object.assign(cfg, overrides); return ensureSmartCrop(); };
+
+  /* =================== SMARTCROP LOADER (ON-DEMAND) =================== */
+  function ensureSmartCrop() {
+    return new Promise((resolve, reject) => {
+      if (window.smartcrop) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/smartcrop@2.0.6/smartcrop.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('SmartCrop failed to load'));
+      document.head.appendChild(s);
+    });
+  }
+
+  /* ======================= CATEGORY INFERENCE ======================= */
+  const CATS = {
+    MOVIE: 'movie', TV: 'tv', PERSON: 'person',
+    MUSIC_ARTIST: 'music-artist', MUSIC_ALBUM: 'music-album', MUSIC_TRACK: 'music-track',
+    GAME: 'game', TEAM: 'team', BRAND: 'brand', LOGO: 'logo',
+    FOOD: 'food', DEVICE: 'device', PLACE: 'place', GENERIC: 'generic'
+  };
+
+  function inferCategory(label, hints = {}) {
+    const n = normalize(label);
+    if (hints.kind) return hints.kind;
+
+    if (/\bseason\b|\bs\d{1,2}\b/.test(n)) return CATS.TV;
+    if (/\balbum\b/.test(n)) return CATS.MUSIC_ALBUM;
+    if (/\btrack\b|\bsong\b/.test(n)) return CATS.MUSIC_TRACK;
+    if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
+    if (/\bfc\b|\bclub\b|\bunited\b|\bcity\b|\bpatriots\b|\blakers\b|\bwarriors\b/.test(n)) return CATS.TEAM;
+    if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\blogo\b|\bbrand\b/.test(n)) return CATS.BRAND;
+    if (/\blogo\b/.test(n)) return CATS.LOGO;
+    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bfries\b|\bcoffee\b|\btea\b|\bmushroom\b|\bswiss\b/.test(n)) return CATS.FOOD;
+    if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b/.test(n)) return CATS.DEVICE;
+    if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bstate\b/.test(n)) return CATS.PLACE;
+    if (/\bactor\b|\bactress\b|\bdirector\b|\bproducer\b/.test(n)) return CATS.PERSON;
+
+    return CATS.GENERIC;
+  }
+
+  /* ======================= CONTEXT TOKEN BUILDER ======================= */
+  function buildContext(label, cat, hints = {}) {
+    const base = normalize(label);
+    const toks = [];
+    switch (cat) {
+      case CATS.PERSON:
+        toks.push(`${base} portrait headshot face centered photo`, 'front view professional photography'); break;
+      case CATS.MOVIE:
+        toks.push(`${base} official movie poster`, String(hints.year || yearFrom(label) || ''));
+        toks.push('no fan art no parody'); break;
+      case CATS.TV:
+        toks.push(`${base} official tv poster`, String(hints.year || yearFrom(label) || ''));
+        toks.push('no fan art no parody'); break;
+      case CATS.MUSIC_ALBUM:
+        toks.push(`${base} official album cover square`, 'no fan art no lyric video'); break;
+      case CATS.MUSIC_TRACK:
+        toks.push(`${base} official single cover square`, 'no fan art'); break;
+      case CATS.MUSIC_ARTIST:
+        toks.push(`${base} artist press photo portrait`); break;
+      case CATS.GAME:
+        toks.push(`${base} official video game logo transparent`, 'no fan art no box mockup'); break;
+      case CATS.LOGO:
+      case CATS.BRAND:
+      case CATS.TEAM:
+        toks.push(`${base} official logo transparent background svg png`, 'centered no mockup no banner'); break;
+      case CATS.FOOD:
+        toks.push(`${base} plated dish food photography`, 'no raw ingredients no recipe text');
+        if (/\bmushroom\b/.test(base)) toks.push('mushroom');
+        if (/\bswiss\b/.test(base))    toks.push('swiss cheese');
+        if (/\bburger\b/.test(base))   toks.push('burger sandwich');
+        break;
+      case CATS.DEVICE:
+        toks.push(`${base} product photo front view`, 'studio lighting isolated'); break;
+      case CATS.PLACE:
+        toks.push(`${base} landmark skyline wide shot`); break;
+      default:
+        toks.push(`${base} high quality photo`);
+    }
+    return toks.filter(Boolean).join(' ').trim();
+  }
+
+  /* ===================== DUPLICATE AVOIDANCE ===================== */
+  const seen = new Set();
+  function resetSeen() { seen.clear(); }
+  function markSeen(url) { if (url) seen.add(url.replace(/\?.*$/, '')); }
+  function isSeen(url)   { return url ? seen.has(url.replace(/\?.*$/, '')) : false; }
+
+  /* ========================= PROVIDER CALLS ========================= */
+  // TMDB common
+  function tmdbImage(path, size = 'w500') { return path ? `https://image.tmdb.org/t/p/${size}${path}` : null; }
+
+  async function tmdbSearchMovie(title, year) {
+    if (!cfg.TMDB_KEY) return null;
+    const u = new URL('https://api.themoviedb.org/3/search/movie');
+    u.searchParams.set('api_key', cfg.TMDB_KEY);
+    u.searchParams.set('query', title);
+    if (year) u.searchParams.set('year', year);
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    return j.results?.find(x => titlesEqual(x.title, title) || titlesEqual(x.original_title, title)) || null;
+  }
+  async function tmdbSearchTV(title, year) {
+    if (!cfg.TMDB_KEY) return null;
+    const u = new URL('https://api.themoviedb.org/3/search/tv');
+    u.searchParams.set('api_key', cfg.TMDB_KEY);
+    u.searchParams.set('query', title);
+    if (year) u.searchParams.set('first_air_date_year', year);
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    return j.results?.find(x => titlesEqual(x.name, title) || titlesEqual(x.original_name, title)) || null;
+  }
+  async function tmdbSearchPerson(name) {
+    if (!cfg.TMDB_KEY) return null;
+    const u = new URL('https://api.themoviedb.org/3/search/person');
+    u.searchParams.set('api_key', cfg.TMDB_KEY);
+    u.searchParams.set('query', name);
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    return j.results?.find(x => titlesEqual(x.name, name)) || null;
+  }
+
+  // Last.fm / TheAudioDB
+  async function lastfmArtistImage(artist) {
+    if (!cfg.LASTFM_KEY) return null;
+    const u = new URL('https://ws.audioscrobbler.com/2.0/');
+    u.searchParams.set('method', 'artist.getinfo');
+    u.searchParams.set('artist', artist);
+    u.searchParams.set('api_key', cfg.LASTFM_KEY);
+    u.searchParams.set('format', 'json');
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    const ok = j?.artist?.name && titlesEqual(j.artist.name, artist);
+    if (!ok) return null;
+    const images = j?.artist?.image || [];
+    const best = images.reverse().find(im => im['#text']);
+    return best ? best['#text'] : null;
+  }
+  async function theAudioDBAlbumCover(artist, album) {
+    if (!cfg.AUDIO_KEY) return null;
+    const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchalbum.php`);
+    u.searchParams.set('s', artist);
+    u.searchParams.set('a', album);
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    const exact = j?.album?.find(a => titlesEqual(a.strArtist, artist) && titlesEqual(a.strAlbum, album));
+    return exact?.strAlbumThumbHQ || exact?.strAlbumThumb || null;
+  }
+  async function theAudioDBTrackCover(artist, track) {
+    if (!cfg.AUDIO_KEY) return null;
+    const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchtrack.php`);
+    u.searchParams.set('s', artist);
+    u.searchParams.set('t', track);
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    const exact = j?.track?.find(t => titlesEqual(t.strArtist, artist) && titlesEqual(t.strTrack, track));
+    return exact?.strTrackThumbHQ || exact?.strTrackThumb || null;
+  }
+
+  // Wikidata / Wikipedia
+  async function wikidataQID(label) {
+    const u = new URL('https://www.wikidata.org/w/api.php');
+    u.searchParams.set('action', 'wbsearchentities');
+    u.searchParams.set('search', label);
+    u.searchParams.set('language', 'en');
+    u.searchParams.set('format', 'json');
+    u.searchParams.set('origin', '*');
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    const exact = j?.search?.find(e => titlesEqual(e.label, label));
+    return (exact || j?.search?.[0])?.id || null;
+  }
+  async function wikidataLogoByQID(qid) {
+    if (!qid) return null;
+    const u = new URL('https://www.wikidata.org/w/api.php');
+    u.searchParams.set('action', 'wbgetclaims');
+    u.searchParams.set('entity', qid);
+    u.searchParams.set('property', 'P154'); // official logo image
+    u.searchParams.set('format', 'json');
+    u.searchParams.set('origin', '*');
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    const claim = j?.claims?.P154?.[0]?.mainsnak?.datavalue?.value;
+    if (!claim) return null;
+    const file = claim.replace(/ /g, '_');
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}`;
+  }
+  async function wikipediaLeadImage(label) {
+    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.thumbnail?.source || j?.originalimage?.source || null;
+  }
+
+  // Pixabay
+  async function pixabayImage(query) {
+    if (!cfg.PIXABAY_KEY) return null;
+    const u = new URL('https://pixabay.com/api/');
+    u.searchParams.set('key', cfg.PIXABAY_KEY);
+    u.searchParams.set('q', query);
+    u.searchParams.set('image_type', 'photo');
+    u.searchParams.set('safesearch', 'true');
+    u.searchParams.set('per_page', '10');
+    const r = await fetch(u); if (!r.ok) return null;
+    const j = await r.json();
+    return j?.hits?.[0]?.largeImageURL || j?.hits?.[0]?.webformatURL || null;
+  }
+
+  /* ========================= MASTER RESOLVER ========================= */
+  async function resolveImageURL(item) {
+    // item: { label, hints? } ; hints: {kind, year, artist, album, track}
+    const label = item?.label || '';
+    const hints = item?.hints || {};
+    const cat   = inferCategory(label, hints);
+    const y     = hints.year || yearFrom(label);
+
+    // STRICT: do not accept "close but not exact" — only exact normalized matches
+
+    if (cat === CATS.MOVIE) {
+      const m = await tmdbSearchMovie(label, y);
+      const url = m ? (tmdbImage(m.poster_path, 'w500') || tmdbImage(m.backdrop_path, 'w780')) : null;
+      return url && !isSeen(url) ? url : null;
+    }
+    if (cat === CATS.TV) {
+      const t = await tmdbSearchTV(label, y);
+      const url = t ? (tmdbImage(t.poster_path, 'w500') || tmdbImage(t.backdrop_path, 'w780')) : null;
+      return url && !isSeen(url) ? url : null;
+    }
+    if (cat === CATS.PERSON) {
+      const p = await tmdbSearchPerson(label);
+      const url = p ? tmdbImage(p.profile_path, 'w500') : null;
+      return url && !isSeen(url) ? url : null;
+    }
+
+    // Music
+    if (cat === CATS.MUSIC_ALBUM && hints.artist) {
+      const url = await theAudioDBAlbumCover(hints.artist, label);
+      return url && !isSeen(url) ? url : null;
+    }
+    if (cat === CATS.MUSIC_TRACK && hints.artist) {
+      const url = await theAudioDBTrackCover(hints.artist, label);
+      return url && !isSeen(url) ? url : null;
+    }
+    if (cat === CATS.MUSIC_ARTIST) {
+      const url = await lastfmArtistImage(label);
+      return url && !isSeen(url) ? url : null;
+    }
+
+    // Logos / Brands / Teams / Games — prefer official transparent logo
+    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) {
+      const qid  = await wikidataQID(label);
+      const logo = await wikidataLogoByQID(qid);
+      if (logo && !isSeen(logo)) return logo;
+
+      const wiki = await wikipediaLeadImage(label);
+      if (wiki && /logo/i.test(wiki) && !isSeen(wiki)) return wiki;
+
+      const context = buildContext(label, cat, hints);
+      const pb = await pixabayImage(context);
+      return pb && !isSeen(pb) ? pb : null;
+    }
+
+    // Food / Device / Place / Generic — context-enriched Pixabay
+    const context = buildContext(label, cat, hints);
+    const pb = await pixabayImage(context);
+    return pb && !isSeen(pb) ? pb : null;
+  }
+
+  /* =================== SMART RENDERING PIPELINE =================== */
+  function chooseRenderMode(cat) {
+    // contain (no cropping) for logos/marks/covers; cover-smart for everything else
+    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) return 'contain';
+    if (cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) return 'contain';
+    return 'cover-smart';
+  }
+
+  function getTargetSizeFor(imgEl) {
+    const rect = imgEl.getBoundingClientRect();
+    let w = Math.max(1, Math.round(rect.width))  || 512;
+    let h = Math.max(1, Math.round(rect.height)) || 384;
+    const MAX = 1600;
+    if (w > MAX || h > MAX) {
+      const s = Math.min(MAX / w, MAX / h);
+      w = Math.round(w * s);
+      h = Math.round(h * s);
+    }
+    return { w, h };
+  }
+
+  async function smartRenderInto(imgEl, srcURL, mode, bg = 'transparent') {
+    await ensureSmartCrop();
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = async () => {
+        try {
+          const { w: tw, h: th } = getTargetSizeFor(imgEl);
+          const canvas = document.createElement('canvas');
+          canvas.width = tw; canvas.height = th;
+          const ctx = canvas.getContext('2d');
+
+          if (mode === 'contain') {
+            if (bg && bg !== 'transparent') {
+              ctx.fillStyle = bg; ctx.fillRect(0, 0, tw, th);
+            }
+            const scale = Math.min(tw / img.width, th / img.height);
+            const dw = Math.round(img.width * scale);
+            const dh = Math.round(img.height * scale);
+            const dx = Math.round((tw - dw) / 2);
+            const dy = Math.round((th - dh) / 2);
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, dx, dy, dw, dh);
+          } else {
+            const crop = await window.smartcrop.crop(img, { width: tw, height: th, minScale: 1.0, ruleOfThirds: true });
+            const top = crop?.topCrop || crop?.crops?.[0] || { x: 0, y: 0, width: img.width, height: img.height };
+            const sx = clamp(Math.round(top.x), 0, img.width);
+            const sy = clamp(Math.round(top.y), 0, img.height);
+            const sw = clamp(Math.round(top.width), 1, img.width - sx);
+            const sh = clamp(Math.round(top.height), 1, img.height - sy);
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
+          }
+          canvas.toBlob((blob) => {
+            if (!blob) return reject(new Error('toBlob failed'));
+            const url = URL.createObjectURL(blob);
+            // assign and leave the URL object in place until next render; GC later
+            imgEl.src = url;
+            imgEl.setAttribute('data-processed', '1');
+            resolve(url);
+          }, 'image/png');
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error('Image load failed: ' + srcURL));
+      img.src = srcURL;
+    });
+  }
+
+  /* ================ PUBLIC RESOLVE + RENDER (used by UI) ================ */
+  async function resolveAndRender(item, opts = {}) {
+    const els  = getEl();
+    const img  = els.img;
+    const lab  = els.itemLabel;
+
+    // prepare UI text
+    if (lab) lab.textContent = item?.label || '';
+
+    setBusy(true);
+    try {
+      const url = await resolveImageURL(item);
+      if (!url) throw new Error('No exact image found for: ' + (item?.label || ''));
+      markSeen(url);
+      // initial alt for a11y (set before load)
+      if (img) img.alt = item?.label || '';
+
+      const cat  = inferCategory(item?.label, item?.hints);
+      const mode = chooseRenderMode(cat);
+      await smartRenderInto(img, url, mode, 'transparent');
+      ariaAnnounce(`Loaded image for ${item?.label}`);
+      pulse(img);
+      return true;
+    } catch (err) {
+      console.error(err);
+      // graceful fallback: try a context Pixabay if main resolver failed
+      const cat = inferCategory(item?.label, item?.hints);
+      const ctx = buildContext(item?.label, cat, item?.hints);
+      const pb  = await pixabayImage(ctx);
+      if (pb && !isSeen(pb)) {
+        markSeen(pb);
+        if (els.img) {
+          els.img.src = pb;
+          els.img.alt = item?.label || '';
+          ariaAnnounce(`Loaded fallback image for ${item?.label}`);
+          pulse(els.img);
+          setBusy(false);
+          return true;
         }
       }
-      const wd = await wikidataFindImageByClass(item.label, "device");
-      if (wd && acceptanceForClass(wd, "device", item.label, topic.name, brandToken) && applyRulePostFilter(wd, "device", item.label, topic.name, rule)) {
-        return { main: wd.url, thumb: wd.url, isLogo: !!wd.isLogo, meta: wd };
-      }
-      return null;
-    })());
-  }
-
-  // Generic → Wikipedia only
-  if (cls === "generic" || provider === "wiki"){
-    tasks.push((async()=>{
-      const r = await wikiResolveWithSearch(item.label, "generic");
-      if (r && acceptanceForClass(r, "generic", item.label, topic.name) && applyRulePostFilter(r, "generic", item.label, topic.name, rule)) {
-        return { main: r.url, thumb: r.url, isLogo: !!r.isLogo, meta: r };
-      }
-      return null;
-    })());
-  }
-
-  let out = await firstTruthy(tasks);
-
-  // If nothing acceptable, use neutral placeholder
-  if (!out){
-    const ph = `https://placehold.co/800x450?text=${encodeURIComponent(item.label)}`;
-    out = { main: ph, thumb: ph, isLogo:false, meta: { title: item.label, desc:"", p31Ok:true, year:null, genreAnimation:false, isPosterArt:false } };
-  }
-
-  // Avoid duplicates within the same topic by trying contextual variants
-  if (usedImageUrls.has(out.thumb)) {
-    const alt = await tryContextualVariants(item.label, cls, topic.name);
-    if (alt && !usedImageUrls.has(alt.thumb) && applyRulePostFilter(alt.meta, cls, item.label, topic.name, rule)) out = alt;
-  }
-
-  out.prefersFace = (cls === "person") || topicPrefersFace(topic) || labelPrefersFace(item.label);
-  cacheSet(cacheKey, out);
-  return out;
-}
-
-/* ---------- state & elements ---------- */
-const topics = window.BLIND_RANK_TOPICS || [];
-let topicOrder = shuffle(topics.map((_,i)=>i));
-let currentTopicIndex = 0;
-
-let currentTopic = null;
-let itemsQueue   = [];
-let placed       = {};
-let currentItem  = null;
-let didCelebrate = false;
-
-const SESSION_KEY = "blind-rank:session:v12";
-
-const topicTag     = $("#topicTag");
-const cardImg      = $("#cardImg");
-const itemTitle    = $("#itemTitle");
-const helpText     = $("#cardHelp");
-const rankSlots    = $$(".rank-slot");
-const resultsEl    = $("#results");
-const confettiEl   = $("#confetti");
-
-/* ---------- UI + session ---------- */
-function updateUIAfterState(){
-  if (!currentItem){
-    setLoading(false);
-    itemTitle && (itemTitle.textContent = "All items placed!");
-    helpText  && (helpText.textContent  = "Great job — tap Next Topic to continue.");
-    if (cardImg) cardImg.style.display = "none";
-    if (nextTopicCta) nextTopicCta.hidden = false;
-    celebrate();
-    return;
-  }
-  if (nextTopicCta) nextTopicCta.hidden = true;
-  if (cardImg) cardImg.style.display = "";
-}
-
-function saveSession(){
-  try{
-    const placedLabels = {};
-    for (const [rank, item] of Object.entries(placed)) placedLabels[rank] = item.label;
-    const payload = {
-      version: 12,
-      topicOrder,
-      currentTopicIndex,
-      placedLabels,
-      queueLabels: itemsQueue.map(it => it.label),
-      currentItemLabel: currentItem?.label || null,
-      when: Date.now()
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-  }catch(_){}
-}
-function restoreSession(){
-  try{
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return false;
-    const s = JSON.parse(raw);
-    if (!s?.topicOrder) return false;
-
-    topicOrder = s.topicOrder;
-    currentTopicIndex = s.currentTopicIndex || 0;
-    const topicIdx = topicOrder[currentTopicIndex] ?? 0;
-    currentTopic = topics[topicIdx];
-    if (!currentTopic) return false;
-
-    const byLabel = (label)=> (currentTopic.items || []).find(it => it.label === label);
-
-    placed = {};
-    Object.entries(s.placedLabels || {}).forEach(([rank, label])=>{
-      const it = byLabel(label); if (it) placed[Number(rank)] = it;
-    });
-    itemsQueue  = (s.queueLabels || []).map(byLabel).filter(Boolean);
-    currentItem = s.currentItemLabel ? byLabel(s.currentItemLabel) : (itemsQueue.shift() || null);
-
-    topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
-    clearSlots();
-    Object.entries(placed).forEach(([rankStr, it])=>{
-      const slot = $(`.rank-slot[data-rank="${rankStr}"]`);
-      if (slot) renderSlotInto(slot, it, currentTopic);
-    });
-    updateResults();
-    didCelebrate = false;
-    usedImageUrls = new Set();
-    // seed used set from already-placed thumbs
-    $$(".slot-thumb").forEach(st=>{
-      const bg = st.style.backgroundImage || "";
-      const url = bg.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
-      if (url) usedImageUrls.add(url);
-    });
-    paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
-    wireControls();
-    return true;
-  }catch(_){ return false; }
-}
-
-/* ---------- UI helpers ---------- */
-function clearSlots(){
-  rankSlots.forEach(slot=>{
-    slot.setAttribute("aria-selected","false");
-    const dz = $(".slot-dropzone", slot);
-    dz.innerHTML = "";
-    dz.classList.add("empty");
-  });
-}
-
-let _paintToken = 0;
-async function paintCurrent(){
-  if (!currentItem){
-    setLoading(false);
-    updateUIAfterState();
-    return;
-  }
-  const token = ++_paintToken;
-
-  setLoading(true);
-  const info = await resolveImages(currentTopic, currentItem);
-  if (token !== _paintToken) return; // user advanced; abandon
-
-  if (cardImg){
-    cardImg.style.objectFit = info.isLogo ? "contain" : "cover";
-    cardImg.style.background = info.isLogo ? "#0e120e" : "transparent";
-    await loadProgressive(cardImg, info.main, !info.isLogo && (info.prefersFace === true));
-    if (token !== _paintToken) return;
-    cardImg.alt = currentItem.label;
-  }
-  setLoading(false);
-
-  if (token !== _paintToken) return;
-  itemTitle && (itemTitle.textContent = currentItem.label);
-  if (helpText) {
-    helpText.innerHTML = `
-      <svg class="info-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path></svg>
-      Use the <strong>Place</strong> buttons to lock this into a rank. No drag needed.
-    `;
-  }
-}
-
-/* prefetch next N low-res */
-async function prefetchNext(n=2){
-  const peek = itemsQueue.slice(0, n);
-  for (const it of peek){
-    const { main } = await resolveImages(currentTopic, it);
-    const img = new Image(); img.decoding="async";
-    img.src = tmdbLowRes(main) || main;
-  }
-}
-
-/* ---------- flow ---------- */
-function startNewSession(){
-  if (!Array.isArray(topics) || topics.length === 0) {
-    topicTag && (topicTag.textContent = "Add topics to begin");
-    itemTitle && (itemTitle.textContent = "No topics found");
-    helpText  && (helpText.textContent  = "Create topics.js and define window.BLIND_RANK_TOPICS.");
-    setLoading(false);
-    return;
-  }
-  topicOrder = shuffle(topics.map((_,i)=>i));
-  currentTopicIndex = 0;
-  loadTopicByOrderIndex(0);
-  saveSession();
-}
-
-function loadTopicByOrderIndex(orderIdx){
-  const idx = topicOrder[orderIdx] ?? 0;
-  currentTopicIndex = orderIdx;
-  currentTopic = topics[idx];
-
-  placed      = {};
-  itemsQueue  = shuffle((currentTopic.items || []).slice());
-  currentItem = itemsQueue.shift() || null;
-
-  didCelebrate = false;
-  usedImageUrls = new Set();
-
-  topicTag && (topicTag.textContent = currentTopic.name || "Untitled");
-  clearSlots();
-  updateResults();
-  setLoading(false);
-  paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
-  saveSession();
-}
-
-async function placeCurrentItemInto(rank){
-  rank = Number(rank);
-  if (!currentItem || (cardLoading && !cardLoading.hidden)) return;
-  if (placed[rank]) return;
-  const slot = $(`.rank-slot[data-rank="${rank}"]`);
-  if (!slot) return;
-
-  placed[rank] = currentItem;
-  await renderSlotInto(slot, currentItem, currentTopic);
-  slot.setAttribute("aria-selected","true");
-
-  currentItem = itemsQueue.shift() || null;
-
-  updateResults();
-  saveSession();
-
-  paintCurrent().then(()=>{ updateUIAfterState(); prefetchNext(2); });
-}
-
-async function renderSlotInto(slot, item, topic){
-  const dz = $(".slot-dropzone", slot);
-  dz.classList.remove("empty");
-  dz.innerHTML = `
-    <div class="slot-item">
-      <div class="slot-thumb skeleton"></div>
-      <div class="slot-meta">
-        <p class="title">${escapeHtml(item.label)}</p>
-        <p class="topic">${escapeHtml(topic.name || "")}</p>
-      </div>
-    </div>
-  `;
-  const info = await resolveImages(topic, item);
-
-  // Verify loads; else placeholder
-  const ok = await new Promise(res => {
-    const im = new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src = info.thumb;
-  });
-  const finalThumb = ok ? info.thumb : `https://placehold.co/320x200?text=${encodeURIComponent(item.label)}`;
-
-  const face = !info.isLogo && (topicPrefersFace(topic) || labelPrefersFace(item.label));
-  const thumbEl = $(".slot-thumb", dz);
-  if (thumbEl){
-    thumbEl.classList.remove("skeleton");
-    thumbEl.style.backgroundImage   = `url('${finalThumb}')`;
-    thumbEl.style.backgroundPosition = face ? "center 20%" : "center";
-    thumbEl.style.backgroundSize     = info.isLogo ? "contain" : "cover";
-    thumbEl.style.backgroundColor    = info.isLogo ? "#0e120e" : "transparent";
-  }
-
-  // Track used URLs for duplicate avoidance
-  usedImageUrls.add(finalThumb);
-}
-
-function updateResults(){
-  const filled = Object.keys(placed).length;
-  const remain = Math.max(0, 5 - filled);
-  const resultsEl = $("#results");
-  if (resultsEl) resultsEl.textContent = filled === 5 ? "All five placed. Nice!" : `${remain} to place…`;
-
-  if (filled === 4) {
-    const nextIdx = (currentTopicIndex + 1) % topicOrder.length;
-    const nextTopic = topics[topicOrder[nextIdx]];
-    if (nextTopic?.items?.[0]) {
-      resolveImages(nextTopic, nextTopic.items[0]).then(info => {
-        const img = new Image(); img.decoding="async"; img.src = tmdbLowRes(info.main) || info.main;
-      }).catch(()=>{});
+      // final: clear img
+      if (els.img) els.img.removeAttribute('src');
+      ariaAnnounce(`Couldn't load image for ${item?.label}`);
+      return false;
+    } finally {
+      setBusy(false);
     }
   }
-}
 
-/* ---------- controls (idempotent) ---------- */
-function gotoNextTopic(){
-  const next = (currentTopicIndex + 1) % topicOrder.length;
-  setLoading(false);
-  loadTopicByOrderIndex(next);
-}
+  /* ===================== SIMPLE APP STATE & WIRING ===================== */
+  // This section assumes you already load TOPICS somewhere (topics.js).
+  // It preserves look/feel; only JS behavior is improved.
 
-function addRipple(btn, evt){
-  const rect = btn.getBoundingClientRect();
-  const ripple = document.createElement("span");
-  ripple.className = "ripple";
-  const size = Math.max(rect.width, rect.height) * 1.6; // stronger/larger ripple
-  const x = ((evt.clientX ?? (rect.left + rect.width/2)) - rect.left) - size/2;
-  const y = ((evt.clientY ?? (rect.top + rect.height/2)) - rect.top)  - size/2;
-  ripple.style.width = ripple.style.height = `${size*1.75}px`;
-  ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
-  ripple.style.opacity = "0.45";       // more visible on mobile
-  ripple.style.transform = "scale(1)"; // initial
-  btn.appendChild(ripple);
-  setTimeout(()=> ripple.remove(), 900);
-}
+  const App = {
+    topics: window.TOPICS || [], // [{title, items:[{label,hints?}...]}]
+    topicIndex: 0,
+    itemIndex:  0,
+    ranks:      [], // array of 5 placed items (indices), or objects per your schema
 
-function wireControls(){
-  const pb = $("#placeButtons");
-  if (pb && !pb.__wired){
-    pb.addEventListener("click",(e)=>{
-      const btn = e.target.closest("[data-rank]");
-      if (!btn) return;
-      addRipple(btn, e);
-      btn.animate([{transform:"translateY(0)"},{transform:"translateY(1px)"},{transform:"translateY(0)"}],{duration:160,easing:"ease-out"});
-      placeCurrentItemInto(btn.dataset.rank);
+    currentTopic() { return this.topics[this.topicIndex] || null; },
+    currentItem()  {
+      const t = this.currentTopic(); if (!t) return null;
+      return t.items?.[this.itemIndex] || null;
+    },
+    resetRanks() { this.ranks = new Array(5).fill(null); }
+  };
+
+  function renderTopicTitle() {
+    const t = App.currentTopic();
+    const { topicTitle } = getEl();
+    if (topicTitle) topicTitle.textContent = t?.title || '';
+  }
+
+  async function showCurrentItem() {
+    const item = App.currentItem();
+    if (!item) return;
+    await resolveAndRender(item);
+  }
+
+  function bindPlaceButtons() {
+    const { placeBtns } = getEl();
+    placeBtns.forEach(btn => {
+      const r = parseInt(btn.getAttribute('data-rank') || btn.dataset.rank || '', 10);
+      if (!Number.isFinite(r)) return;
+      on(btn, 'click', async () => {
+        // store placement (you may already have your own structure—this preserves behavior)
+        App.ranks[r - 1] = App.currentItem();
+        // proceed to next item in topic
+        App.itemIndex = Math.min((App.itemIndex + 1), (App.currentTopic().items.length - 1));
+        // if we've filled all or reached end, you can show summary or auto-next
+        await showCurrentItem();
+      });
     });
-    pb.__wired = true;
   }
-  const topBtn = $("#nextTopicBtn");
-  if (topBtn && !topBtn.__wired){
-    topBtn.addEventListener("click", gotoNextTopic);
-    topBtn.__wired = true;
-  }
-  if (nextTopicCta && !nextTopicCta.__wired){
-    nextTopicCta.addEventListener("click", gotoNextTopic);
-    nextTopicCta.__wired = true;
-  }
-}
-wireControls();
 
-/* ---------- confetti ---------- */
-function celebrate(){
-  const filled = Object.keys(placed).length;
-  if (filled !== 5 || didCelebrate || !confettiEl) return;
-  didCelebrate = true;
-
-  const canvas = confettiEl;
-  canvas.width = innerWidth; canvas.height = innerHeight;
-  canvas.style.display = "block";
-
-  const ctx = canvas.getContext("2d");
-  const colors = ["#FFD84D","#7C5CFF","#22C55E","#F472B6","#38BDF8"];
-  const parts = Array.from({length: 110}).map(()=>({
-    x: Math.random()*canvas.width,
-    y: -20 - Math.random()*canvas.height*0.3,
-    r: 4 + Math.random()*6,
-    c: colors[Math.floor(Math.random()*colors.length)],
-    vx: -2 + Math.random()*4,
-    vy: 2 + Math.random()*3,
-    rot: Math.random()*Math.PI,
-    vr: -0.12 + Math.random()*0.24
-  }));
-
-  let t = 0;
-  (function tick(){
-    t++;
-    const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0,0,W,H);
-    parts.forEach(p=>{
-      p.x += p.vx; p.y += p.vy; p.vy += 0.02;
-      p.rot += p.vr;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.fillStyle = p.c;
-      ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
-      ctx.restore();
+  function bindNavButtons() {
+    const { nextBtn, newBtn } = getEl();
+    on(nextBtn, 'click', async () => {
+      // next item (skip)
+      App.itemIndex = Math.min(App.itemIndex + 1, App.currentTopic().items.length - 1);
+      await showCurrentItem();
     });
-    if (t < 180) requestAnimationFrame(tick);
-    else canvas.style.display = "none";
-  })();
-}
-addEventListener("resize", ()=>{
-  if (!confettiEl) return;
-  confettiEl.width = innerWidth; confettiEl.height = innerHeight;
-});
+    on(newBtn, 'click', async () => {
+      // next topic
+      App.topicIndex = (App.topicIndex + 1) % App.topics.length;
+      App.itemIndex  = 0;
+      App.resetRanks();
+      resetSeen();
+      renderTopicTitle();
+      await showCurrentItem();
+    });
+  }
 
-/* ---------- bootstrap ---------- */
-restoreSession() || startNewSession();
+  async function boot() {
+    try {
+      await ensureSmartCrop(); // pre-load so first draw is crisp
+    } catch (e) {
+      console.warn('SmartCrop not available; will fallback to native contain/cover');
+    }
+    renderTopicTitle();
+    bindPlaceButtons();
+    bindNavButtons();
+    await showCurrentItem();
+  }
+
+  // Kickoff when DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+
+  // expose a couple helpers if needed elsewhere
+  window.BR.resetSeen = resetSeen;
+  window.BR.resolveAndRender = resolveAndRender;
+
+})();
