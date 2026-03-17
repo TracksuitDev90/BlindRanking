@@ -104,7 +104,15 @@
         pool = pool.filter(t => moods.includes(t.mood));
       }
       this.topics = shuffle(pool);
+      // For topics with itemPool, pick 5 random items for variety
+      this.topics.forEach(t => this._rollItems(t));
       this.selectedMoods = moods || [];
+    },
+
+    // Pick 5 random items from itemPool (if present)
+    _rollItems(topic) {
+      if (!topic.itemPool || topic.itemPool.length <= 5) return;
+      topic.items = shuffle(topic.itemPool).slice(0, 5);
     },
 
     hydrate() {
@@ -979,6 +987,9 @@
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     if (!App.topics.length) return;
     App.topicIndex = (App.topicIndex + 1) % App.topics.length;
+    // Re-roll items from pool for variety on revisit
+    const nextTopic = App.topics[App.topicIndex];
+    if (nextTopic) App._rollItems(nextTopic);
     App.itemIndex = 0;
     App.ranks = new Array(5).fill(null);
     App.rankImages = new Array(5).fill(null);
