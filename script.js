@@ -267,7 +267,9 @@
     MOVIE:'movie', TV:'tv', PERSON:'person',
     MUSIC_ARTIST:'music-artist', MUSIC_ALBUM:'music-album', MUSIC_TRACK:'music-track',
     GAME:'game', TEAM:'team', BRAND:'brand', LOGO:'logo',
-    FOOD:'food', DEVICE:'device', PLACE:'place', GENERIC:'generic'
+    FOOD:'food', DEVICE:'device', PLACE:'place',
+    PRODUCT:'product', SNEAKER:'sneaker', FASHION:'fashion',
+    GENERIC:'generic'
   };
 
   function inferCategory(label, hints = {}) {
@@ -276,6 +278,9 @@
     if (p === 'tmdb' && m === 'movie') return CATS.MOVIE;
     if (p === 'tmdb' && m === 'tv')    return CATS.TV;
     if (m === 'person')                 return CATS.PERSON;
+    if (m === 'sneaker')                return CATS.SNEAKER;
+    if (m === 'product')                return CATS.PRODUCT;
+    if (m === 'fashion')                return CATS.FASHION;
     const n = normalize(label);
     if (/\bseason\b|\bs\d{1,2}\b/.test(n)) return CATS.TV;
     if (/\balbum\b/.test(n)) return CATS.MUSIC_ALBUM;
@@ -283,6 +288,10 @@
     if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
     if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
     if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b|\blogo\b/.test(n)) return CATS.BRAND;
+    // Sneakers / shoes
+    if (/\bair jordan\b|\bjordan \d|\bair force\b|\bair max\b|\byeezy\b|\bnew balance\b|\bchuck taylor\b|\bstan smith\b|\bdunk\b|\b(?:nike|adidas|puma|reebok|vans|converse)\b.*\b(?:shoe|sneaker|boot|runner)\b|\bsneaker\b|\b(?:shoe|sneaker|boot|runner)s?\b/.test(n)) return CATS.SNEAKER;
+    // Fashion items (clothing, accessories, luxury goods)
+    if (/\bhandbag\b|\bpurse\b|\bsunglasses\b|\bjacket\b|\bdress\b|\bperfume\b|\bcologne\b|\bjewelry\b|\bnecklace\b|\bwatch\b.*\b(?:rolex|omega|patek|cartier|tag)\b/.test(n)) return CATS.FASHION;
     if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b|\bbrownie\b|\bdoughnut\b|\bcookie\b|\bwaffle\b|\bpancake\b|\bchip\b|\bcereal\b|\bcandy\b/.test(n)) return CATS.FOOD;
     if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b/.test(n)) return CATS.DEVICE;
     if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
@@ -299,6 +308,13 @@
     if (topicMood === 'people') return CATS.PERSON;
     if (topicMood === 'places') return CATS.PLACE;
     if (topicMood === 'sports') return CATS.TEAM;
+    if (topicMood === 'sneakers') return CATS.SNEAKER;
+    if (topicMood === 'fashion') return CATS.FASHION;
+    if (topicMood === 'products') return CATS.PRODUCT;
+    // Topic name heuristic for product-like "culture" topics
+    const tn = normalize(hints.topicName || '');
+    if (/\bsneaker/.test(tn)) return CATS.SNEAKER;
+    if (/\bwatch\b|\bfashion\b|\bluxury\b|\bjewel/.test(tn)) return CATS.FASHION;
     return cat;
   }
 
@@ -312,6 +328,9 @@
       [CATS.FOOD]:         `${b} ${topicName || ''} food close-up photography`,
       [CATS.PLACE]:        `${b} landmark photo`,
       [CATS.DEVICE]:       `${b} product photo`,
+      [CATS.SNEAKER]:      `${b} sneaker shoe product photography white background`,
+      [CATS.FASHION]:      `${b} product photography studio`,
+      [CATS.PRODUCT]:      `${b} product photography high quality`,
     };
     return map[cat] || `${b} photo`;
   }
@@ -459,12 +478,115 @@
     } catch(_) { return null; }
   }
 
+  // Openverse (WordPress) — free, no API key, openly-licensed high-quality images
+  async function openverseImage(query, opts = {}) {
+    try {
+      const u = new URL('https://api.openverse.org/v1/images/');
+      u.searchParams.set('q', query);
+      u.searchParams.set('page_size', '5');
+      if (opts.aspectRatio) u.searchParams.set('aspect_ratio', opts.aspectRatio);
+      if (opts.size) u.searchParams.set('size', opts.size);
+      // Prefer photos, not illustrations/logos
+      u.searchParams.set('extension', 'jpg,png');
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      const results = j?.results || [];
+      // Pick the highest-resolution result that looks like a real photo
+      for (const hit of results) {
+        const url = hit?.url;
+        if (!url) continue;
+        // Skip very small images (likely thumbnails/icons)
+        if ((hit.width || 0) < 200 && (hit.height || 0) < 200) continue;
+        return url;
+      }
+      return null;
+    } catch(_) { return null; }
+  }
+
+  // Wikimedia Commons search — finds high-quality images from Commons
+  async function commonsSearch(query) {
+    try {
+      const u = new URL('https://commons.wikimedia.org/w/api.php');
+      u.searchParams.set('action', 'query');
+      u.searchParams.set('generator', 'search');
+      u.searchParams.set('gsrsearch', `${query} filetype:bitmap`);
+      u.searchParams.set('gsrlimit', '5');
+      u.searchParams.set('gsrnamespace', '6'); // File namespace
+      u.searchParams.set('prop', 'imageinfo');
+      u.searchParams.set('iiprop', 'url|size|mime');
+      u.searchParams.set('iiurlwidth', '800');
+      u.searchParams.set('format', 'json');
+      u.searchParams.set('origin', '*');
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      const pages = j?.query?.pages;
+      if (!pages) return null;
+      // Sort by page ID (lower = older/more established) and pick first good image
+      const sorted = Object.values(pages).sort((a, b) => (a.pageid || 0) - (b.pageid || 0));
+      for (const pg of sorted) {
+        const info = pg?.imageinfo?.[0];
+        if (!info) continue;
+        // Skip SVGs and tiny images
+        if (info.mime === 'image/svg+xml') continue;
+        if ((info.width || 0) < 200) continue;
+        // Use the thumbnail URL at 800px width, or original if smaller
+        return info.thumburl || info.url || null;
+      }
+      return null;
+    } catch(_) { return null; }
+  }
+
+  // Pexels API — high-quality curated stock photos (requires API key)
+  async function pexelsImage(query) {
+    const key = (window.BR_CONFIG && window.BR_CONFIG.PEXELS_KEY) || '';
+    if (!key) return null;
+    try {
+      const u = new URL('https://api.pexels.com/v1/search');
+      u.searchParams.set('query', query);
+      u.searchParams.set('per_page', '3');
+      u.searchParams.set('orientation', 'portrait');
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 8000);
+      const resp = await fetch(u.toString(), {
+        headers: { 'Authorization': key },
+        signal: c.signal
+      }).finally(() => clearTimeout(t));
+      if (!resp.ok) return null;
+      const j = await resp.json();
+      const photo = j?.photos?.[0];
+      return photo?.src?.large2x || photo?.src?.large || photo?.src?.original || null;
+    } catch(_) { return null; }
+  }
+
+  // Unsplash API — high-quality photos (requires API key)
+  async function unsplashImage(query) {
+    const key = (window.BR_CONFIG && window.BR_CONFIG.UNSPLASH_KEY) || '';
+    if (!key) return null;
+    try {
+      const u = new URL('https://api.unsplash.com/search/photos');
+      u.searchParams.set('query', query);
+      u.searchParams.set('per_page', '3');
+      u.searchParams.set('orientation', 'portrait');
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 8000);
+      const resp = await fetch(u.toString(), {
+        headers: { 'Authorization': `Client-ID ${key}` },
+        signal: c.signal
+      }).finally(() => clearTimeout(t));
+      if (!resp.ok) return null;
+      const j = await resp.json();
+      const photo = j?.results?.[0];
+      return photo?.urls?.regular || photo?.urls?.full || null;
+    } catch(_) { return null; }
+  }
+
   /* ============================ RESOLVER ============================ */
   async function resolveImageURL(item, hints = {}) {
     const label = item?.label || '';
     const h = { ...hints, ...(item?.hints || {}) };
     const topic = App.currentTopic();
     const topicMood = topic?.mood || '';
+    h.topicName = topic?.name || '';
     const cat = inferCategoryWithMood(label, h, topicMood);
     const y = h.year || yearFrom(label);
     if (item?.imageUrl) return item.imageUrl;
@@ -529,19 +651,88 @@
         () => wikiImage(label)
       );
 
+    // SNEAKER: prioritize product-specific sources for actual shoe images
+    if (cat === CATS.SNEAKER) {
+      const ctx = buildContext(label, cat, topic?.name);
+      return first(
+        // Wikidata P18 often has the actual product photo for famous sneakers
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        // Commons has extensive sneaker photography
+        () => commonsSearch(`${cleanLabel(label)} shoe`),
+        // Openverse indexes many CC-licensed product photos
+        () => openverseImage(`${cleanLabel(label)} sneaker shoe`, { size: 'medium' }),
+        // Wikipedia as fallback
+        () => wikiImage(label),
+        // Pexels / Unsplash if keys are configured
+        () => pexelsImage(ctx),
+        () => unsplashImage(ctx),
+        () => pixabay(ctx)
+      );
+    }
+
+    // FASHION: luxury goods, watches, accessories — prioritize product photography
+    if (cat === CATS.FASHION) {
+      const ctx = buildContext(label, cat, topic?.name);
+      return first(
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => commonsSearch(cleanLabel(label)),
+        () => openverseImage(cleanLabel(label), { size: 'medium' }),
+        () => wikiImage(label),
+        () => pexelsImage(ctx),
+        () => unsplashImage(ctx),
+        () => pixabay(ctx)
+      );
+    }
+
+    // PRODUCT: general products — similar chain with product-focused queries
+    if (cat === CATS.PRODUCT) {
+      const ctx = buildContext(label, cat, topic?.name);
+      return first(
+        () => wikiImage(label),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => commonsSearch(cleanLabel(label)),
+        () => openverseImage(`${cleanLabel(label)} product`, { size: 'medium' }),
+        () => pexelsImage(ctx),
+        () => unsplashImage(ctx),
+        () => pixabay(ctx)
+      );
+    }
+
+    // DEVICE: tech products — add new sources
+    if (cat === CATS.DEVICE) {
+      const ctx = buildContext(label, cat, topic?.name);
+      return first(
+        () => wikiImage(label),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => commonsSearch(cleanLabel(label)),
+        () => openverseImage(`${cleanLabel(label)} product`, { size: 'medium' }),
+        () => pexelsImage(ctx),
+        () => unsplashImage(ctx),
+        () => pixabay(ctx)
+      );
+    }
+
     // FOOD: use more specific search queries to avoid wrong images
     if (cat === CATS.FOOD)
       return first(
         () => wikiImage(label),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => openverseImage(`${cleanLabel(label)} food`, { size: 'medium' }),
+        () => pexelsImage(buildContext(label, cat, topic?.name)),
+        () => unsplashImage(buildContext(label, cat, topic?.name)),
         () => pixabay(buildContext(label, cat, topic?.name))
       );
 
-    // Generic: wiki → wikidata → pixabay
+    // Generic: wiki → wikidata → commons → openverse → pexels → unsplash → pixabay
+    const ctx = buildContext(label, cat, topic?.name);
     return first(
       () => wikiImage(label),
       async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-      () => pixabay(buildContext(label, cat, topic?.name))
+      () => commonsSearch(cleanLabel(label)),
+      () => openverseImage(cleanLabel(label)),
+      () => pexelsImage(ctx),
+      () => unsplashImage(ctx),
+      () => pixabay(ctx)
     );
   }
 
@@ -552,10 +743,13 @@
       imgEl.style.objectFit = 'contain';
       imgEl.style.objectPosition = 'center';
     } else if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
-      // People: show upper portion (faces) — use top 20% to ensure full face
       imgEl.style.objectFit = 'cover';
       imgEl.style.objectPosition = 'center 20%';
     } else if (cat === CATS.MOVIE || cat === CATS.TV) {
+      imgEl.style.objectFit = 'contain';
+      imgEl.style.objectPosition = 'center';
+    } else if (cat === CATS.SNEAKER || cat === CATS.FASHION || cat === CATS.PRODUCT || cat === CATS.DEVICE) {
+      // Products: contain to show full product, centered
       imgEl.style.objectFit = 'contain';
       imgEl.style.objectPosition = 'center';
     } else {
@@ -621,13 +815,18 @@
       if (myToken !== paintToken) return false;
       const topicMood = topic?.mood || '';
       const cat = inferCategoryWithMood(item.label, hints, topicMood);
-      const pb = await pixabay(buildContext(item.label, cat, topic?.name));
-      if (pb && !isSeen(pb) && myToken === paintToken) {
-        markSeen(pb);
-        currentResolvedURL = pb;
-        img.style.objectFit = 'cover';
-        img.style.objectPosition = 'center';
-        img.src = pb;
+      const ctx = buildContext(item.label, cat, topic?.name);
+      // Try multiple fallback sources before giving up
+      const fallbackUrl = await openverseImage(cleanLabel(item.label))
+        || await commonsSearch(cleanLabel(item.label))
+        || await pexelsImage(ctx)
+        || await unsplashImage(ctx)
+        || await pixabay(ctx);
+      if (fallbackUrl && !isSeen(fallbackUrl) && myToken === paintToken) {
+        markSeen(fallbackUrl);
+        currentResolvedURL = fallbackUrl;
+        applyImageStyle(img, cat);
+        img.src = fallbackUrl;
         prefetchNext();
         return true;
       }
