@@ -25,20 +25,20 @@ window.TOPICS = [
     {label:"Amélie"}, {label:"Back to the Future"}
   ]},
   { name: "Sci-Fi Movies", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
-    {label:"Blade Runner"}, {label:"Interstellar"}, {label:"The Matrix"}, {label:"Arrival"}, {label:"Dune (2021 film)"}
+    {label:"Blade Runner"}, {label:"Interstellar (film)"}, {label:"The Matrix"}, {label:"Arrival (film)"}, {label:"Dune (2021 film)"}
   ]},
   { name: "Horror Movies", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"The Shining"}, {label:"Get Out"}, {label:"Hereditary"}, {label:"A Quiet Place"}, {label:"It Follows"}
   ]},
   { name: "90s Blockbusters", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
-    {label:"Jurassic Park"}, {label:"Titanic"}, {label:"Independence Day"}, {label:"The Lion King (1994 film)"}, {label:"The Matrix"}
+    {label:"Jurassic Park"}, {label:"Titanic (1997 film)"}, {label:"Independence Day (1996 film)"}, {label:"The Lion King (1994 film)"}, {label:"The Matrix"}
   ]},
   { name: "Animated Classics", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"The Lion King (1994 film)"}, {label:"Beauty and the Beast (1991 film)"}, {label:"Aladdin (1992 Disney film)"},
     {label:"Toy Story"}, {label:"Princess Mononoke"}
   ]},
   { name: "Pixar Movies", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
-    {label:"Toy Story"}, {label:"Up"}, {label:"Inside Out"}, {label:"Coco"}, {label:"Ratatouille"}
+    {label:"Toy Story"}, {label:"Up (2009 film)"}, {label:"Inside Out (2015 film)"}, {label:"Coco (2017 film)"}, {label:"Ratatouille (film)"}
   ]},
   { name: "DreamWorks Animation", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"Shrek"}, {label:"How to Train Your Dragon"}, {label:"Kung Fu Panda"}, {label:"Madagascar"}, {label:"Megamind"}
@@ -49,7 +49,7 @@ window.TOPICS = [
   ]},
   { name: "Rom-Com Favorites", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"When Harry Met Sally..."}, {label:"Notting Hill (film)"}, {label:"10 Things I Hate About You"},
-    {label:"Crazy Rich Asians (film)"}, {label:"Love Actually"}
+    {label:"Crazy Rich Asians (film)"}, {label:"Love Actually (film)"}
   ]},
   { name: "Best Picture Winners", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"The Godfather"}, {label:"The Silence of the Lambs (1991 film)"}, {label:"No Country for Old Men (film)"},
@@ -62,14 +62,14 @@ window.TOPICS = [
     {label:"Stranger Things"}, {label:"The Last of Us (TV series)"}
   ]},
   { name: "Sitcoms", mood: "tv", provider: "tmdb", mediaType: "tv", items: [
-    {label:"Friends"}, {label:"The Office (American TV series)"}, {label:"Parks and Recreation"},
+    {label:"Friends (TV series)"}, {label:"The Office (American TV series)"}, {label:"Parks and Recreation"},
     {label:"Seinfeld"}, {label:"Brooklyn Nine-Nine"}
   ]},
   { name: "Prestige TV", mood: "tv", provider: "tmdb", mediaType: "tv", items: [
-    {label:"The Sopranos"}, {label:"Mad Men"}, {label:"The Wire"}, {label:"The Leftovers (TV series)"}, {label:"Succession"}
+    {label:"The Sopranos"}, {label:"Mad Men"}, {label:"The Wire (TV series)"}, {label:"The Leftovers (TV series)"}, {label:"Succession (TV series)"}
   ]},
   { name: "Crime Series", mood: "tv", provider: "tmdb", mediaType: "tv", items: [
-    {label:"True Detective"}, {label:"Narcos"}, {label:"Mindhunter"}, {label:"Broadchurch"}, {label:"Fargo (TV series)"}
+    {label:"True Detective"}, {label:"Narcos"}, {label:"Mindhunter (TV series)"}, {label:"Broadchurch"}, {label:"Fargo (TV series)"}
   ]},
   { name: "Fantasy TV", mood: "tv", provider: "tmdb", mediaType: "tv", items: [
     {label:"The Witcher (TV series)"}, {label:"House of the Dragon"}, {label:"His Dark Materials (TV series)"},
@@ -175,7 +175,7 @@ window.TOPICS = [
     {label:"Mochi"}, {label:"Panna cotta"}
   ]},
   { name: "Cheeses", mood: "food", provider: "wiki", items: [
-    {label:"Cheddar cheese"}, {label:"Mozzarella"}, {label:"Brie"}, {label:"Gouda cheese"}, {label:"Parmigiano Reggiano"}
+    {label:"Cheddar cheese"}, {label:"Mozzarella"}, {label:"Brie cheese"}, {label:"Gouda cheese"}, {label:"Parmigiano Reggiano"}
   ], itemPool: [
     {label:"Cheddar cheese"}, {label:"Mozzarella"}, {label:"Brie"}, {label:"Gouda cheese"}, {label:"Parmigiano Reggiano"},
     {label:"Gruyère cheese"}, {label:"Camembert"}, {label:"Manchego"}, {label:"Feta cheese"}, {label:"Roquefort"}
@@ -196,7 +196,7 @@ window.TOPICS = [
 
   // ---- Animals & Nature (Wikipedia) ----
   { name: "Big Cats", mood: "animals", provider: "wiki", items: [
-    {label:"Lion"}, {label:"Tiger"}, {label:"Leopard"}, {label:"Cheetah"}, {label:"Jaguar"}
+    {label:"Lion"}, {label:"Tiger"}, {label:"Leopard"}, {label:"Cheetah"}, {label:"Jaguar (animal)"}
   ]},
   { name: "Dog Breeds", mood: "animals", provider: "wiki", items: [
     {label:"Labrador Retriever"}, {label:"German Shepherd"}, {label:"Bulldog"}, {label:"Poodle"}, {label:"Beagle"}
@@ -223,7 +223,7 @@ window.TOPICS = [
     {label:"Chimpanzee"}, {label:"Gorilla"}, {label:"Orangutan"}, {label:"Gibbon"}, {label:"Baboon"}
   ]},
   { name: "Horse Breeds", mood: "animals", provider: "wiki", items: [
-    {label:"Arabian horse"}, {label:"Thoroughbred"}, {label:"Clydesdale horse"}, {label:"Mustang"}, {label:"Friesian horse"}
+    {label:"Arabian horse"}, {label:"Thoroughbred"}, {label:"Clydesdale horse"}, {label:"Mustang (horse)"}, {label:"Friesian horse"}
   ]},
 
   // ---- Places & Travel (Wikipedia) ----
@@ -376,7 +376,7 @@ window.TOPICS = [
     {label:"Vanilla ice cream"}, {label:"Chocolate ice cream"}, {label:"Strawberry ice cream"}, {label:"Mint chocolate chip"}, {label:"Cookies and cream"}
   ]},
   { name: "Hobbies", mood: "culture", provider: "wiki", items: [
-    {label:"Reading"}, {label:"Gardening"}, {label:"Painting"}, {label:"Cycling"}, {label:"Cooking"}
+    {label:"Reading (process)"}, {label:"Gardening"}, {label:"Painting"}, {label:"Cycling"}, {label:"Cooking"}
   ]},
   { name: "School Subjects", mood: "culture", provider: "wiki", items: [
     {label:"Mathematics"}, {label:"Science"}, {label:"History"}, {label:"Literature"}, {label:"Art"}
@@ -388,7 +388,7 @@ window.TOPICS = [
     {label:"Orion (constellation)"}, {label:"Ursa Major"}, {label:"Cassiopeia (constellation)"}, {label:"Scorpius"}, {label:"Leo (constellation)"}
   ]},
   { name: "Planets", mood: "culture", provider: "wiki", items: [
-    {label:"Mercury (planet)"}, {label:"Venus"}, {label:"Earth"}, {label:"Mars"}, {label:"Jupiter"}
+    {label:"Mercury (planet)"}, {label:"Venus (planet)"}, {label:"Earth"}, {label:"Mars (planet)"}, {label:"Jupiter (planet)"}
   ]}
 ];
 
@@ -431,8 +431,8 @@ const MORE_TOPICS = [
     items:[{label:"Sriracha"},{label:"Tabasco sauce"},{label:"Frank's RedHot"},{label:"Cholula Hot Sauce"},{label:"Tapatío"}],
     itemPool:[{label:"Sriracha"},{label:"Tabasco sauce"},{label:"Frank's RedHot"},{label:"Cholula Hot Sauce"},{label:"Tapatío"},{label:"Crystal Hot Sauce"},{label:"Valentina (hot sauce)"},{label:"Harissa"},{label:"Sambal"},{label:"Gochujang"}] },
   { name:"Best Fruits", mood: "food", provider:"wiki",
-    items:[{label:"Mango"},{label:"Apple"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"}],
-    itemPool:[{label:"Mango"},{label:"Apple"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"},{label:"Watermelon"},{label:"Peach"},{label:"Blueberry"},{label:"Cherry"},{label:"Grape"},{label:"Kiwifruit"},{label:"Raspberry"}] },
+    items:[{label:"Mango"},{label:"Apple (fruit)"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"}],
+    itemPool:[{label:"Mango"},{label:"Apple (fruit)"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"},{label:"Watermelon"},{label:"Peach"},{label:"Blueberry"},{label:"Cherry"},{label:"Grape"},{label:"Kiwifruit"},{label:"Raspberry"}] },
   { name:"Best Vegetables", mood: "food", provider:"wiki",
     items:[{label:"Broccoli"},{label:"Carrot"},{label:"Spinach"},{label:"Corn"},{label:"Tomato"}],
     itemPool:[{label:"Broccoli"},{label:"Carrot"},{label:"Spinach"},{label:"Corn"},{label:"Tomato"},{label:"Asparagus"},{label:"Brussels sprout"},{label:"Sweet potato"},{label:"Zucchini"},{label:"Avocado"},{label:"Cauliflower"},{label:"Green bean"}] },
@@ -443,8 +443,8 @@ const MORE_TOPICS = [
     items:[{label:"Spaghetti"},{label:"Penne"},{label:"Fettuccine"},{label:"Rigatoni"},{label:"Farfalle"}],
     itemPool:[{label:"Spaghetti"},{label:"Penne"},{label:"Fettuccine"},{label:"Rigatoni"},{label:"Farfalle"},{label:"Linguine"},{label:"Fusilli"},{label:"Orecchiette"},{label:"Tagliatelle"},{label:"Pappardelle"},{label:"Orzo"},{label:"Cavatappi"}] },
   { name:"Best Cheeses", mood: "food", provider:"wiki",
-    items:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie"}],
-    itemPool:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie"},{label:"Gruyère cheese"},{label:"Manchego"},{label:"Feta cheese"},{label:"Roquefort"},{label:"Camembert"}] },
+    items:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie cheese"}],
+    itemPool:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie cheese"},{label:"Gruyère cheese"},{label:"Manchego"},{label:"Feta cheese"},{label:"Roquefort"},{label:"Camembert"}] },
   { name:"Best Breads", mood: "food", provider:"wiki",
     items:[{label:"Sourdough bread"},{label:"Baguette"},{label:"Ciabatta"},{label:"Rye bread"},{label:"Brioche"}],
     itemPool:[{label:"Sourdough bread"},{label:"Baguette"},{label:"Ciabatta"},{label:"Rye bread"},{label:"Brioche"},{label:"Focaccia"},{label:"Pita bread"},{label:"Challah"},{label:"Naan"},{label:"Pretzel"},{label:"Cornbread"},{label:"Pumpernickel"}] },
@@ -487,34 +487,34 @@ const MORE_TOPICS = [
 
   // ————— TV / Movies —————
   { name:"Top 90s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Backstreet Boys"},{label:"NSYNC"},{label:"Boyz II Men"},{label:"98 Degrees"},{label:"New Kids on the Block"}] },
-  { name:"Top Early 00s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Westlife"},{label:"Blue"},{label:"O-Town"},{label:"Busted"},{label:"Jonas Brothers"}] },
+  { name:"Top Early 00s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Westlife"},{label:"Blue (English group)"},{label:"O-Town (group)"},{label:"Busted (band)"},{label:"Jonas Brothers"}] },
   { name:"Best Cartoons of the 90s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Rugrats"},{label:"Dexter's Laboratory"},{label:"The Powerpuff Girls"},{label:"Batman: The Animated Series"},{label:"Doug"}] },
   { name:"Best Cartoons of the 00s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Avatar: The Last Airbender"},{label:"Teen Titans"},{label:"Kim Possible"},{label:"Ben 10"},{label:"SpongeBob SquarePants"}] },
-  { name:"Best 90s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Friends"},{label:"Seinfeld"},{label:"Frasier"},{label:"The Fresh Prince of Bel-Air"},{label:"Home Improvement"}] },
-  { name:"Best 2000s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Office (US)"},{label:"How I Met Your Mother"},{label:"Arrested Development"},{label:"Scrubs"},{label:"30 Rock"}] },
-  { name:"Best Fantasy TV Shows", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Game of Thrones"},{label:"The Witcher"},{label:"His Dark Materials"},{label:"Shadow and Bone"},{label:"Merlin"}] },
+  { name:"Best 90s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Friends (TV series)"},{label:"Seinfeld"},{label:"Frasier"},{label:"The Fresh Prince of Bel-Air"},{label:"Home Improvement (TV series)"}] },
+  { name:"Best 2000s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Office (American TV series)"},{label:"How I Met Your Mother"},{label:"Arrested Development"},{label:"Scrubs (TV series)"},{label:"30 Rock"}] },
+  { name:"Best Fantasy TV Shows", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Game of Thrones"},{label:"The Witcher (TV series)"},{label:"His Dark Materials (TV series)"},{label:"Shadow and Bone (TV series)"},{label:"Merlin (TV series)"}] },
   { name:"Best Sci-Fi TV Shows", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Star Trek: The Next Generation"},{label:"The X-Files"},{label:"Battlestar Galactica"},{label:"Black Mirror"},{label:"The Expanse"}] },
-  { name:"Best HBO Dramas", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Sopranos"},{label:"The Wire"},{label:"Succession"},{label:"True Detective"},{label:"Boardwalk Empire"}] },
-  { name:"Best Netflix Originals (TV)", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Stranger Things"},{label:"The Crown"},{label:"Narcos"},{label:"Ozark"},{label:"Mindhunter"}] },
+  { name:"Best HBO Dramas", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Sopranos"},{label:"The Wire (TV series)"},{label:"Succession (TV series)"},{label:"True Detective"},{label:"Boardwalk Empire"}] },
+  { name:"Best Netflix Originals (TV)", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Stranger Things"},{label:"The Crown (TV series)"},{label:"Narcos"},{label:"Ozark (TV series)"},{label:"Mindhunter (TV series)"}] },
   { name:"Best 90s Comedy Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Dumb and Dumber"},{label:"Home Alone"},{label:"Groundhog Day"},{label:"The Big Lebowski"},{label:"Mrs. Doubtfire"}] },
   { name:"Best 2000s Action Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Dark Knight"},{label:"Gladiator"},{label:"The Bourne Identity"},{label:"Kill Bill: Vol. 1"},{label:"Casino Royale"}] },
-  { name:"Best Pixar Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Toy Story"},{label:"Finding Nemo"},{label:"The Incredibles"},{label:"Up"},{label:"Coco"}] },
-  { name:"Best Disney Animated Classics", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Lion King"},{label:"Aladdin"},{label:"Beauty and the Beast"},{label:"Mulan"},{label:"The Little Mermaid"}] },
-  { name:"Best Superhero Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Iron Man"},{label:"The Avengers"},{label:"Spider-Man: No Way Home"},{label:"The Dark Knight"},{label:"Black Panther"}] },
-  { name:"Best Horror Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Exorcist"},{label:"Halloween"},{label:"The Shining"},{label:"Get Out"},{label:"A Nightmare on Elm Street"}] },
-  { name:"Best Romantic Comedies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"When Harry Met Sally..."},{label:"Notting Hill"},{label:"10 Things I Hate About You"},{label:"Crazy Rich Asians"},{label:"The Proposal"}] },
-  { name:"Best Film Trilogies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Lord of the Rings"},{label:"The Godfather Trilogy"},{label:"The Dark Knight Trilogy"},{label:"Back to the Future"},{label:"The Matrix"}] },
+  { name:"Best Pixar Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Toy Story"},{label:"Finding Nemo"},{label:"The Incredibles"},{label:"Up (2009 film)"},{label:"Coco (2017 film)"}] },
+  { name:"Best Disney Animated Classics", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Lion King (1994 film)"},{label:"Aladdin (1992 Disney film)"},{label:"Beauty and the Beast (1991 film)"},{label:"Mulan (1998 film)"},{label:"The Little Mermaid (1989 film)"}] },
+  { name:"Best Superhero Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Iron Man (2008 film)"},{label:"The Avengers (2012 film)"},{label:"Spider-Man: No Way Home"},{label:"The Dark Knight"},{label:"Black Panther (film)"}] },
+  { name:"Best Horror Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Exorcist"},{label:"Halloween (1978 film)"},{label:"The Shining"},{label:"Get Out"},{label:"A Nightmare on Elm Street"}] },
+  { name:"Best Romantic Comedies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"When Harry Met Sally..."},{label:"Notting Hill (film)"},{label:"10 Things I Hate About You"},{label:"Crazy Rich Asians (film)"},{label:"The Proposal (film)"}] },
+  { name:"Best Film Trilogies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Lord of the Rings: The Fellowship of the Ring"},{label:"The Godfather"},{label:"The Dark Knight"},{label:"Back to the Future"},{label:"The Matrix"}] },
   { name:"Best Film Directors", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Steven Spielberg"},{label:"Christopher Nolan"},{label:"Quentin Tarantino"},{label:"Martin Scorsese"},{label:"James Cameron"}] },
   { name:"Best Actresses (Modern)", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Meryl Streep"},{label:"Saoirse Ronan"},{label:"Viola Davis"},{label:"Scarlett Johansson"},{label:"Cate Blanchett"}] },
   { name:"Best Actors (Modern)", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Denzel Washington"},{label:"Leonardo DiCaprio"},{label:"Tom Hanks"},{label:"Keanu Reeves"},{label:"Christian Bale"}] },
-  { name:"Best MCU Heroes", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Iron Man"},{label:"Captain America"},{label:"Thor"},{label:"Black Widow"},{label:"Doctor Strange"}] },
-  { name:"Best Star Wars Characters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Luke Skywalker"},{label:"Darth Vader"},{label:"Han Solo"},{label:"Princess Leia"},{label:"Yoda"}] },
+  { name:"Best MCU Heroes", mood: "people", provider:"wiki", items:[{label:"Iron Man"},{label:"Captain America"},{label:"Thor (Marvel Comics)"},{label:"Black Widow (Marvel Comics)"},{label:"Doctor Strange"}] },
+  { name:"Best Star Wars Characters", mood: "people", provider:"wiki", items:[{label:"Luke Skywalker"},{label:"Darth Vader"},{label:"Han Solo"},{label:"Princess Leia"},{label:"Yoda"}] },
   { name:"Best Anime of the 90s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Neon Genesis Evangelion"},{label:"Cowboy Bebop"},{label:"Sailor Moon"},{label:"Dragon Ball Z"},{label:"Yu Yu Hakusho"}] },
   { name:"Best Anime of the 2000s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Fullmetal Alchemist: Brotherhood"},{label:"Naruto"},{label:"Death Note"},{label:"One Piece"},{label:"Bleach"}] },
 
   // ————— Music —————
   { name:"Best Pop Divas", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Beyoncé"},{label:"Taylor Swift"},{label:"Ariana Grande"},{label:"Adele"},{label:"Lady Gaga"}] },
-  { name:"Best Rock Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"The Beatles"},{label:"The Rolling Stones"},{label:"Led Zeppelin"},{label:"Queen"},{label:"Pink Floyd"}] },
+  { name:"Best Rock Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"The Beatles"},{label:"The Rolling Stones"},{label:"Led Zeppelin"},{label:"Queen (band)"},{label:"Pink Floyd"}] },
   { name:"Best 90s Hip-Hop Artists", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Tupac Shakur"},{label:"The Notorious B.I.G."},{label:"Nas"},{label:"Snoop Dogg"},{label:"Dr. Dre"}] },
   { name:"Best EDM DJs", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Calvin Harris"},{label:"Avicii"},{label:"David Guetta"},{label:"Deadmau5"},{label:"Tiësto"}] },
   { name:"Best Country Artists", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Johnny Cash"},{label:"Dolly Parton"},{label:"Garth Brooks"},{label:"Shania Twain"},{label:"Chris Stapleton"}] },
@@ -525,13 +525,13 @@ const MORE_TOPICS = [
   { name:"Best Female Rappers", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Nicki Minaj"},{label:"Missy Elliott"},{label:"Cardi B"},{label:"Lauryn Hill"},{label:"Megan Thee Stallion"}] },
 
   // ————— Games & Hobbies —————
-  { name:"Best Video Game Franchises", mood: "games", provider:"wiki", items:[{label:"The Legend of Zelda"},{label:"Super Mario"},{label:"Halo"},{label:"Final Fantasy"},{label:"Grand Theft Auto"}] },
+  { name:"Best Video Game Franchises", mood: "games", provider:"wiki", items:[{label:"The Legend of Zelda"},{label:"Super Mario"},{label:"Halo (franchise)"},{label:"Final Fantasy"},{label:"Grand Theft Auto"}] },
   { name:"Best Open-World Games", mood: "games", provider:"wiki", items:[{label:"The Witcher 3: Wild Hunt"},{label:"Grand Theft Auto V"},{label:"Red Dead Redemption 2"},{label:"The Legend of Zelda: Breath of the Wild"},{label:"Assassin's Creed Odyssey"}] },
-  { name:"Best PlayStation Exclusives", mood: "games", provider:"wiki", items:[{label:"The Last of Us"},{label:"God of War"},{label:"Uncharted 4"},{label:"Ghost of Tsushima"},{label:"Bloodborne"}] },
+  { name:"Best PlayStation Exclusives", mood: "games", provider:"wiki", items:[{label:"The Last of Us"},{label:"God of War (2018 video game)"},{label:"Uncharted 4: A Thief's End"},{label:"Ghost of Tsushima"},{label:"Bloodborne"}] },
   { name:"Best Nintendo Switch Games", mood: "games", provider:"wiki", items:[{label:"Mario Kart 8 Deluxe"},{label:"Animal Crossing: New Horizons"},{label:"Super Smash Bros. Ultimate"},{label:"The Legend of Zelda: Tears of the Kingdom"},{label:"Splatoon 3"}] },
-  { name:"Best Indie Games", mood: "games", provider:"wiki", items:[{label:"Hades"},{label:"Celeste"},{label:"Hollow Knight"},{label:"Stardew Valley"},{label:"Undertale"}] },
-  { name:"Best Board Games", mood: "games", provider:"wiki", items:[{label:"Catan"},{label:"Ticket to Ride"},{label:"Carcassonne"},{label:"Pandemic"},{label:"Chess"}] },
-  { name:"Best Card Games", mood: "games", provider:"wiki", items:[{label:"Poker"},{label:"Blackjack"},{label:"Uno"},{label:"Magic: The Gathering"},{label:"Hearthstone"}] },
+  { name:"Best Indie Games", mood: "games", provider:"wiki", items:[{label:"Hades (video game)"},{label:"Celeste (video game)"},{label:"Hollow Knight"},{label:"Stardew Valley"},{label:"Undertale"}] },
+  { name:"Best Board Games", mood: "games", provider:"wiki", items:[{label:"Catan"},{label:"Ticket to Ride (board game)"},{label:"Carcassonne (board game)"},{label:"Pandemic (board game)"},{label:"Chess"}] },
+  { name:"Best Card Games", mood: "games", provider:"wiki", items:[{label:"Poker"},{label:"Blackjack"},{label:"Uno (card game)"},{label:"Magic: The Gathering"},{label:"Hearthstone"}] },
 
   // ————— Sports —————
   { name:"Best NBA Legends", mood: "sports", provider:"wiki", mediaType:"person", items:[{label:"Michael Jordan"},{label:"LeBron James"},{label:"Kobe Bryant"},{label:"Magic Johnson"},{label:"Larry Bird"}] },
@@ -554,9 +554,9 @@ const MORE_TOPICS = [
   // ————— Books / Comics —————
   { name:"Best Fantasy Book Series", mood: "culture", provider:"wiki", items:[{label:"Harry Potter"},{label:"The Lord of the Rings"},{label:"A Song of Ice and Fire"},{label:"The Wheel of Time"},{label:"The Stormlight Archive"}] },
   { name:"Best Sci-Fi Authors", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Isaac Asimov"},{label:"Arthur C. Clarke"},{label:"Philip K. Dick"},{label:"Ursula K. Le Guin"},{label:"Frank Herbert"}] },
-  { name:"Best Comic Book Heroes", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Batman"},{label:"Spider-Man"},{label:"Superman"},{label:"Wonder Woman"},{label:"Wolverine"}] },
-  { name:"Best Comic Book Villains", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Joker"},{label:"Magneto"},{label:"Loki"},{label:"Thanos"},{label:"Green Goblin"}] },
-  { name:"Best 90s Sitcom Characters", mood: "tv", provider:"wiki", mediaType:"person", items:[{label:"Chandler Bing"},{label:"George Costanza"},{label:"Frasier Crane"},{label:"Will Smith (The Fresh Prince)"},{label:"Elaine Benes"}] },
+  { name:"Best Comic Book Heroes", mood: "people", provider:"wiki", items:[{label:"Batman"},{label:"Spider-Man"},{label:"Superman"},{label:"Wonder Woman"},{label:"Wolverine (character)"}] },
+  { name:"Best Comic Book Villains", mood: "people", provider:"wiki", items:[{label:"Joker (character)"},{label:"Magneto (Marvel Comics)"},{label:"Loki (Marvel Comics)"},{label:"Thanos"},{label:"Green Goblin"}] },
+  { name:"Best 90s Sitcom Characters", mood: "tv", provider:"wiki", items:[{label:"Chandler Bing"},{label:"George Costanza"},{label:"Frasier Crane"},{label:"Will Smith (The Fresh Prince of Bel-Air)"},{label:"Elaine Benes"}] },
   { name:"Best 2000s TV Antiheroes", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Tony Soprano"},{label:"Walter White"},{label:"Don Draper"},{label:"Dexter Morgan"},{label:"Omar Little"}] },
 
   // ————— Tech / Gadgets —————
@@ -565,16 +565,16 @@ const MORE_TOPICS = [
   { name:"Best Laptops for Creators", mood: "tech", provider:"wiki", items:[{label:"MacBook Pro"},{label:"Dell XPS 15"},{label:"Razer Blade 15"},{label:"Microsoft Surface Laptop"},{label:"HP Spectre x360"}] },
   { name:"Best Headphones (Consumer)", mood: "tech", provider:"wiki", items:[{label:"Sony WH-1000XM5"},{label:"Bose QuietComfort 45"},{label:"AirPods Pro"},{label:"Sennheiser Momentum 4"},{label:"Beats Studio Pro"}] },
   { name:"Best Cameras", mood: "tech", provider:"wiki", items:[{label:"Canon EOS R5"},{label:"Sony A7 IV"},{label:"Nikon Z7 II"},{label:"Fujifilm X-T5"},{label:"Panasonic Lumix S5"}] },
-  { name:"Best Car Brands", mood: "tech", provider:"wiki", items:[{label:"Toyota"},{label:"BMW"},{label:"Mercedes-Benz"},{label:"Tesla"},{label:"Honda"}] },
+  { name:"Best Car Brands", mood: "tech", provider:"wiki", items:[{label:"Toyota"},{label:"BMW"},{label:"Mercedes-Benz"},{label:"Tesla, Inc."},{label:"Honda"}] },
   { name:"Best Electric Cars", mood: "tech", provider:"wiki", items:[{label:"Tesla Model 3"},{label:"Ford Mustang Mach-E"},{label:"Hyundai Ioniq 5"},{label:"Porsche Taycan"},{label:"Nissan Leaf"}] },
   { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (1965)"},{label:"Chevrolet Camaro (1969)"},{label:"Porsche 911 (1973)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
-  { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}] },
+  { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}], mediaType:"brand" },
   { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion"},{label:"Trello"},{label:"Asana"},{label:"Todoist"},{label:"Evernote"}] },
-  { name:"Best Web Browsers", mood: "tech", provider:"wiki", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari"},{label:"Brave"}] },
-  { name:"Best Programming Languages", mood: "tech", provider:"wiki", items:[{label:"Python"},{label:"JavaScript"},{label:"Java"},{label:"C#"},{label:"Go"}] },
-  { name:"Best Cloud Providers", mood: "tech", provider:"wiki", items:[{label:"Amazon Web Services"},{label:"Microsoft Azure"},{label:"Google Cloud"},{label:"DigitalOcean"},{label:"Heroku"}] },
-  { name:"Best Web Frameworks", mood: "tech", provider:"wiki", items:[{label:"React"},{label:"Vue.js"},{label:"Angular"},{label:"Svelte"},{label:"Next.js"}] },
-  { name:"Best AI Tools (Consumer)", mood: "tech", provider:"wiki", items:[{label:"ChatGPT"},{label:"Midjourney"},{label:"Stable Diffusion"},{label:"Claude"},{label:"Perplexity"}] },
+  { name:"Best Web Browsers", mood: "tech", provider:"wiki", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
+  { name:"Best Programming Languages", mood: "tech", provider:"wiki", items:[{label:"Python (programming language)"},{label:"JavaScript"},{label:"Java (programming language)"},{label:"C Sharp (programming language)"},{label:"Go (programming language)"}] },
+  { name:"Best Cloud Providers", mood: "tech", provider:"wiki", items:[{label:"Amazon Web Services"},{label:"Microsoft Azure"},{label:"Google Cloud Platform"},{label:"DigitalOcean"},{label:"Heroku"}] },
+  { name:"Best Web Frameworks", mood: "tech", provider:"wiki", items:[{label:"React (software)"},{label:"Vue.js"},{label:"Angular (web framework)"},{label:"Svelte"},{label:"Next.js"}] },
+  { name:"Best AI Tools (Consumer)", mood: "tech", provider:"wiki", items:[{label:"ChatGPT"},{label:"Midjourney"},{label:"Stable Diffusion"},{label:"Claude (language model)"},{label:"Perplexity (chatbot)"}] },
   { name:"Best Operating Systems", mood: "tech", provider:"wiki", items:[{label:"Windows 11"},{label:"macOS"},{label:"Ubuntu"},{label:"Android"},{label:"iOS"}] },
   { name:"Best Smartwatches", mood: "tech", provider:"wiki", items:[{label:"Apple Watch"},{label:"Samsung Galaxy Watch"},{label:"Garmin Forerunner"},{label:"Fitbit Versa"},{label:"Google Pixel Watch"}] },
 
@@ -583,10 +583,10 @@ const MORE_TOPICS = [
   { name:"Best Hikes in the World", mood: "places", provider:"wiki", items:[{label:"Inca Trail"},{label:"Appalachian Trail"},{label:"Tour du Mont Blanc"},{label:"Mount Kilimanjaro"},{label:"Tongariro Alpine Crossing"}] },
   { name:"Best Museums", mood: "places", provider:"wiki", items:[{label:"Louvre"},{label:"British Museum"},{label:"The Metropolitan Museum of Art"},{label:"Museo del Prado"},{label:"Uffizi Gallery"}] },
   { name:"Best Universities", mood: "culture", provider:"wiki", items:[{label:"Harvard University"},{label:"Stanford University"},{label:"MIT"},{label:"University of Oxford"},{label:"University of Cambridge"}] },
-  { name:"Best 20th-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"The Internet"},{label:"Penicillin"},{label:"Airplane"},{label:"Television"},{label:"Nuclear Power"}] },
-  { name:"Best 21st-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Smartphone"},{label:"CRISPR"},{label:"3D Printing"},{label:"Social Media"},{label:"Electric Cars"}] },
-  { name:"Best Startups of the 2010s", mood: "culture", provider:"wiki", items:[{label:"Uber"},{label:"Airbnb"},{label:"Slack"},{label:"Stripe"},{label:"Snapchat"}] },
-  { name:"Best Social Networks", mood: "culture", provider:"wiki", items:[{label:"Facebook"},{label:"Instagram"},{label:"TikTok"},{label:"Twitter (X)"},{label:"Reddit"}] },
+  { name:"Best 20th-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Internet"},{label:"Penicillin"},{label:"Airplane"},{label:"Television"},{label:"Nuclear power"}] },
+  { name:"Best 21st-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Smartphone"},{label:"CRISPR"},{label:"3D printing"},{label:"Social media"},{label:"Electric car"}] },
+  { name:"Best Startups of the 2010s", mood: "culture", provider:"wiki", items:[{label:"Uber"},{label:"Airbnb"},{label:"Slack (software)"},{label:"Stripe (company)"},{label:"Snapchat"}] },
+  { name:"Best Social Networks", mood: "culture", provider:"wiki", items:[{label:"Facebook"},{label:"Instagram"},{label:"TikTok"},{label:"X (social network)"},{label:"Reddit"}] },
   { name:"Best Podcasts", mood: "culture", provider:"wiki", items:[{label:"The Joe Rogan Experience"},{label:"This American Life"},{label:"Radiolab"},{label:"Serial"},{label:"The Daily"}] },
   { name:"Best Late-Night Hosts", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Jimmy Fallon"},{label:"Jimmy Kimmel"},{label:"Stephen Colbert"},{label:"John Oliver"},{label:"Seth Meyers"}] },
   { name:"Best Stand-Up Comedians", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Dave Chappelle"},{label:"Jerry Seinfeld"},{label:"Kevin Hart"},{label:"Ali Wong"},{label:"John Mulaney"}] },
