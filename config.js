@@ -11,6 +11,9 @@ window.BR_CONFIG = {
   LASTFM_KEY: "572f6e907e1e350d560363b452e2f9c7",         // Music artists (backup)
   AUDIO_KEY: "523532",                                     // Music artists (TheAudioDB key)
 
+  /* Fanart.tv — high-quality fan art for movies, TV, music */
+  FANART_KEY: "0153a502575b20215c602bc067e16f10",
+
   /* Generic fallbacks (nice visuals) */
   PIXABAY_KEY: "52130276-cec6f70c4efde5dfb713cbce7",
   PEXELS_KEY: "",         // optional: add if you create a key

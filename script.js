@@ -53,7 +53,8 @@
     OMDB_KEY:    (window.BR_CONFIG && window.BR_CONFIG.OMDB_KEY)    || '',
     LASTFM_KEY:  (window.BR_CONFIG && window.BR_CONFIG.LASTFM_KEY)  || '',
     AUDIO_KEY:   (window.BR_CONFIG && window.BR_CONFIG.AUDIO_KEY)   || '',
-    PIXABAY_KEY: (window.BR_CONFIG && window.BR_CONFIG.PIXABAY_KEY) || ''
+    PIXABAY_KEY: (window.BR_CONFIG && window.BR_CONFIG.PIXABAY_KEY) || '',
+    FANART_KEY:  (window.BR_CONFIG && window.BR_CONFIG.FANART_KEY)  || ''
   };
 
   window.BR = window.BR || {};
@@ -330,18 +331,23 @@
   function buildContext(label, cat, topicName) {
     const b = cleanLabel(label);
     const map = {
-      [CATS.PERSON]:       `${b} portrait photo face`,
-      [CATS.MUSIC_ARTIST]: `${b} artist portrait photo face`,
-      [CATS.MOVIE]:        `${b} official movie poster`,
-      [CATS.TV]:           `${b} tv show poster`,
-      [CATS.FOOD]:         `${b} food dish close-up photography`,
-      [CATS.PLACE]:        `${b} landmark photo`,
-      [CATS.DEVICE]:       `${b} product photo`,
-      [CATS.SNEAKER]:      `${b} sneaker shoe product photography white background`,
-      [CATS.FASHION]:      `${b} product photography studio`,
-      [CATS.PRODUCT]:      `${b} product photography high quality`,
+      [CATS.PERSON]:       `"${b}" celebrity portrait headshot professional photo`,
+      [CATS.MUSIC_ARTIST]: `"${b}" musician artist official portrait press photo`,
+      [CATS.MOVIE]:        `"${b}" official movie poster high resolution`,
+      [CATS.TV]:           `"${b}" official TV series poster key art`,
+      [CATS.FOOD]:         `"${b}" single dish plated food photography isolated on white`,
+      [CATS.PLACE]:        `"${b}" famous landmark scenic photography aerial view`,
+      [CATS.DEVICE]:       `"${b}" product official press photo isolated on white background`,
+      [CATS.SNEAKER]:      `"${b}" single sneaker shoe product photo isolated on white background studio`,
+      [CATS.FASHION]:      `"${b}" luxury product photo studio isolated on white background`,
+      [CATS.PRODUCT]:      `"${b}" official product photo isolated on white background studio`,
+      [CATS.GAME]:         `"${b}" video game official cover art box art`,
+      [CATS.TEAM]:         `"${b}" team official logo crest badge`,
+      [CATS.BRAND]:        `"${b}" brand official logo high resolution`,
+      [CATS.MUSIC_ALBUM]:  `"${b}" album cover art official`,
+      [CATS.MUSIC_TRACK]:  `"${b}" single cover art official`,
     };
-    return map[cat] || `${b} photo`;
+    return map[cat] || `"${b}" official photo high quality`;
   }
 
   /* ============================ SEEN SET ============================ */
@@ -553,8 +559,17 @@
       u.searchParams.set('key', cfg.PIXABAY_KEY); u.searchParams.set('q', query);
       u.searchParams.set('image_type','photo'); u.searchParams.set('safesearch','true');
       u.searchParams.set('per_page','5');
+      u.searchParams.set('min_width', '400');
+      u.searchParams.set('min_height', '400');
+      u.searchParams.set('editors_choice', 'true'); // prefer curated high-quality
       const r = await fetchT(u); if (!r.ok) return null;
-      const j = await r.json();
+      let j = await r.json();
+      // If editors_choice returns nothing, retry without it
+      if (!j?.hits?.length) {
+        u.searchParams.delete('editors_choice');
+        const r2 = await fetchT(u); if (!r2.ok) return null;
+        j = await r2.json();
+      }
       return j?.hits?.[0]?.largeImageURL || j?.hits?.[0]?.webformatURL || null;
     } catch(_) { return null; }
   }
@@ -564,11 +579,13 @@
     try {
       const u = new URL('https://api.openverse.org/v1/images/');
       u.searchParams.set('q', query);
-      u.searchParams.set('page_size', '5');
+      u.searchParams.set('page_size', '10');
       if (opts.aspectRatio) u.searchParams.set('aspect_ratio', opts.aspectRatio);
       if (opts.size) u.searchParams.set('size', opts.size);
       // Prefer photos, not illustrations/logos
       u.searchParams.set('extension', 'jpg,png');
+      // Exclude low-quality sources
+      u.searchParams.set('source', 'flickr,wikimedia,rawpixel');
       const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
       const results = j?.results || [];
@@ -577,7 +594,9 @@
         const url = hit?.url;
         if (!url) continue;
         // Skip very small images (likely thumbnails/icons)
-        if ((hit.width || 0) < 300 && (hit.height || 0) < 300) continue;
+        if ((hit.width || 0) < 400 && (hit.height || 0) < 400) continue;
+        // Skip images with very short titles (likely generic)
+        if (hit.title && hit.title.length < 3) continue;
         return url;
       }
       return null;
@@ -614,6 +633,75 @@
         return info.thumburl || info.url || null;
       }
       return null;
+    } catch(_) { return null; }
+  }
+
+  // Fanart.tv — high-quality fan art for movies, TV shows, and music artists
+  async function fanartMovie(tmdbId) {
+    if (!cfg.FANART_KEY || !tmdbId) return null;
+    try {
+      const u = `https://webservice.fanart.tv/v3/movies/${tmdbId}?api_key=${cfg.FANART_KEY}`;
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      // Prefer movieposter, then moviethumb, then moviebackground
+      const poster = j.movieposter?.[0]?.url;
+      if (poster) return poster;
+      const thumb = j.moviethumb?.[0]?.url;
+      if (thumb) return thumb;
+      return j.moviebackground?.[0]?.url || null;
+    } catch(_) { return null; }
+  }
+
+  async function fanartTV(tvdbId) {
+    if (!cfg.FANART_KEY || !tvdbId) return null;
+    try {
+      const u = `https://webservice.fanart.tv/v3/tv/${tvdbId}?api_key=${cfg.FANART_KEY}`;
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      const poster = j.tvposter?.[0]?.url;
+      if (poster) return poster;
+      const thumb = j.tvthumb?.[0]?.url;
+      if (thumb) return thumb;
+      return j.showbackground?.[0]?.url || null;
+    } catch(_) { return null; }
+  }
+
+  async function fanartArtist(musicbrainzId) {
+    if (!cfg.FANART_KEY || !musicbrainzId) return null;
+    try {
+      const u = `https://webservice.fanart.tv/v3/music/${musicbrainzId}?api_key=${cfg.FANART_KEY}`;
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      const thumb = j.artistthumb?.[0]?.url;
+      if (thumb) return thumb;
+      return j.artistbackground?.[0]?.url || null;
+    } catch(_) { return null; }
+  }
+
+  // Lookup MusicBrainz ID for an artist (needed for Fanart.tv music)
+  async function musicbrainzArtistId(name) {
+    try {
+      const c = cleanLabel(name);
+      const u = new URL('https://musicbrainz.org/ws/2/artist/');
+      u.searchParams.set('query', c);
+      u.searchParams.set('limit', '3');
+      u.searchParams.set('fmt', 'json');
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      const match = j.artists?.find(a => titlesEqual(a.name, c)) || j.artists?.[0];
+      return match?.id || null;
+    } catch(_) { return null; }
+  }
+
+  // Lookup TVDB ID for a show via TMDB (needed for Fanart.tv TV)
+  async function tmdbTvExternalIds(tmdbTvId) {
+    if (!cfg.TMDB_KEY || !tmdbTvId) return null;
+    try {
+      const u = new URL(`https://api.themoviedb.org/3/tv/${tmdbTvId}/external_ids`);
+      u.searchParams.set('api_key', cfg.TMDB_KEY);
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      return j.tvdb_id || null;
     } catch(_) { return null; }
   }
 
@@ -694,24 +782,32 @@
 
     const wikiHints = wikiHintsForCategory(cat);
 
-    // Helper: return first unseen URL from a series of async calls
+    // Helper: return first unseen, relevant URL from a series of async calls
     async function first(...fns) {
       for (const fn of fns) {
         const url = await fn();
-        if (url && !isSeen(url)) return url;
+        if (url && !isSeen(url) && validateRelevance(url, label, cat)) return url;
       }
       return null;
     }
 
     if (cat === CATS.MOVIE)
       return first(
-        async () => { const m = await tmdbMovie(label, y); return m ? (tmdbImg(m.poster_path) || tmdbImg(m.backdrop_path,'w780')) : null; },
+        async () => { const m = await tmdbMovie(label, y); if (!m) return null; const fart = await fanartMovie(m.id); if (fart) return fart; return tmdbImg(m.poster_path) || tmdbImg(m.backdrop_path,'w780'); },
         () => wikiImage(label, wikiHints)
       );
 
     if (cat === CATS.TV)
       return first(
-        async () => { const t = await tmdbTV(label, y); return t ? (tmdbImg(t.poster_path) || tmdbImg(t.backdrop_path,'w780')) : null; },
+        async () => {
+          const t = await tmdbTV(label, y);
+          if (!t) return null;
+          // Try Fanart.tv via TVDB ID
+          const tvdbId = await tmdbTvExternalIds(t.id);
+          const fart = await fanartTV(tvdbId);
+          if (fart) return fart;
+          return tmdbImg(t.poster_path) || tmdbImg(t.backdrop_path,'w780');
+        },
         () => tvmazeImg(label),
         () => wikiImage(label, wikiHints)
       );
@@ -733,22 +829,20 @@
       );
 
     // MUSIC_ARTIST: for solo artists use TMDB person search, for bands use Wikipedia first
+    // Fanart.tv added as high-priority source via MusicBrainz ID lookup
     if (cat === CATS.MUSIC_ARTIST) {
       const cl = cleanLabel(label);
       const isBand = /\bband\b|\bthe\s/i.test(label) || /\bboys\b|\bgirls\b|\bbrothers\b|\bdirection\b|\bpink\b|\bclan\b|\bday\b|\bpunk\b/i.test(cl);
       if (isBand) {
         return first(
+          async () => { const mbid = await musicbrainzArtistId(label); return fanartArtist(mbid); },
           () => wikiImage(label, wikiHints),
           async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-          () => itunesArtwork(cl),
-          async () => {
-            const p = await tmdbPerson(label);
-            if (!p) return null;
-            return p._hrPath || tmdbImg(p.profile_path, 'h632') || tmdbImg(p.profile_path);
-          }
+          () => itunesArtwork(cl)
         );
       }
       return first(
+        async () => { const mbid = await musicbrainzArtistId(label); return fanartArtist(mbid); },
         async () => {
           const p = await tmdbPerson(label);
           if (!p) return null;
@@ -872,6 +966,64 @@
     }
   }
 
+  /* ======================= RELEVANCE VALIDATION ======================= */
+  // Checks whether a resolved image URL is likely relevant to the item label & category.
+  // Filters out generic stock photos, unrelated results, and low-quality placeholders.
+  function validateRelevance(url, label, cat) {
+    if (!url) return false;
+    const u = url.toLowerCase();
+    const n = normalize(label);
+
+    // Block common placeholder / generic images
+    const BLOCKED_PATTERNS = [
+      /placeholder/i, /no[-_]?image/i, /default[-_]?avatar/i,
+      /generic[-_]?photo/i, /stock[-_]?photo/i, /missing[-_]?image/i,
+      /nophoto/i, /noimage/i, /blank\.(jpg|png)/i,
+      /\bicon[-_]?\d+/i, /favicon/i, /logo[-_]?small/i
+    ];
+    for (const pat of BLOCKED_PATTERNS) {
+      if (pat.test(u)) return false;
+    }
+
+    // Block SVGs for photo categories (often logos/icons, not photos)
+    if (/\.svg(\?|$)/i.test(u)) {
+      const photoCats = [CATS.PERSON, CATS.MUSIC_ARTIST, CATS.FOOD, CATS.PLACE, CATS.SNEAKER, CATS.FASHION];
+      if (photoCats.includes(cat)) return false;
+    }
+
+    // For stock photo APIs, verify the URL has some relation to the query
+    // by checking that at least one keyword from the label appears in the URL path
+    const stockDomains = ['pixabay.com', 'images.pexels.com', 'images.unsplash.com'];
+    const isStock = stockDomains.some(d => u.includes(d));
+    if (isStock) {
+      // Stock images with purely numeric filenames are OK (that's how these APIs work)
+      // But block if the URL contains obviously unrelated subject keywords
+      const unrelatedSubjects = [
+        'abstract', 'background', 'texture', 'pattern', 'wallpaper',
+        'blur', 'bokeh', 'gradient'
+      ];
+      for (const subj of unrelatedSubjects) {
+        if (u.includes(subj) && !n.includes(subj)) return false;
+      }
+    }
+
+    // For Wikimedia Commons, reject files that are maps/flags/diagrams unless that's the category
+    if (u.includes('commons.wikimedia.org') || u.includes('upload.wikimedia.org')) {
+      const wikiBlockPatterns = [
+        /\bflag[-_]of\b/i, /\bcoat[-_]of[-_]arms\b/i, /\bmap[-_]of\b/i,
+        /\blocator[-_]map\b/i, /\bblank[-_]map\b/i
+      ];
+      const isPlaceOrTeam = cat === CATS.PLACE || cat === CATS.TEAM;
+      if (!isPlaceOrTeam) {
+        for (const pat of wikiBlockPatterns) {
+          if (pat.test(u)) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   function loadImage(imgEl, url) {
     return new Promise((resolve, reject) => {
       const temp = new Image();
@@ -880,6 +1032,12 @@
         // Reject tiny images (likely icons/placeholders, not real photos)
         if (temp.naturalWidth < 80 || temp.naturalHeight < 80) {
           reject(new Error('Image too small'));
+          return;
+        }
+        // Reject extremely narrow or extremely wide aspect ratios (likely banners/strips)
+        const aspect = temp.naturalWidth / temp.naturalHeight;
+        if (aspect > 4 || aspect < 0.15) {
+          reject(new Error('Bad aspect ratio'));
           return;
         }
         imgEl.src = url;
@@ -951,12 +1109,15 @@
       const cat = inferCategoryWithMood(item.label, hints, topicMood);
       const ctx = buildContext(item.label, cat, topic?.name);
       // Try multiple fallback sources before giving up
-      const fallbackUrl = await openverseImage(cleanLabel(item.label))
-        || await commonsSearch(cleanLabel(item.label))
-        || await pexelsImage(ctx)
-        || await unsplashImage(ctx)
-        || await pixabay(ctx);
-      if (fallbackUrl && !isSeen(fallbackUrl) && myToken === paintToken) {
+      const fallbackCandidates = [
+        await openverseImage(cleanLabel(item.label)),
+        await commonsSearch(cleanLabel(item.label)),
+        await pexelsImage(ctx),
+        await unsplashImage(ctx),
+        await pixabay(ctx)
+      ];
+      const fallbackUrl = fallbackCandidates.find(u => u && !isSeen(u) && validateRelevance(u, item.label, cat)) || null;
+      if (fallbackUrl && myToken === paintToken) {
         markSeen(fallbackUrl);
         currentResolvedURL = fallbackUrl;
         applyImageStyle(img, cat);
