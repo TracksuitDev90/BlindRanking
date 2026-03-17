@@ -128,33 +128,70 @@ window.TOPICS = [
   // ---- Food & Drink (Wikipedia) ----
   { name: "Foods", mood: "food", provider: "wiki", items: [
     {label:"Pizza"}, {label:"Sushi"}, {label:"Hamburger"}, {label:"Taco"}, {label:"Ramen"}
+  ], itemPool: [
+    {label:"Pizza"}, {label:"Sushi"}, {label:"Hamburger"}, {label:"Taco"}, {label:"Ramen"},
+    {label:"Pad thai"}, {label:"Steak"}, {label:"Fried chicken"}, {label:"Pasta"}, {label:"Curry"},
+    {label:"Dumpling"}, {label:"Burrito"}
   ]},
   { name: "Italian Dishes", mood: "food", provider: "wiki", items: [
     {label:"Lasagna"}, {label:"Risotto"}, {label:"Carbonara"}, {label:"Pizza Margherita"}, {label:"Tiramisu"}
+  ], itemPool: [
+    {label:"Lasagna"}, {label:"Risotto"}, {label:"Carbonara"}, {label:"Pizza Margherita"}, {label:"Tiramisu"},
+    {label:"Osso buco"}, {label:"Gnocchi"}, {label:"Bruschetta"}, {label:"Panna cotta"}, {label:"Minestrone"},
+    {label:"Focaccia"}, {label:"Arancini"}
   ]},
   { name: "Japanese Dishes", mood: "food", provider: "wiki", items: [
     {label:"Ramen"}, {label:"Tempura"}, {label:"Okonomiyaki"}, {label:"Tonkatsu"}, {label:"Sushi"}
+  ], itemPool: [
+    {label:"Ramen"}, {label:"Tempura"}, {label:"Okonomiyaki"}, {label:"Tonkatsu"}, {label:"Sushi"},
+    {label:"Yakitori"}, {label:"Udon"}, {label:"Miso soup"}, {label:"Gyoza"}, {label:"Katsu curry"},
+    {label:"Takoyaki"}, {label:"Onigiri"}
   ]},
   { name: "Mexican Dishes", mood: "food", provider: "wiki", items: [
     {label:"Tacos al pastor"}, {label:"Enchilada"}, {label:"Chile relleno"}, {label:"Mole sauce"}, {label:"Quesadilla"}
+  ], itemPool: [
+    {label:"Tacos al pastor"}, {label:"Enchilada"}, {label:"Chile relleno"}, {label:"Mole sauce"}, {label:"Quesadilla"},
+    {label:"Tamale"}, {label:"Churro"}, {label:"Pozole"}, {label:"Elote"}, {label:"Chilaquiles"},
+    {label:"Burrito"}, {label:"Guacamole"}
   ]},
   { name: "Indian Dishes", mood: "food", provider: "wiki", items: [
     {label:"Butter chicken"}, {label:"Biryani"}, {label:"Masala dosa"}, {label:"Palak paneer"}, {label:"Rogan josh"}
+  ], itemPool: [
+    {label:"Butter chicken"}, {label:"Biryani"}, {label:"Masala dosa"}, {label:"Palak paneer"}, {label:"Rogan josh"},
+    {label:"Tandoori chicken"}, {label:"Samosa"}, {label:"Naan"}, {label:"Chana masala"}, {label:"Vindaloo"},
+    {label:"Dal makhani"}, {label:"Gulab jamun"}
   ]},
   { name: "Breakfast Foods", mood: "food", provider: "wiki", items: [
     {label:"Pancake"}, {label:"French toast"}, {label:"Omelette"}, {label:"Bagel"}, {label:"Waffle"}
+  ], itemPool: [
+    {label:"Pancake"}, {label:"French toast"}, {label:"Omelette"}, {label:"Bagel"}, {label:"Waffle"},
+    {label:"Eggs Benedict"}, {label:"Croissant"}, {label:"Granola"}, {label:"Breakfast burrito"}, {label:"Acai bowl"}
   ]},
   { name: "Desserts", mood: "food", provider: "wiki", items: [
     {label:"Cheesecake"}, {label:"Brownie"}, {label:"Doughnut"}, {label:"Apple pie"}, {label:"Ice cream"}
+  ], itemPool: [
+    {label:"Cheesecake"}, {label:"Brownie"}, {label:"Doughnut"}, {label:"Apple pie"}, {label:"Ice cream"},
+    {label:"Crème brûlée"}, {label:"Macaron"}, {label:"Churro"}, {label:"Cannoli"}, {label:"Baklava"},
+    {label:"Mochi"}, {label:"Panna cotta"}
   ]},
   { name: "Cheeses", mood: "food", provider: "wiki", items: [
     {label:"Cheddar cheese"}, {label:"Mozzarella"}, {label:"Brie"}, {label:"Gouda cheese"}, {label:"Parmigiano Reggiano"}
+  ], itemPool: [
+    {label:"Cheddar cheese"}, {label:"Mozzarella"}, {label:"Brie"}, {label:"Gouda cheese"}, {label:"Parmigiano Reggiano"},
+    {label:"Gruyère cheese"}, {label:"Camembert"}, {label:"Manchego"}, {label:"Feta cheese"}, {label:"Roquefort"}
   ]},
   { name: "Street Foods", mood: "food", provider: "wiki", items: [
     {label:"Falafel"}, {label:"Bánh mì"}, {label:"Arepa"}, {label:"Poutine"}, {label:"Samosa"}
+  ], itemPool: [
+    {label:"Falafel"}, {label:"Bánh mì"}, {label:"Arepa"}, {label:"Poutine"}, {label:"Samosa"},
+    {label:"Empanada"}, {label:"Gyoza"}, {label:"Churro"}, {label:"Takoyaki"}, {label:"Jerk chicken"},
+    {label:"Currywurst"}, {label:"Shawarma"}
   ]},
   { name: "Beverages", mood: "food", provider: "wiki", items: [
     {label:"Coffee"}, {label:"Tea"}, {label:"Lemonade"}, {label:"Hot chocolate"}, {label:"Smoothie"}
+  ], itemPool: [
+    {label:"Coffee"}, {label:"Tea"}, {label:"Lemonade"}, {label:"Hot chocolate"}, {label:"Smoothie"},
+    {label:"Matcha"}, {label:"Kombucha"}, {label:"Horchata"}, {label:"Chai tea"}, {label:"Bubble tea"}
   ]},
 
   // ---- Animals & Nature (Wikipedia) ----
@@ -357,36 +394,96 @@ window.TOPICS = [
 
 const MORE_TOPICS = [
   // ————— Food & Drink —————
-  { name:"Best Pizza Toppings", mood:"food", provider:"wiki", items:[{label:"Pepperoni"},{label:"Mushrooms"},{label:"Sausage"},{label:"Extra cheese"},{label:"Onions"}] },
-  { name:"Best Types of Pizza", mood:"food", provider:"wiki", items:[{label:"Margherita"},{label:"Pepperoni"},{label:"BBQ Chicken"},{label:"Meat Lovers"},{label:"Veggie"}] },
-  { name:"Best Burger Styles", mood: "food", provider:"wiki", items:[{label:"Classic Cheeseburger"},{label:"Bacon Cheeseburger"},{label:"Mushroom Swiss"},{label:"BBQ Burger"},{label:"Jalapeño Burger"}] },
-  { name:"Best Sandwiches", mood: "food", provider:"wiki", items:[{label:"BLT"},{label:"Club Sandwich"},{label:"Reuben"},{label:"Grilled Cheese"},{label:"Philly Cheesesteak"}] },
-  { name:"Best Breakfast Cereals", mood: "food", provider:"wiki", items:[{label:"Cheerios"},{label:"Frosted Flakes"},{label:"Cinnamon Toast Crunch"},{label:"Lucky Charms"},{label:"Froot Loops"}] },
-  { name:"Best Ice Cream Flavors", mood: "food", provider:"wiki", items:[{label:"Vanilla"},{label:"Chocolate"},{label:"Strawberry"},{label:"Cookies and Cream"},{label:"Mint Chocolate Chip"}] },
-  { name:"Best Sodas", mood: "food", provider:"wiki", items:[{label:"Coca-Cola"},{label:"Pepsi"},{label:"Sprite"},{label:"Dr Pepper"},{label:"Mountain Dew"}] },
-  { name:"Best Coffee Drinks", mood: "food", provider:"wiki", items:[{label:"Espresso"},{label:"Cappuccino"},{label:"Latte"},{label:"Cold Brew"},{label:"Americano"}] },
-  { name:"Best Teas", mood: "food", provider:"wiki", items:[{label:"Green Tea"},{label:"Black Tea"},{label:"Earl Grey"},{label:"Oolong"},{label:"Chai"}] },
-  { name:"Best Chocolate Candy", mood: "food", provider:"wiki", items:[{label:"Snickers"},{label:"Kit Kat"},{label:"Reese's Peanut Butter Cups"},{label:"Twix"},{label:"M&M's"}] },
-  { name:"Best Potato Chip Flavors", mood: "food", provider:"wiki", items:[{label:"Classic Salted"},{label:"Sour Cream & Onion"},{label:"Barbecue"},{label:"Salt & Vinegar"},{label:"Cheddar & Sour Cream"}] },
-  { name:"Best Hot Sauces", mood: "food", provider:"wiki", items:[{label:"Sriracha"},{label:"Tabasco"},{label:"Frank's RedHot"},{label:"Cholula"},{label:"Tapatío"}] },
-  { name:"Best Fruits", mood: "food", provider:"wiki", items:[{label:"Mango"},{label:"Apple"},{label:"Banana"},{label:"Strawberries"},{label:"Pineapple"}] },
-  { name:"Best Vegetables", mood: "food", provider:"wiki", items:[{label:"Broccoli"},{label:"Carrots"},{label:"Spinach"},{label:"Corn"},{label:"Tomatoes"}] },
-  { name:"Best Sushi Rolls", mood: "food", provider:"wiki", items:[{label:"California Roll"},{label:"Spicy Tuna Roll"},{label:"Dragon Roll"},{label:"Rainbow Roll"},{label:"Philadelphia Roll"}] },
-  { name:"Best Pasta Shapes", mood: "food", provider:"wiki", items:[{label:"Spaghetti"},{label:"Penne"},{label:"Fettuccine"},{label:"Rigatoni"},{label:"Farfalle"}] },
-  { name:"Best Cheeses", mood: "food", provider:"wiki", items:[{label:"Cheddar"},{label:"Mozzarella"},{label:"Gouda"},{label:"Parmesan"},{label:"Brie"}] },
-  { name:"Best Breads", mood: "food", provider:"wiki", items:[{label:"Sourdough"},{label:"Baguette"},{label:"Ciabatta"},{label:"Rye"},{label:"Brioche"}] },
-  { name:"Best Soups", mood: "food", provider:"wiki", items:[{label:"Chicken Noodle"},{label:"Tomato"},{label:"Clam Chowder"},{label:"French Onion"},{label:"Minestrone"}] },
-  { name:"Best Salads", mood: "food", provider:"wiki", items:[{label:"Caesar"},{label:"Greek Salad"},{label:"Cobb"},{label:"Caprese"},{label:"Nicoise"}] },
-  { name:"Best BBQ Meats", mood: "food", provider:"wiki", items:[{label:"Brisket"},{label:"Pulled Pork"},{label:"Ribs"},{label:"Chicken Thighs"},{label:"Sausage"}] },
-  { name:"Best Fast-Food Chains (US)", mood: "food", provider:"wiki", items:[{label:"McDonald's"},{label:"Burger King"},{label:"Wendy's"},{label:"Taco Bell"},{label:"Chick-fil-A"}] },
-  { name:"Best Breakfast Items", mood: "food", provider:"wiki", items:[{label:"Pancakes"},{label:"Waffles"},{label:"French Toast"},{label:"Omelette"},{label:"Bagel with Cream Cheese"}] },
-  { name:"Best Pizza Regional Styles", mood: "food", provider:"wiki", items:[{label:"New York Style"},{label:"Chicago Deep-Dish"},{label:"Neapolitan"},{label:"Detroit Style"},{label:"Sicilian"}] },
-  { name:"Best Milkshakes", mood: "food", provider:"wiki", items:[{label:"Chocolate"},{label:"Vanilla"},{label:"Strawberry"},{label:"Oreo"},{label:"Salted Caramel"}] },
-  { name:"Best Cookies", mood: "food", provider:"wiki", items:[{label:"Chocolate Chip"},{label:"Oatmeal Raisin"},{label:"Peanut Butter"},{label:"Snickerdoodle"},{label:"Shortbread"}] },
-  { name:"Best Taco Fillings", mood: "food", provider:"wiki", items:[{label:"Carnitas"},{label:"Al Pastor"},{label:"Carne Asada"},{label:"Chicken Tinga"},{label:"Fish Taco"}] },
-  { name:"Best Indian Dishes", mood: "food", provider:"wiki", items:[{label:"Butter Chicken"},{label:"Biryani"},{label:"Palak Paneer"},{label:"Masala Dosa"},{label:"Rogan Josh"}] },
-  { name:"Best Chinese Dishes", mood: "food", provider:"wiki", items:[{label:"Kung Pao Chicken"},{label:"Sweet and Sour Pork"},{label:"Mapo Tofu"},{label:"Peking Duck"},{label:"Chow Mein"}] },
-  { name:"Best Italian Dishes", mood: "food", provider:"wiki", items:[{label:"Lasagna"},{label:"Risotto"},{label:"Carbonara"},{label:"Osso Buco"},{label:"Gnocchi"}] },
+  { name:"Best Pizza Toppings", mood:"food", provider:"wiki",
+    items:[{label:"Pepperoni"},{label:"Mushroom"},{label:"Italian sausage"},{label:"Mozzarella"},{label:"Onion"}],
+    itemPool:[{label:"Pepperoni"},{label:"Mushroom"},{label:"Italian sausage"},{label:"Mozzarella"},{label:"Onion"},{label:"Bell pepper"},{label:"Black olive"},{label:"Jalapeño"},{label:"Pineapple"},{label:"Anchovy"},{label:"Basil"},{label:"Prosciutto"}] },
+  { name:"Best Types of Pizza", mood:"food", provider:"wiki",
+    items:[{label:"Pizza Margherita"},{label:"Pepperoni pizza"},{label:"Hawaiian pizza"},{label:"Meat lover's pizza"},{label:"Vegetarian pizza"}],
+    itemPool:[{label:"Pizza Margherita"},{label:"Pepperoni pizza"},{label:"Hawaiian pizza"},{label:"Meat lover's pizza"},{label:"Vegetarian pizza"},{label:"Four cheese pizza"},{label:"Pizza capricciosa"},{label:"Buffalo chicken pizza"},{label:"White pizza"},{label:"Pizza marinara"}] },
+  { name:"Best Burger Styles", mood: "food", provider:"wiki",
+    items:[{label:"Cheeseburger"},{label:"Bacon cheeseburger"},{label:"Patty melt"},{label:"Slider (sandwich)"},{label:"Smash burger"}],
+    itemPool:[{label:"Cheeseburger"},{label:"Bacon cheeseburger"},{label:"Patty melt"},{label:"Slider (sandwich)"},{label:"Smash burger"},{label:"Mushroom Swiss burger"},{label:"Veggie burger"},{label:"Turkey burger"},{label:"Bison burger"},{label:"Jucy Lucy"}] },
+  { name:"Best Sandwiches", mood: "food", provider:"wiki",
+    items:[{label:"BLT"},{label:"Club sandwich"},{label:"Reuben sandwich"},{label:"Grilled cheese"},{label:"Cheesesteak"}],
+    itemPool:[{label:"BLT"},{label:"Club sandwich"},{label:"Reuben sandwich"},{label:"Grilled cheese"},{label:"Cheesesteak"},{label:"Po' boy"},{label:"Bánh mì"},{label:"Cuban sandwich"},{label:"Monte Cristo sandwich"},{label:"Muffuletta"}] },
+  { name:"Best Breakfast Cereals", mood: "food", provider:"wiki",
+    items:[{label:"Cheerios"},{label:"Frosted Flakes"},{label:"Cinnamon Toast Crunch"},{label:"Lucky Charms"},{label:"Froot Loops"}],
+    itemPool:[{label:"Cheerios"},{label:"Frosted Flakes"},{label:"Cinnamon Toast Crunch"},{label:"Lucky Charms"},{label:"Froot Loops"},{label:"Cap'n Crunch"},{label:"Cocoa Puffs"},{label:"Honey Nut Cheerios"},{label:"Rice Krispies"},{label:"Apple Jacks"}] },
+  { name:"Best Ice Cream Flavors", mood: "food", provider:"wiki",
+    items:[{label:"Vanilla ice cream"},{label:"Chocolate ice cream"},{label:"Strawberry ice cream"},{label:"Cookies and cream"},{label:"Mint chocolate chip ice cream"}],
+    itemPool:[{label:"Vanilla ice cream"},{label:"Chocolate ice cream"},{label:"Strawberry ice cream"},{label:"Cookies and cream"},{label:"Mint chocolate chip ice cream"},{label:"Rocky road ice cream"},{label:"Pistachio ice cream"},{label:"Cookie dough ice cream"},{label:"Butter pecan ice cream"},{label:"Neapolitan ice cream"}] },
+  { name:"Best Sodas", mood: "food", provider:"wiki",
+    items:[{label:"Coca-Cola"},{label:"Pepsi"},{label:"Sprite (drink)"},{label:"Dr Pepper"},{label:"Mountain Dew"}],
+    itemPool:[{label:"Coca-Cola"},{label:"Pepsi"},{label:"Sprite (drink)"},{label:"Dr Pepper"},{label:"Mountain Dew"},{label:"Fanta"},{label:"7 Up"},{label:"Root beer"},{label:"Ginger ale"},{label:"Cream soda"}] },
+  { name:"Best Coffee Drinks", mood: "food", provider:"wiki",
+    items:[{label:"Espresso"},{label:"Cappuccino"},{label:"Latte"},{label:"Cold brew coffee"},{label:"Caffè Americano"}],
+    itemPool:[{label:"Espresso"},{label:"Cappuccino"},{label:"Latte"},{label:"Cold brew coffee"},{label:"Caffè Americano"},{label:"Flat white"},{label:"Macchiato"},{label:"Irish coffee"},{label:"Affogato"},{label:"Mocha coffee"}] },
+  { name:"Best Teas", mood: "food", provider:"wiki",
+    items:[{label:"Green tea"},{label:"Black tea"},{label:"Earl Grey tea"},{label:"Oolong tea"},{label:"Masala chai"}],
+    itemPool:[{label:"Green tea"},{label:"Black tea"},{label:"Earl Grey tea"},{label:"Oolong tea"},{label:"Masala chai"},{label:"Matcha"},{label:"Chamomile tea"},{label:"Peppermint tea"},{label:"White tea"},{label:"Rooibos"}] },
+  { name:"Best Chocolate Candy", mood: "food", provider:"wiki",
+    items:[{label:"Snickers"},{label:"Kit Kat"},{label:"Reese's Peanut Butter Cups"},{label:"Twix"},{label:"M&M's"}],
+    itemPool:[{label:"Snickers"},{label:"Kit Kat"},{label:"Reese's Peanut Butter Cups"},{label:"Twix"},{label:"M&M's"},{label:"Milky Way (chocolate bar)"},{label:"Butterfinger"},{label:"3 Musketeers (candy bar)"},{label:"Toblerone"},{label:"Ferrero Rocher"}] },
+  { name:"Best Potato Chip Flavors", mood: "food", provider:"wiki",
+    items:[{label:"Potato chip"},{label:"Sour cream and onion"},{label:"Barbecue chip"},{label:"Salt and vinegar chips"},{label:"Cheddar cheese chip"}],
+    itemPool:[{label:"Potato chip"},{label:"Sour cream and onion"},{label:"Barbecue chip"},{label:"Salt and vinegar chips"},{label:"Cheddar cheese chip"},{label:"Kettle chip"},{label:"Jalapeño chip"},{label:"Dill pickle chip"},{label:"Ranch dressing chip"},{label:"Sweet chili chip"}] },
+  { name:"Best Hot Sauces", mood: "food", provider:"wiki",
+    items:[{label:"Sriracha"},{label:"Tabasco sauce"},{label:"Frank's RedHot"},{label:"Cholula Hot Sauce"},{label:"Tapatío"}],
+    itemPool:[{label:"Sriracha"},{label:"Tabasco sauce"},{label:"Frank's RedHot"},{label:"Cholula Hot Sauce"},{label:"Tapatío"},{label:"Crystal Hot Sauce"},{label:"Valentina (hot sauce)"},{label:"Harissa"},{label:"Sambal"},{label:"Gochujang"}] },
+  { name:"Best Fruits", mood: "food", provider:"wiki",
+    items:[{label:"Mango"},{label:"Apple"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"}],
+    itemPool:[{label:"Mango"},{label:"Apple"},{label:"Banana"},{label:"Strawberry"},{label:"Pineapple"},{label:"Watermelon"},{label:"Peach"},{label:"Blueberry"},{label:"Cherry"},{label:"Grape"},{label:"Kiwifruit"},{label:"Raspberry"}] },
+  { name:"Best Vegetables", mood: "food", provider:"wiki",
+    items:[{label:"Broccoli"},{label:"Carrot"},{label:"Spinach"},{label:"Corn"},{label:"Tomato"}],
+    itemPool:[{label:"Broccoli"},{label:"Carrot"},{label:"Spinach"},{label:"Corn"},{label:"Tomato"},{label:"Asparagus"},{label:"Brussels sprout"},{label:"Sweet potato"},{label:"Zucchini"},{label:"Avocado"},{label:"Cauliflower"},{label:"Green bean"}] },
+  { name:"Best Sushi Rolls", mood: "food", provider:"wiki",
+    items:[{label:"California roll"},{label:"Spicy tuna roll"},{label:"Sashimi"},{label:"Nigiri"},{label:"Temaki"}],
+    itemPool:[{label:"California roll"},{label:"Spicy tuna roll"},{label:"Sashimi"},{label:"Nigiri"},{label:"Temaki"},{label:"Maki (sushi)"},{label:"Uramaki"},{label:"Chirashizushi"},{label:"Inari sushi"},{label:"Futomaki"}] },
+  { name:"Best Pasta Shapes", mood: "food", provider:"wiki",
+    items:[{label:"Spaghetti"},{label:"Penne"},{label:"Fettuccine"},{label:"Rigatoni"},{label:"Farfalle"}],
+    itemPool:[{label:"Spaghetti"},{label:"Penne"},{label:"Fettuccine"},{label:"Rigatoni"},{label:"Farfalle"},{label:"Linguine"},{label:"Fusilli"},{label:"Orecchiette"},{label:"Tagliatelle"},{label:"Pappardelle"},{label:"Orzo"},{label:"Cavatappi"}] },
+  { name:"Best Cheeses", mood: "food", provider:"wiki",
+    items:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie"}],
+    itemPool:[{label:"Cheddar cheese"},{label:"Mozzarella"},{label:"Gouda cheese"},{label:"Parmesan cheese"},{label:"Brie"},{label:"Gruyère cheese"},{label:"Manchego"},{label:"Feta cheese"},{label:"Roquefort"},{label:"Camembert"}] },
+  { name:"Best Breads", mood: "food", provider:"wiki",
+    items:[{label:"Sourdough bread"},{label:"Baguette"},{label:"Ciabatta"},{label:"Rye bread"},{label:"Brioche"}],
+    itemPool:[{label:"Sourdough bread"},{label:"Baguette"},{label:"Ciabatta"},{label:"Rye bread"},{label:"Brioche"},{label:"Focaccia"},{label:"Pita bread"},{label:"Challah"},{label:"Naan"},{label:"Pretzel"},{label:"Cornbread"},{label:"Pumpernickel"}] },
+  { name:"Best Soups", mood: "food", provider:"wiki",
+    items:[{label:"Chicken soup"},{label:"Tomato soup"},{label:"Clam chowder"},{label:"French onion soup"},{label:"Minestrone"}],
+    itemPool:[{label:"Chicken soup"},{label:"Tomato soup"},{label:"Clam chowder"},{label:"French onion soup"},{label:"Minestrone"},{label:"Pho"},{label:"Lobster bisque"},{label:"Gazpacho"},{label:"Miso soup"},{label:"Goulash"},{label:"Borscht"},{label:"Hot and sour soup"}] },
+  { name:"Best Salads", mood: "food", provider:"wiki",
+    items:[{label:"Caesar salad"},{label:"Greek salad"},{label:"Cobb salad"},{label:"Caprese salad"},{label:"Salade niçoise"}],
+    itemPool:[{label:"Caesar salad"},{label:"Greek salad"},{label:"Cobb salad"},{label:"Caprese salad"},{label:"Salade niçoise"},{label:"Waldorf salad"},{label:"Tabbouleh"},{label:"Fattoush"},{label:"Panzanella"},{label:"Coleslaw"}] },
+  { name:"Best BBQ Meats", mood: "food", provider:"wiki",
+    items:[{label:"Brisket"},{label:"Pulled pork"},{label:"Ribs"},{label:"Barbecue chicken"},{label:"Sausage"}],
+    itemPool:[{label:"Brisket"},{label:"Pulled pork"},{label:"Ribs"},{label:"Barbecue chicken"},{label:"Sausage"},{label:"Tri-tip"},{label:"Pork belly"},{label:"Burnt ends"},{label:"Smoked turkey"},{label:"Lamb chops"}] },
+  { name:"Best Fast-Food Chains (US)", mood: "food", provider:"wiki",
+    items:[{label:"McDonald's"},{label:"Burger King"},{label:"Wendy's"},{label:"Taco Bell"},{label:"Chick-fil-A"}],
+    itemPool:[{label:"McDonald's"},{label:"Burger King"},{label:"Wendy's"},{label:"Taco Bell"},{label:"Chick-fil-A"},{label:"Popeyes Louisiana Kitchen"},{label:"Five Guys"},{label:"In-N-Out Burger"},{label:"Shake Shack"},{label:"Whataburger"}] },
+  { name:"Best Breakfast Items", mood: "food", provider:"wiki",
+    items:[{label:"Pancake"},{label:"Waffle"},{label:"French toast"},{label:"Omelette"},{label:"Bagel"}],
+    itemPool:[{label:"Pancake"},{label:"Waffle"},{label:"French toast"},{label:"Omelette"},{label:"Bagel"},{label:"Eggs Benedict"},{label:"Croissant"},{label:"Breakfast burrito"},{label:"Granola"},{label:"Acai bowl"}] },
+  { name:"Best Pizza Regional Styles", mood: "food", provider:"wiki",
+    items:[{label:"New York-style pizza"},{label:"Chicago-style pizza"},{label:"Neapolitan pizza"},{label:"Detroit-style pizza"},{label:"Sicilian pizza"}],
+    itemPool:[{label:"New York-style pizza"},{label:"Chicago-style pizza"},{label:"Neapolitan pizza"},{label:"Detroit-style pizza"},{label:"Sicilian pizza"},{label:"Roman pizza"},{label:"Greek pizza"},{label:"St. Louis-style pizza"},{label:"New Haven-style pizza"},{label:"Grandma pizza"}] },
+  { name:"Best Milkshakes", mood: "food", provider:"wiki",
+    items:[{label:"Chocolate milkshake"},{label:"Vanilla milkshake"},{label:"Strawberry milkshake"},{label:"Oreo milkshake"},{label:"Milkshake"}],
+    itemPool:[{label:"Chocolate milkshake"},{label:"Vanilla milkshake"},{label:"Strawberry milkshake"},{label:"Oreo milkshake"},{label:"Milkshake"},{label:"Peanut butter milkshake"},{label:"Banana milkshake"},{label:"Malt (drink)"},{label:"Cookies and cream milkshake"},{label:"Caramel milkshake"}] },
+  { name:"Best Cookies", mood: "food", provider:"wiki",
+    items:[{label:"Chocolate chip cookie"},{label:"Oatmeal raisin cookie"},{label:"Peanut butter cookie"},{label:"Snickerdoodle"},{label:"Shortbread"}],
+    itemPool:[{label:"Chocolate chip cookie"},{label:"Oatmeal raisin cookie"},{label:"Peanut butter cookie"},{label:"Snickerdoodle"},{label:"Shortbread"},{label:"Macaron"},{label:"Sugar cookie"},{label:"Biscotti"},{label:"Gingerbread cookie"},{label:"Macaroon"}] },
+  { name:"Best Taco Fillings", mood: "food", provider:"wiki",
+    items:[{label:"Carnitas"},{label:"Tacos al pastor"},{label:"Carne asada"},{label:"Tinga"},{label:"Fish taco"}],
+    itemPool:[{label:"Carnitas"},{label:"Tacos al pastor"},{label:"Carne asada"},{label:"Tinga"},{label:"Fish taco"},{label:"Barbacoa"},{label:"Chorizo"},{label:"Birria"},{label:"Pollo asado"},{label:"Lengua (taco)"}] },
+  { name:"Best Indian Dishes", mood: "food", provider:"wiki",
+    items:[{label:"Butter chicken"},{label:"Biryani"},{label:"Palak paneer"},{label:"Masala dosa"},{label:"Rogan josh"}],
+    itemPool:[{label:"Butter chicken"},{label:"Biryani"},{label:"Palak paneer"},{label:"Masala dosa"},{label:"Rogan josh"},{label:"Tandoori chicken"},{label:"Chana masala"},{label:"Vindaloo"},{label:"Korma"},{label:"Tikka masala"},{label:"Dal makhani"},{label:"Samosa"}] },
+  { name:"Best Chinese Dishes", mood: "food", provider:"wiki",
+    items:[{label:"Kung Pao chicken"},{label:"Sweet and sour pork"},{label:"Mapo tofu"},{label:"Peking duck"},{label:"Chow mein"}],
+    itemPool:[{label:"Kung Pao chicken"},{label:"Sweet and sour pork"},{label:"Mapo tofu"},{label:"Peking duck"},{label:"Chow mein"},{label:"Dim sum"},{label:"Hot pot"},{label:"Char siu"},{label:"Wonton soup"},{label:"Fried rice"},{label:"Spring roll"},{label:"Dan dan noodles"}] },
+  { name:"Best Italian Dishes", mood: "food", provider:"wiki",
+    items:[{label:"Lasagna"},{label:"Risotto"},{label:"Carbonara"},{label:"Osso buco"},{label:"Gnocchi"}],
+    itemPool:[{label:"Lasagna"},{label:"Risotto"},{label:"Carbonara"},{label:"Osso buco"},{label:"Gnocchi"},{label:"Bruschetta"},{label:"Arancini"},{label:"Panna cotta"},{label:"Tiramisu"},{label:"Focaccia"},{label:"Minestrone"},{label:"Caprese salad"}] },
 
   // ————— TV / Movies —————
   { name:"Top 90s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Backstreet Boys"},{label:"NSYNC"},{label:"Boyz II Men"},{label:"98 Degrees"},{label:"New Kids on the Block"}] },
@@ -504,7 +601,9 @@ const MORE_TOPICS = [
   { name:"Best Architects", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Frank Lloyd Wright"},{label:"Zaha Hadid"},{label:"Le Corbusier"},{label:"I. M. Pei"},{label:"Antoni Gaudí"}] },
   { name:"Best Photographers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ansel Adams"},{label:"Annie Leibovitz"},{label:"Henri Cartier-Bresson"},{label:"Steve McCurry"},{label:"Diane Arbus"}] },
   { name:"Best Fashion Designers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Coco Chanel"},{label:"Giorgio Armani"},{label:"Gianni Versace"},{label:"Alexander McQueen"},{label:"Marc Jacobs"}] },
-  { name:"Best Sneakers", mood: "culture", provider:"wiki", mediaType:"sneaker", items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor"},{label:"Yeezy Boost 350"}] },
+  { name:"Best Sneakers", mood: "culture", provider:"wiki", mediaType:"sneaker",
+    items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"}],
+    itemPool:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"},{label:"Nike Air Max 1"},{label:"New Balance 574"},{label:"Nike Dunk"},{label:"Adidas Superstar (shoe)"},{label:"Vans Old Skool"},{label:"Puma Suede"},{label:"Reebok Classic"}] },
   { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
   { name:"Best Beer Styles", mood: "food", provider:"wiki", items:[{label:"IPA"},{label:"Stout"},{label:"Lager"},{label:"Pilsner"},{label:"Wheat Beer"}] },
   { name:"Best Cocktails", mood: "food", provider:"wiki", items:[{label:"Old Fashioned"},{label:"Margarita"},{label:"Mojito"},{label:"Negroni"},{label:"Martini"}] },
