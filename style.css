@@ -243,11 +243,13 @@ body {
 }
 .btn--success:hover:not(:disabled) { filter: brightness(1.15); }
 
-/* Placed state for rank buttons */
+/* Placed state for rank buttons — high contrast so it's obvious which ranks are taken */
 .btn--tonal.placed {
-  background: var(--primary-cont);
-  color: var(--on-primary-c);
+  background: var(--tertiary);
+  color: #1a1a1a;
   pointer-events: none;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(168, 219, 139, .3);
 }
 
 /* =============== RANKINGS PANEL =============== */

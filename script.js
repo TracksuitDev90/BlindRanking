@@ -97,6 +97,7 @@
     itemIndex:  0,
     ranks:      new Array(5).fill(null),
     rankImages: new Array(5).fill(null),
+    completed:  false, // true when all items in current topic have been ranked
     selectedMoods: [], // mood IDs the user picked
 
     buildTopicList(moods) {
@@ -136,6 +137,7 @@
         this.itemIndex  = d.itemIndex  | 0;
         this.ranks      = Array.isArray(d.ranks) ? d.ranks : new Array(5).fill(null);
         this.rankImages = Array.isArray(d.rankImages) ? d.rankImages : new Array(5).fill(null);
+        this.completed  = !!d.completed;
         return true;
       }
       return false;
@@ -147,7 +149,8 @@
         topicName:  t?.name || '',
         itemIndex:  this.itemIndex,
         ranks:      this.ranks,
-        rankImages: this.rankImages
+        rankImages: this.rankImages,
+        completed:  this.completed
       });
       MOOD_STORAGE.save(this.selectedMoods);
     },
@@ -155,12 +158,13 @@
       this.topicIndex = 0; this.itemIndex = 0;
       this.ranks = new Array(5).fill(null);
       this.rankImages = new Array(5).fill(null);
+      this.completed = false;
       this.persist();
     },
     currentTopic() { return this.topics[this.topicIndex] || null; },
     currentItem()  { const t = this.currentTopic(); return t?.items?.[this.itemIndex] || null; },
     nextItem()     { const t = this.currentTopic(); return t?.items?.[this.itemIndex + 1] || null; },
-    isComplete()   { const t = this.currentTopic(); return t ? this.itemIndex >= t.items.length - 1 && this.ranks.some(Boolean) : false; }
+    isComplete()   { return this.completed; }
   };
 
   // Track the currently displayed image URL so we can store it for rank thumbnails
@@ -302,7 +306,7 @@
     if (/\bair jordan\b|\bjordan \d|\bair force\b|\bair max\b|\byeezy\b|\bnew balance\b|\bchuck taylor\b|\bstan smith\b|\bdunk\b|\b(?:nike|adidas|puma|reebok|vans|converse)\b.*\b(?:shoe|sneaker|boot|runner)\b|\bsneaker\b|\b(?:shoe|sneaker|boot|runner)s?\b/.test(n)) return CATS.SNEAKER;
     // Fashion items (clothing, accessories, luxury goods)
     if (/\bhandbag\b|\bpurse\b|\bsunglasses\b|\bjacket\b|\bdress\b|\bperfume\b|\bcologne\b|\bjewelry\b|\bnecklace\b|\bwatch\b.*\b(?:rolex|omega|patek|cartier|tag)\b/.test(n)) return CATS.FASHION;
-    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b|\bbrownie\b|\bdoughnut\b|\bcookie\b|\bwaffle\b|\bpancake\b|\bchip\b|\bcereal\b|\bcandy\b/.test(n)) return CATS.FOOD;
+    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b|\bbrownie\b|\bdoughnut\b|\bcookie\b|\bwaffle\b|\bpancake\b|\bchip\b|\bcereal\b|\bcandy\b|\bmargarita\b|\bmojito\b|\bcocktail\b|\bsmoothie\b|\blemonade\b|\bmilkshake\b|\bbeer\b|\bwine\b|\bwhiskey\b|\bbourbon\b|\btequila\b|\bvodka\b|\brum\b|\bgin\b|\bespresso\b|\blatte\b|\bcappuccino\b|\bfrappe\b|\bboba\b|\bjuice\b|\bsoda\b|\bsteak\b|\bpasta\b|\bramen\b|\bnachos\b|\bwings\b|\bfries\b|\blobster\b|\bshrimp\b|\bsandwich\b|\bburrito\b|\bquesadilla\b|\bcroissant\b|\bmuffin\b|\bmacaron\b|\bgelato\b|\bsorbet\b|\bchocolate\b|\bpopcorn\b/.test(n)) return CATS.FOOD;
     if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b/.test(n)) return CATS.DEVICE;
     if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
     return CATS.GENERIC;
@@ -335,7 +339,7 @@
       [CATS.MUSIC_ARTIST]: `"${b}" musician artist official portrait press photo`,
       [CATS.MOVIE]:        `"${b}" official movie poster high resolution`,
       [CATS.TV]:           `"${b}" official TV series poster key art`,
-      [CATS.FOOD]:         `"${b}" single dish plated food photography isolated on white`,
+      [CATS.FOOD]:         `"${b}" delicious food drink photography professional close-up`,
       [CATS.PLACE]:        `"${b}" famous landmark scenic photography aerial view`,
       [CATS.DEVICE]:       `"${b}" product official press photo isolated on white background`,
       [CATS.SNEAKER]:      `"${b}" single sneaker shoe product photo isolated on white background studio`,
@@ -559,8 +563,8 @@
       u.searchParams.set('key', cfg.PIXABAY_KEY); u.searchParams.set('q', query);
       u.searchParams.set('image_type','photo'); u.searchParams.set('safesearch','true');
       u.searchParams.set('per_page','5');
-      u.searchParams.set('min_width', '400');
-      u.searchParams.set('min_height', '400');
+      u.searchParams.set('min_width', '600');
+      u.searchParams.set('min_height', '600');
       u.searchParams.set('editors_choice', 'true'); // prefer curated high-quality
       const r = await fetchT(u); if (!r.ok) return null;
       let j = await r.json();
@@ -593,8 +597,8 @@
       for (const hit of results) {
         const url = hit?.url;
         if (!url) continue;
-        // Skip very small images (likely thumbnails/icons)
-        if ((hit.width || 0) < 400 && (hit.height || 0) < 400) continue;
+        // Skip small/low-quality images (likely thumbnails/icons)
+        if ((hit.width || 0) < 600 && (hit.height || 0) < 600) continue;
         // Skip images with very short titles (likely generic)
         if (hit.title && hit.title.length < 3) continue;
         return url;
@@ -953,6 +957,16 @@
     // Default: contain so every image shows in full without cropping
     imgEl.style.objectFit = 'contain';
     imgEl.style.objectPosition = 'center';
+    imgEl.style.padding = '0';
+
+    // Logo-type categories: always contain with padding so logos breathe and are never cropped
+    const isLogo = cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME;
+    if (isLogo) {
+      imgEl.style.objectFit = 'contain';
+      imgEl.style.objectPosition = 'center';
+      imgEl.style.padding = '16px';
+      return;
+    }
 
     // People/artists: cover + face-bias since these are portrait photos
     if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
@@ -1024,19 +1038,22 @@
     return true;
   }
 
-  function loadImage(imgEl, url) {
+  function loadImage(imgEl, url, cat) {
     return new Promise((resolve, reject) => {
       const temp = new Image();
       temp.crossOrigin = 'anonymous';
       temp.onload = () => {
-        // Reject tiny images (likely icons/placeholders, not real photos)
-        if (temp.naturalWidth < 80 || temp.naturalHeight < 80) {
+        // Reject tiny/low-quality images (likely icons/placeholders, not real photos)
+        if (temp.naturalWidth < 150 || temp.naturalHeight < 150) {
           reject(new Error('Image too small'));
           return;
         }
-        // Reject extremely narrow or extremely wide aspect ratios (likely banners/strips)
+        // Logo-type categories get relaxed aspect ratio limits since logos are often very wide or tall
+        const isLogo = cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME;
+        const maxAspect = isLogo ? 8 : 4;
+        const minAspect = isLogo ? 0.08 : 0.15;
         const aspect = temp.naturalWidth / temp.naturalHeight;
-        if (aspect > 4 || aspect < 0.15) {
+        if (aspect > maxAspect || aspect < minAspect) {
           reject(new Error('Bad aspect ratio'));
           return;
         }
@@ -1084,7 +1101,7 @@
       const cat = inferCategoryWithMood(item.label, hints, topicMood);
       applyImageStyle(img, cat);
       try {
-        await loadImage(img, url);
+        await loadImage(img, url, cat);
       } catch (loadErr) {
         // Image URL resolved but failed to actually load — try resolving again
         // (will skip the seen URL and try next provider)
@@ -1094,7 +1111,7 @@
           markSeen(retryUrl);
           currentResolvedURL = retryUrl;
           applyImageStyle(img, cat);
-          await loadImage(img, retryUrl);
+          await loadImage(img, retryUrl, cat);
         } else {
           throw loadErr;
         }
@@ -1280,19 +1297,20 @@
     App.itemIndex = 0;
     App.ranks = new Array(5).fill(null);
     App.rankImages = new Array(5).fill(null);
+    App.completed = false;
     resetSeen();
     prefetchCache.clear();
     currentResolvedURL = null;
+    hideCompletion();
     renderTopicTitle();
     renderRankSlots();
-    const stage = $(SELECTORS.stage);
-    if (stage) stage.classList.remove('complete');
-    const overlay = $(SELECTORS.completionOverlay);
-    if (overlay) { overlay.hidden = true; overlay.classList.remove('visible'); }
     await resolveAndRender(App.currentItem());
   }
 
   function showCompletion() {
+    App.completed = true;
+    App.persist();
+
     const stage = $(SELECTORS.stage);
     if (stage) stage.classList.add('complete');
 
@@ -1312,6 +1330,15 @@
     updateShareButton();
 
     // NO auto-advance — user shares first, then clicks "New Topic"
+  }
+
+  function hideCompletion() {
+    App.completed = false;
+
+    const stage = $(SELECTORS.stage);
+    if (stage) stage.classList.remove('complete');
+    const overlay = $(SELECTORS.completionOverlay);
+    if (overlay) { overlay.hidden = true; overlay.classList.remove('visible'); }
   }
 
   /* ============================== MOOD PICKER ============================== */
@@ -1376,7 +1403,7 @@
       if (!Number.isFinite(r)) return;
       on(btn, 'click', async () => {
         const item = App.currentItem();
-        if (!item) return;
+        if (!item || App.completed) return;
 
         // Place item in rank
         App.ranks[r - 1] = item;
@@ -1415,7 +1442,7 @@
 
       const item = App.currentItem();
       const t = App.currentTopic();
-      if (!item || !t) return;
+      if (!item || !t || App.completed) return;
 
       App.ranks[n - 1] = item;
       App.rankImages[n - 1] = currentResolvedURL;
@@ -1433,9 +1460,19 @@
 
   /* ============================== BOOT ============================== */
   async function startRanking() {
+    // Always clear completion overlay first to prevent stale state
+    hideCompletion();
     renderTopicTitle();
     renderRankSlots();
     if (!App.currentItem()) App.reset();
+
+    // If we restored a completed topic, show the completion state
+    if (App.completed) {
+      showCompletion();
+      // Still render the last item so the card isn't blank
+      await resolveAndRender(App.currentItem());
+      return;
+    }
     await resolveAndRender(App.currentItem());
   }
 
