@@ -302,6 +302,11 @@
     if (/\bgame\b/.test(n) && !/\bgame of\b/.test(n)) return CATS.GAME;
     if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
     if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b|\blogo\b/.test(n)) return CATS.BRAND;
+    // Well-known brands / corporations (car, tech, fashion)
+    if (/\btoyota\b|\bford\b|\bbmw\b|\bmercedes[-\s]?benz\b|\bhonda\b|\bporsche\b|\bferrari\b|\blamborghini\b|\baudi\b|\bvolkswagen\b|\btesla\b|\bchevrolet\b|\bjeep\b|\bsubaru\b|\bhyundai\b|\bkia\b|\bnissan\b|\bmazda\b|\bjaguar\b|\bland rover\b|\bbugatti\b|\bmclaren\b|\bbentley\b|\brolls[-\s]?royce\b|\bmaserati\b|\baston martin\b|\bvolvo\b/.test(n)) return CATS.BRAND;
+    if (/\bgoogle\b|\bmicrosoft\b|\bapple\b|\bamazon\b|\bmeta\b|\bnetflix\b|\bspotify\b|\buber\b|\bairbnb\b|\bslack\b|\bstripe\b|\bsnapchat\b|\btiktok\b|\breddit\b|\btwitch\b|\bdiscord\b|\bshopify\b|\bdropbox\b|\bsalesforce\b|\badobe\b|\boracle\b|\bibm\b|\bsamsung\b|\bsony\b|\bnintendo\b|\bvalve\b|\bepic games\b|\broku\b|\bnvidia\b/.test(n)) return CATS.BRAND;
+    // Fashion / luxury brands
+    if (/\bgucci\b|\blouis vuitton\b|\bchanel\b|\bprada\b|\bversace\b|\bdior\b|\bbalenciaga\b|\bhermes\b|\bburberry\b|\bfendi\b|\bgivenchy\b|\byves saint laurent\b|\bralph lauren\b|\btommy hilfiger\b|\bcalvin klein\b|\barmani\b|\brolex\b|\bomega\b|\bpatek philippe\b|\btag heuer\b|\baudemars piguet\b|\bcartier\b/.test(n)) return CATS.BRAND;
     // Sneakers / shoes
     if (/\bair jordan\b|\bjordan \d|\bair force\b|\bair max\b|\byeezy\b|\bnew balance\b|\bchuck taylor\b|\bstan smith\b|\bdunk\b|\b(?:nike|adidas|puma|reebok|vans|converse)\b.*\b(?:shoe|sneaker|boot|runner)\b|\bsneaker\b|\b(?:shoe|sneaker|boot|runner)s?\b/.test(n)) return CATS.SNEAKER;
     // Fashion items (clothing, accessories, luxury goods)
@@ -316,19 +321,33 @@
   function inferCategoryWithMood(label, hints, topicMood) {
     const cat = inferCategory(label, hints);
     if (cat !== CATS.GENERIC) return cat;
+    const tn = normalize(hints.topicName || '');
     // Use topic mood to improve generic inference
     if (topicMood === 'food') return CATS.FOOD;
     if (topicMood === 'music') return CATS.MUSIC_ARTIST;
     if (topicMood === 'people') return CATS.PERSON;
     if (topicMood === 'places') return CATS.PLACE;
-    if (topicMood === 'sports') return CATS.TEAM;
+    if (topicMood === 'sports') {
+      // Sports topics with people (athletes) should stay PERSON, not TEAM
+      if (/\bquarterback\b|\bathlete\b|\bplayer\b|\bsprinter\b|\bswimmer\b|\bgolfer\b|\btennis\b|\bboxer\b|\bfighter\b|\bchess\b|\bpainter\b|\barchitect\b|\bphotographer\b|\bdesigner\b|\bcomedian\b|\bhost\b|\byoutuber\b|\bstreamer\b|\bolympian\b|\bdriver\b|\blegend\b/.test(tn)) return CATS.PERSON;
+      return CATS.TEAM;
+    }
     if (topicMood === 'sneakers') return CATS.SNEAKER;
     if (topicMood === 'fashion') return CATS.FASHION;
     if (topicMood === 'products') return CATS.PRODUCT;
-    // Topic name heuristic for product-like "culture" topics
-    const tn = normalize(hints.topicName || '');
-    if (/\bsneaker/.test(tn)) return CATS.SNEAKER;
-    if (/\bwatch\b|\bfashion\b|\bluxury\b|\bjewel/.test(tn)) return CATS.FASHION;
+    // Tech mood: detect devices vs brands from topic name
+    if (topicMood === 'tech') {
+      if (/\bcar\b|\belectric car\b|\bclassic car\b|\bsmartphone\b|\blaptop\b|\bheadphone\b|\bcamera\b|\bsmartwatch\b|\bconsole\b|\bdevice\b/.test(tn) && !/\bbrand/.test(tn)) return CATS.DEVICE;
+      // Default: most tech topics are brands/companies/logos
+      return CATS.BRAND;
+    }
+    // Culture mood: use topic name to pick between brand/logo vs generic
+    if (topicMood === 'culture') {
+      if (/\bsneaker/.test(tn)) return CATS.SNEAKER;
+      if (/\bwatch\b.*\bbrand\b|\bfashion\b|\bluxury\b|\bjewel/.test(tn)) return CATS.FASHION;
+      if (/\bpodcast\b|\bsocial\b|\bnetwork\b|\bstartup\b|\bapp\b|\bbrowser\b|\bstreaming\b|\buniversit/.test(tn)) return CATS.BRAND;
+      if (/\bbrand\b|\bcompan/.test(tn)) return CATS.BRAND;
+    }
     return cat;
   }
 
@@ -347,7 +366,7 @@
       [CATS.PRODUCT]:      `"${b}" official product photo isolated on white background studio`,
       [CATS.GAME]:         `"${b}" video game official cover art box art`,
       [CATS.TEAM]:         `"${b}" team official logo crest badge`,
-      [CATS.BRAND]:        `"${b}" brand official logo high resolution`,
+      [CATS.BRAND]:        `"${b}" official logo transparent high resolution vector`,
       [CATS.MUSIC_ALBUM]:  `"${b}" album cover art official`,
       [CATS.MUSIC_TRACK]:  `"${b}" single cover art official`,
     };
@@ -769,7 +788,7 @@
       [CATS.FOOD]: ['food', 'dish'],
       [CATS.PLACE]: ['place', 'city'],
       [CATS.DEVICE]: ['device', 'product'],
-      [CATS.BRAND]: ['company', 'brand'],
+      [CATS.BRAND]: ['company', 'brand', 'corporation'],
     };
     return map[cat] || null;
   }
@@ -816,7 +835,16 @@
         () => wikiImage(label, wikiHints)
       );
 
-    // PERSON: prioritize TMDB person images API for best face photo
+    // PERSON: for sports/non-entertainment people, skip TMDB (it's movie/TV only and
+    // returns wrong people for athletes). Use Wikipedia/Wikidata which have correct photos.
+    if (cat === CATS.PERSON && topicMood === 'sports')
+      return first(
+        () => wikiImage(label, ['American football', 'athlete', 'sports']),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => wikiImage(label)
+      );
+
+    // PERSON: prioritize TMDB person images API for best face photo (entertainment people)
     if (cat === CATS.PERSON)
       return first(
         async () => {
