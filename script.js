@@ -59,7 +59,7 @@
   window.BR = window.BR || {};
 
   /* ============================= FETCH ============================= */
-  function fetchT(url, timeoutMs = 8000) {
+  function fetchT(url, timeoutMs = 12000) {
     const c = new AbortController();
     const t = setTimeout(() => c.abort(), timeoutMs);
     return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
@@ -293,7 +293,8 @@
     if (/\bseason\b|\bs\d{1,2}\b/.test(n)) return CATS.TV;
     if (/\balbum\b/.test(n)) return CATS.MUSIC_ALBUM;
     if (/\btrack\b|\bsong\b/.test(n)) return CATS.MUSIC_TRACK;
-    if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
+    if (/\bvideo game\b/.test(n)) return CATS.GAME;
+    if (/\bgame\b/.test(n) && !/\bgame of\b/.test(n)) return CATS.GAME;
     if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
     if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b|\blogo\b/.test(n)) return CATS.BRAND;
     // Sneakers / shoes
@@ -333,7 +334,7 @@
       [CATS.MUSIC_ARTIST]: `${b} artist portrait photo face`,
       [CATS.MOVIE]:        `${b} official movie poster`,
       [CATS.TV]:           `${b} tv show poster`,
-      [CATS.FOOD]:         `${b} ${topicName || ''} food close-up photography`,
+      [CATS.FOOD]:         `${b} food dish close-up photography`,
       [CATS.PLACE]:        `${b} landmark photo`,
       [CATS.DEVICE]:       `${b} product photo`,
       [CATS.SNEAKER]:      `${b} sneaker shoe product photography white background`,
@@ -355,26 +356,50 @@
   async function tmdbMovie(title, year) {
     if (!cfg.TMDB_KEY) return null;
     const c = cleanLabel(title);
+    // Also try extracting year from label if not provided
+    const y = year || yearFrom(title);
     const u = new URL('https://api.themoviedb.org/3/search/movie');
     u.searchParams.set('api_key', cfg.TMDB_KEY); u.searchParams.set('query', c);
-    if (year) u.searchParams.set('year', year);
+    if (y) u.searchParams.set('year', y);
     try {
       const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      return j.results?.find(x => titlesEqual(x.title, c) || titlesEqual(x.original_title, c)) || j.results?.[0] || null;
+      // Strict: exact title match first
+      const exact = j.results?.find(x => titlesEqual(x.title, c) || titlesEqual(x.original_title, c));
+      if (exact) return exact;
+      // If year was provided, also try matching with year to disambiguate
+      if (y) {
+        const yearMatch = j.results?.find(x => {
+          const rd = x.release_date || '';
+          return rd.startsWith(String(y)) && (titlesEqual(x.title, c) || normalize(x.title).includes(normalize(c)));
+        });
+        if (yearMatch) return yearMatch;
+      }
+      // Fallback: first result, but only if query is specific enough (3+ chars)
+      return c.length >= 3 ? (j.results?.[0] || null) : null;
     } catch(_) { return null; }
   }
 
   async function tmdbTV(title, year) {
     if (!cfg.TMDB_KEY) return null;
     const c = cleanLabel(title);
+    const y = year || yearFrom(title);
     const u = new URL('https://api.themoviedb.org/3/search/tv');
     u.searchParams.set('api_key', cfg.TMDB_KEY); u.searchParams.set('query', c);
-    if (year) u.searchParams.set('first_air_date_year', year);
+    if (y) u.searchParams.set('first_air_date_year', y);
     try {
       const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      return j.results?.find(x => titlesEqual(x.name, c) || titlesEqual(x.original_name, c)) || j.results?.[0] || null;
+      const exact = j.results?.find(x => titlesEqual(x.name, c) || titlesEqual(x.original_name, c));
+      if (exact) return exact;
+      if (y) {
+        const yearMatch = j.results?.find(x => {
+          const fd = x.first_air_date || '';
+          return fd.startsWith(String(y)) && (titlesEqual(x.name, c) || normalize(x.name).includes(normalize(c)));
+        });
+        if (yearMatch) return yearMatch;
+      }
+      return c.length >= 3 ? (j.results?.[0] || null) : null;
     } catch(_) { return null; }
   }
 
@@ -437,13 +462,28 @@
 
   async function wikidataQID(label) {
     try {
-      const u = new URL('https://www.wikidata.org/w/api.php');
-      u.searchParams.set('action','wbsearchentities'); u.searchParams.set('search', cleanLabel(label));
-      u.searchParams.set('language','en'); u.searchParams.set('format','json'); u.searchParams.set('origin','*');
-      const r = await fetchT(u); if (!r.ok) return null;
-      const j = await r.json();
-      const ex = j?.search?.find(e => titlesEqual(e.label, cleanLabel(label)));
-      return (ex || j?.search?.[0])?.id || null;
+      // Try full label first (with disambiguation), then clean label
+      const candidates = [label, cleanLabel(label)];
+      for (const search of candidates) {
+        const u = new URL('https://www.wikidata.org/w/api.php');
+        u.searchParams.set('action','wbsearchentities'); u.searchParams.set('search', search);
+        u.searchParams.set('language','en'); u.searchParams.set('format','json'); u.searchParams.set('origin','*');
+        const r = await fetchT(u); if (!r.ok) continue;
+        const j = await r.json();
+        if (!j?.search?.length) continue;
+        // Try exact match on label first
+        const ex = j.search.find(e => titlesEqual(e.label, cleanLabel(label)));
+        // Then try matching description keywords for disambiguation
+        if (ex) return ex.id;
+        // If label has disambiguation suffix, look for it in description
+        const suffix = label.match(/\(([^)]+)\)$/)?.[1]?.toLowerCase();
+        if (suffix) {
+          const descMatch = j.search.find(e => (e.description || '').toLowerCase().includes(suffix));
+          if (descMatch) return descMatch.id;
+        }
+        return j.search[0].id;
+      }
+      return null;
     } catch(_) { return null; }
   }
 
@@ -461,16 +501,49 @@
     } catch(_) { return null; }
   }
 
-  async function wikiImage(label) {
+  async function wikiImage(label, extraTerms) {
+    // Try multiple Wikipedia search strategies for best accuracy
     const c = cleanLabel(label);
+    const candidates = [label];
+    if (c !== label) candidates.push(c);
+    // If extraTerms provided (e.g. "food", "film"), try label + term as Wikipedia title
+    if (extraTerms) {
+      for (const term of Array.isArray(extraTerms) ? extraTerms : [extraTerms]) {
+        candidates.push(`${c} (${term})`);
+      }
+    }
+    for (const candidate of candidates) {
+      try {
+        const r = await fetchT(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(candidate)}`);
+        if (!r.ok) continue;
+        const j = await r.json();
+        const url = j?.originalimage?.source || j?.thumbnail?.source || null;
+        if (url) return url;
+      } catch(_) { /* try next candidate */ }
+    }
+    // Final fallback: use Wikipedia search API to find the best matching article
     try {
-      let r = await fetchT(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
-      if (!r.ok && c !== label)
-        r = await fetchT(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(c)}`);
-      if (!r.ok) return null;
+      const u = new URL('https://en.wikipedia.org/w/api.php');
+      u.searchParams.set('action', 'query');
+      u.searchParams.set('generator', 'search');
+      u.searchParams.set('gsrsearch', c);
+      u.searchParams.set('gsrlimit', '3');
+      u.searchParams.set('prop', 'pageimages');
+      u.searchParams.set('piprop', 'original|thumbnail');
+      u.searchParams.set('format', 'json');
+      u.searchParams.set('origin', '*');
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      return j?.originalimage?.source || j?.thumbnail?.source || null;
-    } catch(_) { return null; }
+      const pages = j?.query?.pages;
+      if (!pages) return null;
+      // Pick the first page with an image, sorted by search relevance (lowest index)
+      const sorted = Object.values(pages).sort((a, b) => (a.index || 99) - (b.index || 99));
+      for (const pg of sorted) {
+        const url = pg?.original?.source || pg?.thumbnail?.source || null;
+        if (url) return url;
+      }
+    } catch(_) {}
+    return null;
   }
 
   async function pixabay(query) {
@@ -504,7 +577,7 @@
         const url = hit?.url;
         if (!url) continue;
         // Skip very small images (likely thumbnails/icons)
-        if ((hit.width || 0) < 200 && (hit.height || 0) < 200) continue;
+        if ((hit.width || 0) < 300 && (hit.height || 0) < 300) continue;
         return url;
       }
       return null;
@@ -536,7 +609,7 @@
         if (!info) continue;
         // Skip SVGs and tiny images
         if (info.mime === 'image/svg+xml') continue;
-        if ((info.width || 0) < 200) continue;
+        if ((info.width || 0) < 300) continue;
         // Use the thumbnail URL at 800px width, or original if smaller
         return info.thumburl || info.url || null;
       }
@@ -589,6 +662,26 @@
   }
 
   /* ============================ RESOLVER ============================ */
+
+  // Map categories to Wikipedia disambiguation hints for better search accuracy
+  function wikiHintsForCategory(cat) {
+    const map = {
+      [CATS.MOVIE]: ['film'],
+      [CATS.TV]: ['TV series', 'television series'],
+      [CATS.PERSON]: null,
+      [CATS.MUSIC_ARTIST]: ['musician', 'band', 'singer'],
+      [CATS.MUSIC_ALBUM]: ['album'],
+      [CATS.MUSIC_TRACK]: ['song'],
+      [CATS.GAME]: ['video game', 'game'],
+      [CATS.TEAM]: ['team', 'sports team'],
+      [CATS.FOOD]: ['food', 'dish'],
+      [CATS.PLACE]: ['place', 'city'],
+      [CATS.DEVICE]: ['device', 'product'],
+      [CATS.BRAND]: ['company', 'brand'],
+    };
+    return map[cat] || null;
+  }
+
   async function resolveImageURL(item, hints = {}) {
     const label = item?.label || '';
     const h = { ...hints, ...(item?.hints || {}) };
@@ -598,6 +691,8 @@
     const cat = inferCategoryWithMood(label, h, topicMood);
     const y = h.year || yearFrom(label);
     if (item?.imageUrl) return item.imageUrl;
+
+    const wikiHints = wikiHintsForCategory(cat);
 
     // Helper: return first unseen URL from a series of async calls
     async function first(...fns) {
@@ -611,14 +706,14 @@
     if (cat === CATS.MOVIE)
       return first(
         async () => { const m = await tmdbMovie(label, y); return m ? (tmdbImg(m.poster_path) || tmdbImg(m.backdrop_path,'w780')) : null; },
-        () => wikiImage(label)
+        () => wikiImage(label, wikiHints)
       );
 
     if (cat === CATS.TV)
       return first(
         async () => { const t = await tmdbTV(label, y); return t ? (tmdbImg(t.poster_path) || tmdbImg(t.backdrop_path,'w780')) : null; },
         () => tvmazeImg(label),
-        () => wikiImage(label)
+        () => wikiImage(label, wikiHints)
       );
 
     // PERSON: prioritize TMDB person images API for best face photo
@@ -647,7 +742,7 @@
           if (best) return best;
           return p._hrPath || tmdbImg(p.profile_path, 'h632') || tmdbImg(p.profile_path);
         },
-        () => wikiImage(label),
+        () => wikiImage(label, wikiHints),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
         () => itunesArtwork(cleanLabel(label))
       );
@@ -656,22 +751,17 @@
       return first(
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P154'); },
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-        () => wikiImage(label)
+        () => wikiImage(label, wikiHints)
       );
 
     // SNEAKER: prioritize product-specific sources for actual shoe images
     if (cat === CATS.SNEAKER) {
       const ctx = buildContext(label, cat, topic?.name);
       return first(
-        // Wikidata P18 often has the actual product photo for famous sneakers
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-        // Commons has extensive sneaker photography
         () => commonsSearch(`${cleanLabel(label)} shoe`),
-        // Openverse indexes many CC-licensed product photos
         () => openverseImage(`${cleanLabel(label)} sneaker shoe`, { size: 'medium' }),
-        // Wikipedia as fallback
         () => wikiImage(label),
-        // Pexels / Unsplash if keys are configured
         () => pexelsImage(ctx),
         () => unsplashImage(ctx),
         () => pixabay(ctx)
@@ -696,7 +786,7 @@
     if (cat === CATS.PRODUCT) {
       const ctx = buildContext(label, cat, topic?.name);
       return first(
-        () => wikiImage(label),
+        () => wikiImage(label, wikiHints),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
         () => commonsSearch(cleanLabel(label)),
         () => openverseImage(`${cleanLabel(label)} product`, { size: 'medium' }),
@@ -710,7 +800,7 @@
     if (cat === CATS.DEVICE) {
       const ctx = buildContext(label, cat, topic?.name);
       return first(
-        () => wikiImage(label),
+        () => wikiImage(label, wikiHints),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
         () => commonsSearch(cleanLabel(label)),
         () => openverseImage(`${cleanLabel(label)} product`, { size: 'medium' }),
@@ -723,7 +813,7 @@
     // FOOD: use more specific search queries to avoid wrong images
     if (cat === CATS.FOOD)
       return first(
-        () => wikiImage(label),
+        () => wikiImage(label, wikiHints),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
         () => openverseImage(`${cleanLabel(label)} food`, { size: 'medium' }),
         () => pexelsImage(buildContext(label, cat, topic?.name)),
@@ -734,7 +824,7 @@
     // Generic: wiki → wikidata → commons → openverse → pexels → unsplash → pixabay
     const ctx = buildContext(label, cat, topic?.name);
     return first(
-      () => wikiImage(label),
+      () => wikiImage(label, wikiHints),
       async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
       () => commonsSearch(cleanLabel(label)),
       () => openverseImage(cleanLabel(label)),
@@ -771,6 +861,11 @@
       const temp = new Image();
       temp.crossOrigin = 'anonymous';
       temp.onload = () => {
+        // Reject tiny images (likely icons/placeholders, not real photos)
+        if (temp.naturalWidth < 80 || temp.naturalHeight < 80) {
+          reject(new Error('Image too small'));
+          return;
+        }
         imgEl.src = url;
         resolve(url);
       };
@@ -814,7 +909,22 @@
       const topicMood = topic?.mood || '';
       const cat = inferCategoryWithMood(item.label, hints, topicMood);
       applyImageStyle(img, cat);
-      await loadImage(img, url);
+      try {
+        await loadImage(img, url);
+      } catch (loadErr) {
+        // Image URL resolved but failed to actually load — try resolving again
+        // (will skip the seen URL and try next provider)
+        if (myToken !== paintToken) return false;
+        const retryUrl = await resolveImageURL(item, hints);
+        if (retryUrl && myToken === paintToken) {
+          markSeen(retryUrl);
+          currentResolvedURL = retryUrl;
+          applyImageStyle(img, cat);
+          await loadImage(img, retryUrl);
+        } else {
+          throw loadErr;
+        }
+      }
       if (myToken !== paintToken) return false;
 
       prefetchNext();
