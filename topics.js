@@ -269,13 +269,13 @@ window.TOPICS = [
   { name: "Soccer Clubs", mood: "sports", provider: "wiki", items: [
     {label:"Real Madrid CF"}, {label:"FC Barcelona"}, {label:"Manchester United F.C."}, {label:"FC Bayern Munich"}, {label:"Paris Saint-Germain F.C."}
   ]},
-  { name: "Tennis Players", mood: "sports", provider: "wiki", items: [
+  { name: "Tennis Players", mood: "sports", provider: "wiki", mediaType: "person", items: [
     {label:"Roger Federer"}, {label:"Rafael Nadal"}, {label:"Novak Djokovic"}, {label:"Serena Williams"}, {label:"Naomi Osaka"}
   ]},
-  { name: "Olympians", mood: "sports", provider: "wiki", items: [
+  { name: "Olympians", mood: "sports", provider: "wiki", mediaType: "person", items: [
     {label:"Michael Phelps"}, {label:"Usain Bolt"}, {label:"Simone Biles"}, {label:"Katie Ledecky"}, {label:"Carl Lewis"}
   ]},
-  { name: "Formula 1 Drivers", mood: "sports", provider: "wiki", items: [
+  { name: "Formula 1 Drivers", mood: "sports", provider: "wiki", mediaType: "person", items: [
     {label:"Lewis Hamilton"}, {label:"Max Verstappen"}, {label:"Sebastian Vettel"}, {label:"Ayrton Senna"}, {label:"Michael Schumacher"}
   ]},
   { name: "MLB Teams", mood: "sports", provider: "wiki", items: [
@@ -284,10 +284,10 @@ window.TOPICS = [
   { name: "NHL Teams", mood: "sports", provider: "wiki", items: [
     {label:"Montreal Canadiens"}, {label:"Toronto Maple Leafs"}, {label:"Detroit Red Wings"}, {label:"Chicago Blackhawks"}, {label:"New York Rangers"}
   ]},
-  { name: "Golfers", mood: "sports", provider: "wiki", items: [
+  { name: "Golfers", mood: "sports", provider: "wiki", mediaType: "person", items: [
     {label:"Tiger Woods"}, {label:"Jack Nicklaus"}, {label:"Rory McIlroy"}, {label:"Phil Mickelson"}, {label:"Arnold Palmer"}
   ]},
-  { name: "Track Sprinters", mood: "sports", provider: "wiki", items: [
+  { name: "Track Sprinters", mood: "sports", provider: "wiki", mediaType: "person", items: [
     {label:"Usain Bolt"}, {label:"Carl Lewis"}, {label:"Florence Griffith-Joyner"}, {label:"Shelly-Ann Fraser-Pryce"}, {label:"Yohan Blake"}
   ]},
 
