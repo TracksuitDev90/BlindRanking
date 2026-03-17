@@ -1,5 +1,5 @@
 // Simple image cache: stale-while-revalidate for faster repeat views
-const CACHE = 'br-img-v2';
+const CACHE = 'br-img-v3';
 const ALLOW = [
   'image.tmdb.org',
   'upload.wikimedia.org',
@@ -11,7 +11,8 @@ const ALLOW = [
   'theaudiodb.com',
   'cdn.pixabay.com','pixabay.com',
   'images.unsplash.com',
-  'images.pexels.com'
+  'images.pexels.com',
+  'assets.fanart.tv'
 ];
 
 // Limit cache size to prevent unbounded growth
