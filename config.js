@@ -20,5 +20,7 @@ window.BR_CONFIG = {
   ENABLE_TVMAZE: true,        // TV shows
   ENABLE_WIKIPEDIA: true,     // PageImages
   ENABLE_WIKIDATA: true,      // P18 → Commons
-  ENABLE_ITUNES: true         // artist/movie art
+  ENABLE_ITUNES: true,        // artist/movie art
+  ENABLE_OPENVERSE: true,     // Openverse (CC-licensed photos, no key needed)
+  ENABLE_COMMONS_SEARCH: true // Wikimedia Commons search (no key needed)
 };

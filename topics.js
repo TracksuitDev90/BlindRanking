@@ -323,10 +323,10 @@ window.TOPICS = [
   ]},
 
   // ---- Lifestyle & Misc (Wikipedia) ----
-  { name: "Fashion Brands", mood: "culture", provider: "wiki", items: [
+  { name: "Fashion Brands", mood: "culture", provider: "wiki", mediaType: "fashion", items: [
     {label:"Gucci"}, {label:"Prada"}, {label:"Louis Vuitton"}, {label:"Balenciaga"}, {label:"Off-White"}
   ]},
-  { name: "Luxury Watches", mood: "culture", provider: "wiki", items: [
+  { name: "Luxury Watches", mood: "culture", provider: "wiki", mediaType: "fashion", items: [
     {label:"Rolex"}, {label:"Omega SA"}, {label:"Patek Philippe"}, {label:"Audemars Piguet"}, {label:"TAG Heuer"}
   ]},
   { name: "Coffee Drinks", mood: "food", provider: "wiki", items: [
@@ -504,8 +504,8 @@ const MORE_TOPICS = [
   { name:"Best Architects", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Frank Lloyd Wright"},{label:"Zaha Hadid"},{label:"Le Corbusier"},{label:"I. M. Pei"},{label:"Antoni Gaudí"}] },
   { name:"Best Photographers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ansel Adams"},{label:"Annie Leibovitz"},{label:"Henri Cartier-Bresson"},{label:"Steve McCurry"},{label:"Diane Arbus"}] },
   { name:"Best Fashion Designers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Coco Chanel"},{label:"Giorgio Armani"},{label:"Gianni Versace"},{label:"Alexander McQueen"},{label:"Marc Jacobs"}] },
-  { name:"Best Sneakers", mood: "culture", provider:"wiki", items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor"},{label:"Yeezy Boost 350"}] },
-  { name:"Best Watch Brands", mood: "culture", provider:"wiki", items:[{label:"Rolex"},{label:"Omega"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
+  { name:"Best Sneakers", mood: "culture", provider:"wiki", mediaType:"sneaker", items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor"},{label:"Yeezy Boost 350"}] },
+  { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
   { name:"Best Beer Styles", mood: "food", provider:"wiki", items:[{label:"IPA"},{label:"Stout"},{label:"Lager"},{label:"Pilsner"},{label:"Wheat Beer"}] },
   { name:"Best Cocktails", mood: "food", provider:"wiki", items:[{label:"Old Fashioned"},{label:"Margarita"},{label:"Mojito"},{label:"Negroni"},{label:"Martini"}] },
   { name:"Best Wine Varieties", mood: "food", provider:"wiki", items:[{label:"Cabernet Sauvignon"},{label:"Pinot Noir"},{label:"Chardonnay"},{label:"Sauvignon Blanc"},{label:"Merlot"}] },
