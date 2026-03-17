@@ -732,8 +732,22 @@
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); }
       );
 
-    // MUSIC_ARTIST: prioritize TMDB person search for face photos over iTunes album art
-    if (cat === CATS.MUSIC_ARTIST)
+    // MUSIC_ARTIST: for solo artists use TMDB person search, for bands use Wikipedia first
+    if (cat === CATS.MUSIC_ARTIST) {
+      const cl = cleanLabel(label);
+      const isBand = /\bband\b|\bthe\s/i.test(label) || /\bboys\b|\bgirls\b|\bbrothers\b|\bdirection\b|\bpink\b|\bclan\b|\bday\b|\bpunk\b/i.test(cl);
+      if (isBand) {
+        return first(
+          () => wikiImage(label, wikiHints),
+          async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+          () => itunesArtwork(cl),
+          async () => {
+            const p = await tmdbPerson(label);
+            if (!p) return null;
+            return p._hrPath || tmdbImg(p.profile_path, 'h632') || tmdbImg(p.profile_path);
+          }
+        );
+      }
       return first(
         async () => {
           const p = await tmdbPerson(label);
@@ -744,15 +758,21 @@
         },
         () => wikiImage(label, wikiHints),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-        () => itunesArtwork(cleanLabel(label))
+        () => itunesArtwork(cl)
       );
+    }
 
-    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME)
+    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) {
+      // Cache QID to avoid duplicate API calls
+      let cachedQID = null;
+      const getQID = async () => { if (!cachedQID) cachedQID = await wikidataQID(label); return cachedQID; };
       return first(
-        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P154'); },
-        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-        () => wikiImage(label, wikiHints)
+        async () => wikidataImage(await getQID(), 'P154'),
+        async () => wikidataImage(await getQID(), 'P18'),
+        () => wikiImage(label, wikiHints),
+        () => commonsSearch(cleanLabel(label))
       );
+    }
 
     // SNEAKER: prioritize product-specific sources for actual shoe images
     if (cat === CATS.SNEAKER) {
@@ -836,21 +856,17 @@
 
   /* =========================== RENDERING =========================== */
   function applyImageStyle(imgEl, cat) {
-    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME ||
-        cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) {
-      imgEl.style.objectFit = 'contain';
-      imgEl.style.objectPosition = 'center';
-    } else if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
+    // Default: contain so every image shows in full without cropping
+    imgEl.style.objectFit = 'contain';
+    imgEl.style.objectPosition = 'center';
+
+    // People/artists: cover + face-bias since these are portrait photos
+    if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
       imgEl.style.objectFit = 'cover';
       imgEl.style.objectPosition = 'center 20%';
-    } else if (cat === CATS.MOVIE || cat === CATS.TV) {
-      imgEl.style.objectFit = 'contain';
-      imgEl.style.objectPosition = 'center';
-    } else if (cat === CATS.SNEAKER || cat === CATS.FASHION || cat === CATS.PRODUCT || cat === CATS.DEVICE) {
-      // Products: contain to show full product, centered
-      imgEl.style.objectFit = 'contain';
-      imgEl.style.objectPosition = 'center';
-    } else {
+    }
+    // Food/places/animals: cover for immersive full-bleed look
+    if (cat === CATS.FOOD || cat === CATS.PLACE) {
       imgEl.style.objectFit = 'cover';
       imgEl.style.objectPosition = 'center';
     }

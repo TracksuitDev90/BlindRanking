@@ -353,7 +353,7 @@ window.TOPICS = [
     {label:"The Legend of Zelda: Tears of the Kingdom"}
   ]},
   { name: "Comic Book Villains", mood: "culture", provider: "wiki", items: [
-    {label:"Joker (character)"}, {label:"Thanos"}, {label:"Loki"}, {label:"Magneto"}, {label:"Green Goblin"}
+    {label:"Joker (character)"}, {label:"Thanos"}, {label:"Loki (Marvel Comics)"}, {label:"Magneto (Marvel Comics)"}, {label:"Green Goblin"}
   ]},
   { name: "Superheroes", mood: "culture", provider: "wiki", items: [
     {label:"Spider-Man"}, {label:"Batman"}, {label:"Superman"}, {label:"Wonder Woman"}, {label:"Iron Man"}
@@ -367,10 +367,10 @@ window.TOPICS = [
     {label:"Rolex"}, {label:"Omega SA"}, {label:"Patek Philippe"}, {label:"Audemars Piguet"}, {label:"TAG Heuer"}
   ]},
   { name: "Coffee Drinks", mood: "food", provider: "wiki", items: [
-    {label:"Espresso"}, {label:"Latte"}, {label:"Cappuccino"}, {label:"Americano"}, {label:"Mocha"}
+    {label:"Espresso"}, {label:"Latte"}, {label:"Cappuccino"}, {label:"Caffè Americano"}, {label:"Caffè mocha"}
   ]},
   { name: "Tea Varieties", mood: "food", provider: "wiki", items: [
-    {label:"Green tea"}, {label:"Black tea"}, {label:"Oolong"}, {label:"Chamomile"}, {label:"Earl Grey"}
+    {label:"Green tea"}, {label:"Black tea"}, {label:"Oolong tea"}, {label:"Chamomile tea"}, {label:"Earl Grey tea"}
   ]},
   { name: "Ice Cream Flavors", mood: "food", provider: "wiki", items: [
     {label:"Vanilla ice cream"}, {label:"Chocolate ice cream"}, {label:"Strawberry ice cream"}, {label:"Mint chocolate chip"}, {label:"Cookies and cream"}
@@ -488,8 +488,8 @@ const MORE_TOPICS = [
   // ————— TV / Movies —————
   { name:"Top 90s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Backstreet Boys"},{label:"NSYNC"},{label:"Boyz II Men"},{label:"98 Degrees"},{label:"New Kids on the Block"}] },
   { name:"Top Early 00s Boy Bands", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Westlife"},{label:"Blue (English group)"},{label:"O-Town (group)"},{label:"Busted (band)"},{label:"Jonas Brothers"}] },
-  { name:"Best Cartoons of the 90s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Rugrats"},{label:"Dexter's Laboratory"},{label:"The Powerpuff Girls"},{label:"Batman: The Animated Series"},{label:"Doug"}] },
-  { name:"Best Cartoons of the 00s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Avatar: The Last Airbender"},{label:"Teen Titans"},{label:"Kim Possible"},{label:"Ben 10"},{label:"SpongeBob SquarePants"}] },
+  { name:"Best Cartoons of the 90s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Rugrats"},{label:"Dexter's Laboratory"},{label:"The Powerpuff Girls"},{label:"Batman: The Animated Series"},{label:"Doug (TV series)"}] },
+  { name:"Best Cartoons of the 00s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Avatar: The Last Airbender"},{label:"Teen Titans (TV series)"},{label:"Kim Possible"},{label:"Ben 10"},{label:"SpongeBob SquarePants"}] },
   { name:"Best 90s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Friends (TV series)"},{label:"Seinfeld"},{label:"Frasier"},{label:"The Fresh Prince of Bel-Air"},{label:"Home Improvement (TV series)"}] },
   { name:"Best 2000s Sitcoms", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Office (American TV series)"},{label:"How I Met Your Mother"},{label:"Arrested Development"},{label:"Scrubs (TV series)"},{label:"30 Rock"}] },
   { name:"Best Fantasy TV Shows", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Game of Thrones"},{label:"The Witcher (TV series)"},{label:"His Dark Materials (TV series)"},{label:"Shadow and Bone (TV series)"},{label:"Merlin (TV series)"}] },
@@ -497,7 +497,7 @@ const MORE_TOPICS = [
   { name:"Best HBO Dramas", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"The Sopranos"},{label:"The Wire (TV series)"},{label:"Succession (TV series)"},{label:"True Detective"},{label:"Boardwalk Empire"}] },
   { name:"Best Netflix Originals (TV)", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Stranger Things"},{label:"The Crown (TV series)"},{label:"Narcos"},{label:"Ozark (TV series)"},{label:"Mindhunter (TV series)"}] },
   { name:"Best 90s Comedy Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Dumb and Dumber"},{label:"Home Alone"},{label:"Groundhog Day"},{label:"The Big Lebowski"},{label:"Mrs. Doubtfire"}] },
-  { name:"Best 2000s Action Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Dark Knight"},{label:"Gladiator"},{label:"The Bourne Identity"},{label:"Kill Bill: Vol. 1"},{label:"Casino Royale"}] },
+  { name:"Best 2000s Action Films", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Dark Knight"},{label:"Gladiator (2000 film)"},{label:"The Bourne Identity (2002 film)"},{label:"Kill Bill: Volume 1"},{label:"Casino Royale (2006 film)"}] },
   { name:"Best Pixar Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Toy Story"},{label:"Finding Nemo"},{label:"The Incredibles"},{label:"Up (2009 film)"},{label:"Coco (2017 film)"}] },
   { name:"Best Disney Animated Classics", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"The Lion King (1994 film)"},{label:"Aladdin (1992 Disney film)"},{label:"Beauty and the Beast (1991 film)"},{label:"Mulan (1998 film)"},{label:"The Little Mermaid (1989 film)"}] },
   { name:"Best Superhero Movies", mood: "movies", provider:"tmdb", mediaType:"movie", items:[{label:"Iron Man (2008 film)"},{label:"The Avengers (2012 film)"},{label:"Spider-Man: No Way Home"},{label:"The Dark Knight"},{label:"Black Panther (film)"}] },
@@ -510,7 +510,7 @@ const MORE_TOPICS = [
   { name:"Best MCU Heroes", mood: "people", provider:"wiki", items:[{label:"Iron Man"},{label:"Captain America"},{label:"Thor (Marvel Comics)"},{label:"Black Widow (Marvel Comics)"},{label:"Doctor Strange"}] },
   { name:"Best Star Wars Characters", mood: "people", provider:"wiki", items:[{label:"Luke Skywalker"},{label:"Darth Vader"},{label:"Han Solo"},{label:"Princess Leia"},{label:"Yoda"}] },
   { name:"Best Anime of the 90s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Neon Genesis Evangelion"},{label:"Cowboy Bebop"},{label:"Sailor Moon"},{label:"Dragon Ball Z"},{label:"Yu Yu Hakusho"}] },
-  { name:"Best Anime of the 2000s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Fullmetal Alchemist: Brotherhood"},{label:"Naruto"},{label:"Death Note"},{label:"One Piece"},{label:"Bleach"}] },
+  { name:"Best Anime of the 2000s", mood: "tv", provider:"tmdb", mediaType:"tv", items:[{label:"Fullmetal Alchemist: Brotherhood"},{label:"Naruto"},{label:"Death Note (TV series)"},{label:"One Piece"},{label:"Bleach (TV series)"}] },
 
   // ————— Music —————
   { name:"Best Pop Divas", mood: "music", provider:"wiki", mediaType:"person", items:[{label:"Beyoncé"},{label:"Taylor Swift"},{label:"Ariana Grande"},{label:"Adele"},{label:"Lady Gaga"}] },
@@ -548,7 +548,7 @@ const MORE_TOPICS = [
   { name:"Best US National Parks", mood: "places", provider:"wiki", items:[{label:"Yellowstone"},{label:"Yosemite"},{label:"Grand Canyon"},{label:"Zion National Park"},{label:"Glacier National Park"}] },
   { name:"Best World Landmarks", mood: "places", provider:"wiki", items:[{label:"Eiffel Tower"},{label:"Great Wall of China"},{label:"Taj Mahal"},{label:"Machu Picchu"},{label:"Statue of Liberty"}] },
   { name:"Best Beaches", mood: "places", provider:"wiki", items:[{label:"Bora Bora"},{label:"Maldives"},{label:"Maui"},{label:"Santorini"},{label:"Phuket"}] },
-  { name:"Best Ski Destinations", mood: "places", provider:"wiki", items:[{label:"Aspen"},{label:"Whistler"},{label:"Zermatt"},{label:"Chamonix"},{label:"St. Moritz"}] },
+  { name:"Best Ski Destinations", mood: "places", provider:"wiki", items:[{label:"Aspen, Colorado"},{label:"Whistler, British Columbia"},{label:"Zermatt"},{label:"Chamonix"},{label:"St. Moritz"}] },
   { name:"Best Theme Parks", mood: "places", provider:"wiki", items:[{label:"Disneyland"},{label:"Walt Disney World"},{label:"Universal Studios Japan"},{label:"Universal Orlando"},{label:"Europa-Park"}] },
 
   // ————— Books / Comics —————
@@ -569,7 +569,7 @@ const MORE_TOPICS = [
   { name:"Best Electric Cars", mood: "tech", provider:"wiki", items:[{label:"Tesla Model 3"},{label:"Ford Mustang Mach-E"},{label:"Hyundai Ioniq 5"},{label:"Porsche Taycan"},{label:"Nissan Leaf"}] },
   { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (1965)"},{label:"Chevrolet Camaro (1969)"},{label:"Porsche 911 (1973)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
   { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}], mediaType:"brand" },
-  { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion"},{label:"Trello"},{label:"Asana"},{label:"Todoist"},{label:"Evernote"}] },
+  { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion (productivity software)"},{label:"Trello"},{label:"Asana (software)"},{label:"Todoist"},{label:"Evernote"}] },
   { name:"Best Web Browsers", mood: "tech", provider:"wiki", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
   { name:"Best Programming Languages", mood: "tech", provider:"wiki", items:[{label:"Python (programming language)"},{label:"JavaScript"},{label:"Java (programming language)"},{label:"C Sharp (programming language)"},{label:"Go (programming language)"}] },
   { name:"Best Cloud Providers", mood: "tech", provider:"wiki", items:[{label:"Amazon Web Services"},{label:"Microsoft Azure"},{label:"Google Cloud Platform"},{label:"DigitalOcean"},{label:"Heroku"}] },
@@ -587,11 +587,11 @@ const MORE_TOPICS = [
   { name:"Best 21st-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Smartphone"},{label:"CRISPR"},{label:"3D printing"},{label:"Social media"},{label:"Electric car"}] },
   { name:"Best Startups of the 2010s", mood: "culture", provider:"wiki", items:[{label:"Uber"},{label:"Airbnb"},{label:"Slack (software)"},{label:"Stripe (company)"},{label:"Snapchat"}] },
   { name:"Best Social Networks", mood: "culture", provider:"wiki", items:[{label:"Facebook"},{label:"Instagram"},{label:"TikTok"},{label:"X (social network)"},{label:"Reddit"}] },
-  { name:"Best Podcasts", mood: "culture", provider:"wiki", items:[{label:"The Joe Rogan Experience"},{label:"This American Life"},{label:"Radiolab"},{label:"Serial"},{label:"The Daily"}] },
+  { name:"Best Podcasts", mood: "culture", provider:"wiki", items:[{label:"The Joe Rogan Experience"},{label:"This American Life"},{label:"Radiolab"},{label:"Serial (podcast)"},{label:"The Daily (podcast)"}] },
   { name:"Best Late-Night Hosts", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Jimmy Fallon"},{label:"Jimmy Kimmel"},{label:"Stephen Colbert"},{label:"John Oliver"},{label:"Seth Meyers"}] },
   { name:"Best Stand-Up Comedians", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Dave Chappelle"},{label:"Jerry Seinfeld"},{label:"Kevin Hart"},{label:"Ali Wong"},{label:"John Mulaney"}] },
   { name:"Best YouTubers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"MrBeast"},{label:"PewDiePie"},{label:"Markiplier"},{label:"Dude Perfect"},{label:"Emma Chamberlain"}] },
-  { name:"Best Twitch Streamers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ninja"},{label:"Pokimane"},{label:"Shroud"},{label:"xQc"},{label:"Valkyrae"}] },
+  { name:"Best Twitch Streamers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ninja (streamer)"},{label:"Pokimane"},{label:"Shroud (streamer)"},{label:"xQc"},{label:"Valkyrae"}] },
   { name:"Best Soccer Clubs", mood: "sports", provider:"wiki", items:[{label:"Real Madrid"},{label:"FC Barcelona"},{label:"Manchester United"},{label:"Bayern Munich"},{label:"Liverpool"}] },
   { name:"Best NFL Teams (All-Time)", mood: "sports", provider:"wiki", items:[{label:"1985 Chicago Bears"},{label:"2007 New England Patriots"},{label:"1972 Miami Dolphins"},{label:"1990s Dallas Cowboys"},{label:"2013 Seattle Seahawks"}] },
   { name:"Best Olympic Sprinters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Usain Bolt"},{label:"Carl Lewis"},{label:"Michael Johnson"},{label:"Yohan Blake"},{label:"Justin Gatlin"}] },
@@ -604,15 +604,15 @@ const MORE_TOPICS = [
   { name:"Best Sneakers", mood: "culture", provider:"wiki", mediaType:"sneaker",
     items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"}],
     itemPool:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"},{label:"Nike Air Max 1"},{label:"New Balance 574"},{label:"Nike Dunk"},{label:"Adidas Superstar (shoe)"},{label:"Vans Old Skool"},{label:"Puma Suede"},{label:"Reebok Classic"}] },
-  { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
-  { name:"Best Beer Styles", mood: "food", provider:"wiki", items:[{label:"IPA"},{label:"Stout"},{label:"Lager"},{label:"Pilsner"},{label:"Wheat Beer"}] },
-  { name:"Best Cocktails", mood: "food", provider:"wiki", items:[{label:"Old Fashioned"},{label:"Margarita"},{label:"Mojito"},{label:"Negroni"},{label:"Martini"}] },
-  { name:"Best Wine Varieties", mood: "food", provider:"wiki", items:[{label:"Cabernet Sauvignon"},{label:"Pinot Noir"},{label:"Chardonnay"},{label:"Sauvignon Blanc"},{label:"Merlot"}] },
+  { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega SA"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
+  { name:"Best Beer Styles", mood: "food", provider:"wiki", items:[{label:"India pale ale"},{label:"Stout"},{label:"Lager"},{label:"Pilsner"},{label:"Wheat beer"}] },
+  { name:"Best Cocktails", mood: "food", provider:"wiki", items:[{label:"Old fashioned (cocktail)"},{label:"Margarita"},{label:"Mojito"},{label:"Negroni"},{label:"Martini (cocktail)"}] },
+  { name:"Best Wine Varieties", mood: "food", provider:"wiki", items:[{label:"Cabernet Sauvignon"},{label:"Pinot noir"},{label:"Chardonnay"},{label:"Sauvignon blanc"},{label:"Merlot"}] },
   { name:"Best Winter Destinations", mood: "places", provider:"wiki", items:[{label:"Lapland"},{label:"Quebec City"},{label:"Vienna"},{label:"Reykjavik"},{label:"Zurich"}] },
   { name:"Best City Skylines", mood: "places", provider:"wiki", items:[{label:"New York City"},{label:"Hong Kong"},{label:"Dubai"},{label:"Shanghai"},{label:"Singapore"}] },
   { name:"Best Stadiums", mood: "sports", provider:"wiki", items:[{label:"Camp Nou"},{label:"Wembley Stadium"},{label:"Madison Square Garden"},{label:"Yankee Stadium"},{label:"Maracanã"}] },
   { name:"Best Space Missions", mood: "tech", provider:"wiki", items:[{label:"Apollo 11"},{label:"Voyager 1"},{label:"Hubble Space Telescope"},{label:"Mars Curiosity Rover"},{label:"James Webb Space Telescope"}] },
-  { name:"Best Code Editors", mood: "tech", provider:"wiki", items:[{label:"Visual Studio Code"},{label:"Sublime Text"},{label:"Vim"},{label:"IntelliJ IDEA"},{label:"Atom"}] },
+  { name:"Best Code Editors", mood: "tech", provider:"wiki", items:[{label:"Visual Studio Code"},{label:"Sublime Text"},{label:"Vim (text editor)"},{label:"IntelliJ IDEA"},{label:"Atom (text editor)"}] },
   { name:"Best Productivity Methods", mood: "culture", provider:"wiki", items:[{label:"Pomodoro Technique"},{label:"Time Blocking"},{label:"Getting Things Done"},{label:"Eat the Frog"},{label:"2-Minute Rule"}] },
   { name:"Best Dog Breeds", mood: "animals", provider:"wiki", items:[{label:"Labrador Retriever"},{label:"German Shepherd"},{label:"Golden Retriever"},{label:"Poodle"},{label:"French Bulldog"}] },
   { name:"Best Cat Breeds", mood: "animals", provider:"wiki", items:[{label:"Persian cat"},{label:"Siamese cat"},{label:"Maine Coon"},{label:"British Shorthair"},{label:"Sphynx"}] },
