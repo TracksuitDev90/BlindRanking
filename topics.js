@@ -2,7 +2,7 @@
 // 100 categories, 5 items each. Movies/TV use TMDB (needs TMDB key). Others use Wikipedia PageImages.
 // You can override any item's image with: { label: "X", imageUrl: "https://..." }
 
-window.BLIND_RANK_TOPICS = [
+window.TOPICS = [
   // ---- Movies (TMDB) ----
   { name: "Comfort Movies", provider: "tmdb", mediaType: "movie", items: [
     {label:"Spirited Away"}, {label:"Pride & Prejudice (2005 film)"}, {label:"The Princess Bride"},
@@ -509,4 +509,4 @@ const MORE_TOPICS = [
 ];
 
 // Append to existing topics list
-window.BLIND_RANK_TOPICS = (window.BLIND_RANK_TOPICS || []).concat(MORE_TOPICS);
+window.TOPICS = (window.TOPICS || []).concat(MORE_TOPICS);

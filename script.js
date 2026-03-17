@@ -1,46 +1,47 @@
 /* =========================================================
-   FIRESIDE Blind Rankings — accuracy + UX hardened build
-   - Context-aware image queries (burger/tea/pizza/device)
-   - Strict TMDB matching (no short-title drift)
-   - Wikidata logo preference (P154) (+ basic P31 sanity)
-   - Duplicate-image avoidance within a topic
-   - No stock for risky classes (team/brand/logo/device/place) unless forced
-   - Loader gates: disable ALL buttons only during image load
-   - Stronger ripple (mobile-friendly)
-   - Cancel stale paints; prefetch next; localStorage resume; confetti hook
-   - SmartCrop.js for face/object-aware "cover" cropping
-   - "Contain" letterboxing for logos/covers to avoid bad crops
+   FIRESIDE Blind Rankings — accuracy + performance overhaul
+   - Topic-level provider/mediaType drives category (not keyword guessing)
+   - Cleaned TMDB label parsing (strips Wikipedia disambiguation)
+   - Wikidata P18 (main image) + P154 (logo) support
+   - iTunes Search API for music artists/albums
+   - TVMaze API for TV show fallback
+   - Wikipedia lead image as universal fallback
+   - Fetch timeout wrapper (8s default)
+   - Loading spinner shown/hidden properly
+   - Prefetch cache actually used on render
+   - SmartCrop only for cover mode
+   - Cancel-stale paints; localStorage resume; confetti hook
    ========================================================= */
 
 (() => {
   'use strict';
 
-  /* ====================== SELECTORS (tweak if needed) ====================== */
+  /* ====================== SELECTORS ====================== */
   const SELECTORS = {
-    previewImg: '.rank-card__img, #card-img, .card img, img[data-role="preview"]',
+    previewImg: '#cardImg, .rank-card__img, .card img, img[data-role="preview"]',
     liveRegion: '[aria-live], .sr-live, #live',
-    topicTitle: '.topic-title, #topic-title, [data-role="topic-title"]',
-    itemLabel:  '.item-label, #item-label, [data-role="item-label"]',
-    placeWrap:  '.place-buttons, #place-buttons, [data-role="place-buttons"]',
+    topicTitle: '#topicTag, .topic-title, #topic-title, [data-role="topic-title"]',
+    itemLabel:  '#itemTitle, .item-label, #item-label, [data-role="item-label"]',
+    placeWrap:  '#placeButtons, .place-buttons, [data-role="place-buttons"]',
     placeBtns:  'button[data-rank], .btn-rank',
     nextBtn:    '#next-topic, .btn-next, [data-role="next"]',
-    newBtn:     '#new-topic, .btn-new,  [data-role="new"]',
-    allBtns:    'button'
+    newBtn:     '#nextTopicBtn, #new-topic, .btn-new, [data-role="new"]',
+    allBtns:    'button',
+    loading:    '#cardLoading'
   };
 
   /* ============================== UTILITIES =============================== */
   const $  = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
-  const once = (el, ev, fn, opts) => el && el.addEventListener(ev, (...a) => (fn(...a), el.removeEventListener(ev, fn, opts)), opts);
+  const once = (el, ev, fn, opts) => el && el.addEventListener(ev, (...a) => { fn(...a); el.removeEventListener(ev, fn, opts); }, opts);
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   function normalize(s) {
     return (s || '')
       .toLowerCase()
       .replace(/&/g, 'and')
-      .replace(/[“”"']/g, '')
+      .replace(/["""'']/g, '')
       .replace(/[^a-z0-9]+/g, ' ')
       .trim();
   }
@@ -48,6 +49,11 @@
   function yearFrom(label) {
     const m = String(label).match(/\b(19|20)\d{2}\b/);
     return m ? +m[0] : null;
+  }
+
+  // Strip Wikipedia-style disambiguation: "Up (2009 film)" → "Up", year extracted separately
+  function cleanLabel(label) {
+    return (label || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   }
 
   function els() {
@@ -60,7 +66,8 @@
     const nextBtn    = $(SELECTORS.nextBtn);
     const newBtn     = $(SELECTORS.newBtn);
     const allBtns    = $$(SELECTORS.allBtns);
-    return { img, live, topicTitle, itemLabel, placeWrap, placeBtns, nextBtn, newBtn, allBtns };
+    const loading    = $(SELECTORS.loading);
+    return { img, live, topicTitle, itemLabel, placeWrap, placeBtns, nextBtn, newBtn, allBtns, loading };
   }
 
   function ariaAnnounce(msg) {
@@ -82,6 +89,14 @@
   window.BR = window.BR || {};
   window.BR.init = (overrides = {}) => { Object.assign(cfg, overrides); return ensureSmartCrop(); };
 
+  /* ============================= FETCH WITH TIMEOUT ============================= */
+  function fetchWithTimeout(url, opts = {}, timeoutMs = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...opts, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
   /* ============================= APP STATE ============================= */
   const STORAGE = {
     key: 'br_state_v3',
@@ -99,7 +114,7 @@
     hydrate() {
       const data = STORAGE.load();
       if (!data) { this.reset(); return; }
-      if (Array.isArray(this.topics) && data.topicIndex < this.topics.length) {
+      if (Array.isArray(this.topics) && this.topics.length > 0 && data.topicIndex < this.topics.length) {
         this.topicIndex = data.topicIndex|0;
         this.itemIndex  = data.itemIndex|0;
         this.ranks      = Array.isArray(data.ranks) ? data.ranks : new Array(5).fill(null);
@@ -122,9 +137,15 @@
   };
 
   /* ========================= LOADER GATES & RIPPLE ========================= */
-  function setBusy(on = true) {
-    els().allBtns.forEach(b => b.disabled = !!on);
+  function setBusy(busy = true) {
+    const { allBtns, loading } = els();
+    allBtns.forEach(b => b.disabled = !!busy);
+    if (loading) {
+      loading.hidden = !busy;
+      loading.setAttribute('aria-hidden', busy ? 'false' : 'true');
+    }
   }
+
   function installRipple(scope = document) {
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
@@ -150,6 +171,7 @@
       ], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }).onfinish = () => r.remove();
     }, true);
   }
+
   function pulse(el) {
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce || !el?.animate) return;
@@ -157,19 +179,22 @@
   }
 
   /* ============================= SMARTCROP LOADER ============================= */
+  let smartCropLoaded = false;
+  let smartCropFailed = false;
   function ensureSmartCrop() {
-    return new Promise((resolve, reject) => {
-      if (window.smartcrop) return resolve();
+    if (smartCropLoaded || smartCropFailed) return Promise.resolve();
+    return new Promise((resolve) => {
+      if (window.smartcrop) { smartCropLoaded = true; return resolve(); }
       const s = document.createElement('script');
       s.src = 'https://unpkg.com/smartcrop@2.0.6/smartcrop.js';
       s.async = true;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('SmartCrop failed to load'));
+      s.onload = () => { smartCropLoaded = true; resolve(); };
+      s.onerror = () => { smartCropFailed = true; console.warn('SmartCrop unavailable, using CSS object-fit.'); resolve(); };
       document.head.appendChild(s);
     });
   }
 
-  /* ============================ CATEGORY / CONTEXT ============================ */
+  /* ============================ CATEGORY SYSTEM ============================ */
   const CATS = {
     MOVIE: 'movie', TV: 'tv', PERSON: 'person',
     MUSIC_ARTIST: 'music-artist', MUSIC_ALBUM: 'music-album', MUSIC_TRACK: 'music-track',
@@ -177,59 +202,54 @@
     FOOD: 'food', DEVICE: 'device', PLACE: 'place', GENERIC: 'generic'
   };
 
-  function inferCategory(label, hints = {}) {
-    const n = normalize(label);
-    if (hints.kind) return hints.kind;
+  // Topic-level hints are the PRIMARY way to determine category.
+  // Keyword fallback only for topics that don't specify provider/mediaType.
+  function inferCategory(label, topicHints = {}) {
+    // Direct item-level override
+    if (topicHints.kind) return topicHints.kind;
 
+    // Topic-level provider + mediaType (this is the main accuracy driver)
+    const provider  = topicHints.provider  || '';
+    const mediaType = topicHints.mediaType || '';
+
+    if (provider === 'tmdb' && mediaType === 'movie') return CATS.MOVIE;
+    if (provider === 'tmdb' && mediaType === 'tv')    return CATS.TV;
+    if (mediaType === 'person')                        return CATS.PERSON;
+
+    // Keyword fallback for topics without explicit mediaType
+    const n = normalize(label);
     if (/\bseason\b|\bs\d{1,2}\b/.test(n)) return CATS.TV;
     if (/\balbum\b/.test(n)) return CATS.MUSIC_ALBUM;
     if (/\btrack\b|\bsong\b/.test(n)) return CATS.MUSIC_TRACK;
     if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
-    if (/\bfc\b|\bclub\b|\bunited\b|\bcity\b|\bpatriots\b|\blakers\b|\bwarriors\b/.test(n)) return CATS.TEAM;
-    if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\blogo\b|\bbrand\b/.test(n)) return CATS.BRAND;
+    if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
+    if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b/.test(n)) return CATS.BRAND;
     if (/\blogo\b/.test(n)) return CATS.LOGO;
-    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bfries\b|\bcoffee\b|\btea\b|\bmushroom\b|\bswiss\b/.test(n)) return CATS.FOOD;
-    if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b/.test(n)) return CATS.DEVICE;
-    if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bstate\b/.test(n)) return CATS.PLACE;
+    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bfries\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b/.test(n)) return CATS.FOOD;
+    if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b|\bwatch\b/.test(n)) return CATS.DEVICE;
+    if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bstate\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
     if (/\bactor\b|\bactress\b|\bdirector\b|\bproducer\b/.test(n)) return CATS.PERSON;
 
     return CATS.GENERIC;
   }
 
-  function buildContext(label, cat, hints = {}) {
-    const base = normalize(label);
-    const toks = [];
+  function buildContext(label, cat) {
+    const base = cleanLabel(label);
     switch (cat) {
-      case CATS.PERSON:
-        toks.push(`${base} portrait headshot face centered photo`, 'front view professional photography'); break;
-      case CATS.MOVIE:
-        toks.push(`${base} official movie poster`, String(hints.year || yearFrom(label) || '')); toks.push('no fan art no parody'); break;
-      case CATS.TV:
-        toks.push(`${base} official tv poster`, String(hints.year || yearFrom(label) || '')); toks.push('no fan art no parody'); break;
-      case CATS.MUSIC_ALBUM:
-        toks.push(`${base} official album cover square`, 'no fan art no lyric video'); break;
-      case CATS.MUSIC_TRACK:
-        toks.push(`${base} official single cover square`, 'no fan art'); break;
-      case CATS.MUSIC_ARTIST:
-        toks.push(`${base} artist press photo portrait`); break;
-      case CATS.GAME:
-        toks.push(`${base} official video game logo transparent`, 'no fan art no box mockup'); break;
+      case CATS.PERSON:       return `${base} portrait photo`;
+      case CATS.MOVIE:        return `${base} official movie poster`;
+      case CATS.TV:           return `${base} official tv show poster`;
+      case CATS.MUSIC_ALBUM:  return `${base} official album cover`;
+      case CATS.MUSIC_TRACK:  return `${base} official single cover`;
+      case CATS.MUSIC_ARTIST: return `${base} artist photo portrait`;
+      case CATS.GAME:         return `${base} video game logo`;
       case CATS.LOGO: case CATS.BRAND: case CATS.TEAM:
-        toks.push(`${base} official logo transparent background svg png`, 'centered no mockup no banner'); break;
-      case CATS.FOOD:
-        toks.push(`${base} plated dish food photography`, 'no raw ingredients no recipe text');
-        if (/\bmushroom\b/.test(base)) toks.push('mushroom');
-        if (/\bswiss\b/.test(base))    toks.push('swiss cheese');
-        if (/\bburger\b/.test(base))   toks.push('burger sandwich');
-        break;
-      case CATS.DEVICE:
-        toks.push(`${base} product photo front view`, 'studio lighting isolated'); break;
-      case CATS.PLACE:
-        toks.push(`${base} landmark skyline wide shot`); break;
-      default:
-        toks.push(`${base} high quality photo`);
+                              return `${base} official logo`;
+      case CATS.FOOD:         return `${base} plated dish food photography`;
+      case CATS.DEVICE:       return `${base} product photo`;
+      case CATS.PLACE:        return `${base} landmark photo`;
+      default:                return `${base} photo`;
     }
-    return toks.filter(Boolean).join(' ').trim();
   }
 
   /* ============================ DUPLICATE CONTROL ============================ */
@@ -239,214 +259,313 @@
   function isSeen(url)   { return url ? seen.has(url.replace(/\?.*$/, '')) : false; }
 
   /* ============================== PROVIDERS ============================== */
-  // TMDB
+
+  // --- TMDB (movies, TV, people) ---
   function tmdbImage(path, size = 'w500') { return path ? `https://image.tmdb.org/t/p/${size}${path}` : null; }
+
   async function tmdbSearchMovie(title, year) {
     if (!cfg.TMDB_KEY) return null;
+    const clean = cleanLabel(title);
     const u = new URL('https://api.themoviedb.org/3/search/movie');
     u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', title);
+    u.searchParams.set('query', clean);
     if (year) u.searchParams.set('year', year);
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    return j.results?.find(x => titlesEqual(x.title, title) || titlesEqual(x.original_title, title)) || null;
+    try {
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      // Try exact match first, then accept first result (topic already guarantees it's a movie)
+      const exact = j.results?.find(x => titlesEqual(x.title, clean) || titlesEqual(x.original_title, clean));
+      return exact || j.results?.[0] || null;
+    } catch(_) { return null; }
   }
+
   async function tmdbSearchTV(title, year) {
     if (!cfg.TMDB_KEY) return null;
+    const clean = cleanLabel(title);
     const u = new URL('https://api.themoviedb.org/3/search/tv');
     u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', title);
+    u.searchParams.set('query', clean);
     if (year) u.searchParams.set('first_air_date_year', year);
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    return j.results?.find(x => titlesEqual(x.name, title) || titlesEqual(x.original_name, title)) || null;
+    try {
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const exact = j.results?.find(x => titlesEqual(x.name, clean) || titlesEqual(x.original_name, clean));
+      return exact || j.results?.[0] || null;
+    } catch(_) { return null; }
   }
+
   async function tmdbSearchPerson(name) {
     if (!cfg.TMDB_KEY) return null;
+    const clean = cleanLabel(name);
     const u = new URL('https://api.themoviedb.org/3/search/person');
     u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', name);
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    return j.results?.find(x => titlesEqual(x.name, name)) || null;
+    u.searchParams.set('query', clean);
+    try {
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const exact = j.results?.find(x => titlesEqual(x.name, clean));
+      return exact || j.results?.[0] || null;
+    } catch(_) { return null; }
   }
 
-  // Last.fm / TheAudioDB
-  async function lastfmArtistImage(artist) {
-    if (!cfg.LASTFM_KEY) return null;
-    const u = new URL('https://ws.audioscrobbler.com/2.0/');
-    u.searchParams.set('method', 'artist.getinfo');
-    u.searchParams.set('artist', artist);
-    u.searchParams.set('api_key', cfg.LASTFM_KEY);
-    u.searchParams.set('format', 'json');
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    const ok = j?.artist?.name && titlesEqual(j.artist.name, artist);
-    if (!ok) return null;
-    const images = j?.artist?.image || [];
-    const best = images.reverse().find(im => im['#text']);
-    return best ? best['#text'] : null;
-  }
+  // --- TheAudioDB (album/track covers) ---
   async function theAudioDBAlbumCover(artist, album) {
     if (!cfg.AUDIO_KEY) return null;
-    const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchalbum.php`);
-    u.searchParams.set('s', artist);
-    u.searchParams.set('a', album);
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    const exact = j?.album?.find(a => titlesEqual(a.strArtist, artist) && titlesEqual(a.strAlbum, album));
-    return exact?.strAlbumThumbHQ || exact?.strAlbumThumb || null;
+    try {
+      const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchalbum.php`);
+      u.searchParams.set('s', artist);
+      u.searchParams.set('a', album);
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const exact = j?.album?.find(a => titlesEqual(a.strArtist, artist) && titlesEqual(a.strAlbum, album));
+      return exact?.strAlbumThumbHQ || exact?.strAlbumThumb || null;
+    } catch(_) { return null; }
   }
+
   async function theAudioDBTrackCover(artist, track) {
     if (!cfg.AUDIO_KEY) return null;
-    const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchtrack.php`);
-    u.searchParams.set('s', artist);
-    u.searchParams.set('t', track);
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    const exact = j?.track?.find(t => titlesEqual(t.strArtist, artist) && titlesEqual(t.strTrack, track));
-    return exact?.strTrackThumbHQ || exact?.strTrackThumb || null;
-  }
-
-  // Wikidata / Wikipedia (logos first; basic P31 sanity when available)
-  async function wikidataQID(label) {
-    const u = new URL('https://www.wikidata.org/w/api.php');
-    u.searchParams.set('action', 'wbsearchentities');
-    u.searchParams.set('search', label);
-    u.searchParams.set('language', 'en');
-    u.searchParams.set('format', 'json');
-    u.searchParams.set('origin', '*');
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    const exact = j?.search?.find(e => titlesEqual(e.label, label));
-    return (exact || j?.search?.[0])?.id || null;
-  }
-  async function wikidataP31Types(qid) {
-    if (!qid) return [];
-    const u = new URL('https://www.wikidata.org/w/api.php');
-    u.searchParams.set('action', 'wbgetentities');
-    u.searchParams.set('ids', qid);
-    u.searchParams.set('props', 'claims');
-    u.searchParams.set('format', 'json');
-    u.searchParams.set('origin', '*');
-    const r = await fetch(u); if (!r.ok) return [];
-    const j = await r.json();
-    const claims = j?.entities?.[qid]?.claims?.P31 || [];
-    // Return array of QIDs as strings
-    return claims.map(c => c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
-  }
-  // very light whitelist of instance-of QIDs (approximate)
-  const P31_OK = new Set([
-    // organization/company/brand/team (approximate common QIDs)
-    'Q43229',   // organization
-    'Q783794',  // brand
-    'Q4830453', // business enterprise
-    'Q12973014',// sports team
-    'Q476028'   // association football club
-  ]);
-
-  async function wikidataLogoByQID(qid) {
-    if (!qid) return null;
-    // Optional sanity: only accept logos for likely org/brand/team
     try {
-      const p31s = await wikidataP31Types(qid);
-      if (p31s.length && !p31s.some(q => P31_OK.has(q))) {
-        // If clearly not an org/team/brand, bail to fallback
-        // (If P31 missing, we’ll still try; data can be sparse.)
-      }
-    } catch(_) {}
-    const u = new URL('https://www.wikidata.org/w/api.php');
-    u.searchParams.set('action', 'wbgetclaims');
-    u.searchParams.set('entity', qid);
-    u.searchParams.set('property', 'P154');
-    u.searchParams.set('format', 'json');
-    u.searchParams.set('origin', '*');
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    const claim = j?.claims?.P154?.[0]?.mainsnak?.datavalue?.value;
-    if (!claim) return null;
-    const file = claim.replace(/ /g, '_');
-    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}`;
-  }
-  async function wikipediaLeadImage(label) {
-    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
-    if (!r.ok) return null;
-    const j = await r.json();
-    return j?.thumbnail?.source || j?.originalimage?.source || null;
+      const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchtrack.php`);
+      u.searchParams.set('s', artist);
+      u.searchParams.set('t', track);
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const exact = j?.track?.find(t => titlesEqual(t.strArtist, artist) && titlesEqual(t.strTrack, track));
+      return exact?.strTrackThumbHQ || exact?.strTrackThumb || null;
+    } catch(_) { return null; }
   }
 
-  // Pixabay (generic fallback only)
+  // --- iTunes Search API (music artists, albums — replaces deprecated Last.fm images) ---
+  async function itunesArtistImage(artist) {
+    const clean = cleanLabel(artist);
+    try {
+      const u = new URL('https://itunes.apple.com/search');
+      u.searchParams.set('term', clean);
+      u.searchParams.set('media', 'music');
+      u.searchParams.set('entity', 'musicArtist');
+      u.searchParams.set('limit', '5');
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const match = j?.results?.find(x => titlesEqual(x.artistName, clean));
+      // iTunes artist results don't have images directly, but musicArtist entity
+      // may not have artworkUrl. Try allMusic or fall through.
+      // Instead search for a top song to get artwork
+      if (!match) return null;
+      return await itunesArtistArtwork(clean);
+    } catch(_) { return null; }
+  }
+
+  async function itunesArtistArtwork(artist) {
+    try {
+      const u = new URL('https://itunes.apple.com/search');
+      u.searchParams.set('term', artist);
+      u.searchParams.set('media', 'music');
+      u.searchParams.set('entity', 'song');
+      u.searchParams.set('limit', '3');
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const hit = j?.results?.[0];
+      if (!hit?.artworkUrl100) return null;
+      // Upscale to 600x600
+      return hit.artworkUrl100.replace('100x100', '600x600');
+    } catch(_) { return null; }
+  }
+
+  // --- TVMaze (TV show fallback) ---
+  async function tvmazeImage(title) {
+    const clean = cleanLabel(title);
+    try {
+      const u = new URL('https://api.tvmaze.com/singlesearch/shows');
+      u.searchParams.set('q', clean);
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      return j?.image?.original || j?.image?.medium || null;
+    } catch(_) { return null; }
+  }
+
+  // --- Wikidata (P18 main image + P154 logo) ---
+  async function wikidataQID(label) {
+    const clean = cleanLabel(label);
+    try {
+      const u = new URL('https://www.wikidata.org/w/api.php');
+      u.searchParams.set('action', 'wbsearchentities');
+      u.searchParams.set('search', clean);
+      u.searchParams.set('language', 'en');
+      u.searchParams.set('format', 'json');
+      u.searchParams.set('origin', '*');
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const exact = j?.search?.find(e => titlesEqual(e.label, clean));
+      return (exact || j?.search?.[0])?.id || null;
+    } catch(_) { return null; }
+  }
+
+  async function wikidataImageByQID(qid, property) {
+    if (!qid) return null;
+    try {
+      const u = new URL('https://www.wikidata.org/w/api.php');
+      u.searchParams.set('action', 'wbgetclaims');
+      u.searchParams.set('entity', qid);
+      u.searchParams.set('property', property);
+      u.searchParams.set('format', 'json');
+      u.searchParams.set('origin', '*');
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      const claim = j?.claims?.[property]?.[0]?.mainsnak?.datavalue?.value;
+      if (!claim) return null;
+      const file = claim.replace(/ /g, '_');
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=800`;
+    } catch(_) { return null; }
+  }
+
+  // --- Wikipedia lead image (universal fallback) ---
+  async function wikipediaLeadImage(label) {
+    const clean = cleanLabel(label);
+    try {
+      const r = await fetchWithTimeout(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
+      if (!r.ok) {
+        // Try with cleaned label if original had disambiguation
+        if (clean !== label) {
+          const r2 = await fetchWithTimeout(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean)}`);
+          if (!r2.ok) return null;
+          const j2 = await r2.json();
+          return j2?.originalimage?.source || j2?.thumbnail?.source || null;
+        }
+        return null;
+      }
+      const j = await r.json();
+      return j?.originalimage?.source || j?.thumbnail?.source || null;
+    } catch(_) { return null; }
+  }
+
+  // --- Pixabay (last-resort fallback) ---
   async function pixabayImage(query) {
     if (!cfg.PIXABAY_KEY) return null;
-    const u = new URL('https://pixabay.com/api/');
-    u.searchParams.set('key', cfg.PIXABAY_KEY);
-    u.searchParams.set('q', query);
-    u.searchParams.set('image_type', 'photo');
-    u.searchParams.set('safesearch', 'true');
-    u.searchParams.set('per_page', '10');
-    const r = await fetch(u); if (!r.ok) return null;
-    const j = await r.json();
-    return j?.hits?.[0]?.largeImageURL || j?.hits?.[0]?.webformatURL || null;
+    try {
+      const u = new URL('https://pixabay.com/api/');
+      u.searchParams.set('key', cfg.PIXABAY_KEY);
+      u.searchParams.set('q', query);
+      u.searchParams.set('image_type', 'photo');
+      u.searchParams.set('safesearch', 'true');
+      u.searchParams.set('per_page', '5');
+      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const j = await r.json();
+      return j?.hits?.[0]?.largeImageURL || j?.hits?.[0]?.webformatURL || null;
+    } catch(_) { return null; }
   }
 
-  /* ============================ RESOLVER (STRICT) ============================ */
-  async function resolveImageURL(item) {
+  /* ============================ RESOLVER ============================ */
+  // The resolver uses topic-level hints to pick the right provider chain.
+  // This is the key accuracy improvement: "Up" in a movie topic → TMDB movie search,
+  // not keyword guessing that would miss it entirely.
+
+  async function resolveImageURL(item, topicHints = {}) {
     const label = item?.label || '';
-    const hints = item?.hints || {};
+    const hints = { ...topicHints, ...(item?.hints || {}) };
     const cat = inferCategory(label, hints);
     const y   = hints.year || yearFrom(label);
 
-    // STRICT providers first; only accept exact name matches
+    // If item has a hardcoded imageUrl, use it directly
+    if (item?.imageUrl) return item.imageUrl;
+
+    // --- MOVIES (TMDB primary → Wikipedia fallback) ---
     if (cat === CATS.MOVIE) {
       const m = await tmdbSearchMovie(label, y);
       const url = m ? (tmdbImage(m.poster_path, 'w500') || tmdbImage(m.backdrop_path, 'w780')) : null;
-      return url && !isSeen(url) ? url : null;
+      if (url && !isSeen(url)) return url;
+      // Fallback: Wikipedia
+      const wiki = await wikipediaLeadImage(label);
+      if (wiki && !isSeen(wiki)) return wiki;
+      return null;
     }
+
+    // --- TV (TMDB primary → TVMaze → Wikipedia fallback) ---
     if (cat === CATS.TV) {
       const t = await tmdbSearchTV(label, y);
       const url = t ? (tmdbImage(t.poster_path, 'w500') || tmdbImage(t.backdrop_path, 'w780')) : null;
-      return url && !isSeen(url) ? url : null;
+      if (url && !isSeen(url)) return url;
+      // Fallback: TVMaze
+      const tvmaze = await tvmazeImage(label);
+      if (tvmaze && !isSeen(tvmaze)) return tvmaze;
+      // Fallback: Wikipedia
+      const wiki = await wikipediaLeadImage(label);
+      if (wiki && !isSeen(wiki)) return wiki;
+      return null;
     }
+
+    // --- PEOPLE (TMDB person → Wikipedia → Wikidata P18) ---
     if (cat === CATS.PERSON) {
       const p = await tmdbSearchPerson(label);
       const url = p ? tmdbImage(p.profile_path, 'w500') : null;
-      return url && !isSeen(url) ? url : null;
+      if (url && !isSeen(url)) return url;
+      // Fallback: Wikipedia
+      const wiki = await wikipediaLeadImage(label);
+      if (wiki && !isSeen(wiki)) return wiki;
+      // Fallback: Wikidata P18
+      const qid = await wikidataQID(label);
+      const wd = await wikidataImageByQID(qid, 'P18');
+      if (wd && !isSeen(wd)) return wd;
+      return null;
     }
+
+    // --- MUSIC ALBUM ---
     if (cat === CATS.MUSIC_ALBUM && hints.artist) {
       const url = await theAudioDBAlbumCover(hints.artist, label);
-      return url && !isSeen(url) ? url : null;
+      if (url && !isSeen(url)) return url;
+      // iTunes fallback
+      const it = await itunesArtistArtwork(label + ' ' + hints.artist);
+      if (it && !isSeen(it)) return it;
+      return null;
     }
+
+    // --- MUSIC TRACK ---
     if (cat === CATS.MUSIC_TRACK && hints.artist) {
       const url = await theAudioDBTrackCover(hints.artist, label);
-      return url && !isSeen(url) ? url : null;
-    }
-    if (cat === CATS.MUSIC_ARTIST) {
-      const url = await lastfmArtistImage(label);
-      return url && !isSeen(url) ? url : null;
+      if (url && !isSeen(url)) return url;
+      return null;
     }
 
-    // Logos/Brands/Teams/Games: prefer official transparent logos
+    // --- MUSIC ARTIST (iTunes artwork from top song → Wikipedia → Wikidata P18) ---
+    if (cat === CATS.MUSIC_ARTIST) {
+      const it = await itunesArtistArtwork(cleanLabel(label));
+      if (it && !isSeen(it)) return it;
+      const wiki = await wikipediaLeadImage(label);
+      if (wiki && !isSeen(wiki)) return wiki;
+      const qid = await wikidataQID(label);
+      const wd = await wikidataImageByQID(qid, 'P18');
+      if (wd && !isSeen(wd)) return wd;
+      return null;
+    }
+
+    // --- LOGOS / BRANDS / TEAMS / GAMES ---
     if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) {
       const qid  = await wikidataQID(label);
-      const logo = await wikidataLogoByQID(qid);
+      // Try logo (P154) first, then main image (P18)
+      const logo = await wikidataImageByQID(qid, 'P154');
       if (logo && !isSeen(logo)) return logo;
-
+      const p18 = await wikidataImageByQID(qid, 'P18');
+      if (p18 && !isSeen(p18)) return p18;
       const wiki = await wikipediaLeadImage(label);
-      if (wiki && /logo/i.test(wiki) && !isSeen(wiki)) return wiki;
-
-      // "Risky" classes: avoid generic stock unless forced
-      const ctx = buildContext(label, cat, hints);
-      const pb  = await pixabayImage(ctx);
-      return pb && !isSeen(pb) ? pb : null;
+      if (wiki && !isSeen(wiki)) return wiki;
+      return null;
     }
 
-    // Food/Device/Place/Generic: context-enriched fallback
-    const ctx = buildContext(label, cat, hints);
+    // --- EVERYTHING ELSE (Wikipedia → Wikidata P18 → Pixabay) ---
+    // Wikipedia is the best free source for specific items (foods, animals, places, etc.)
+    const wiki = await wikipediaLeadImage(label);
+    if (wiki && !isSeen(wiki)) return wiki;
+
+    const qid = await wikidataQID(label);
+    const wd = await wikidataImageByQID(qid, 'P18');
+    if (wd && !isSeen(wd)) return wd;
+
+    // Last resort: Pixabay with context-enriched query
+    const ctx = buildContext(label, cat);
     const pb  = await pixabayImage(ctx);
     return pb && !isSeen(pb) ? pb : null;
   }
 
-  /* =========================== SMART RENDERING =========================== */
+  /* =========================== RENDERING =========================== */
   function chooseRenderMode(cat) {
     if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) return 'contain';
     if (cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) return 'contain';
@@ -467,7 +586,38 @@
   }
 
   async function smartRenderInto(imgEl, srcURL, mode, bg = 'transparent') {
+    // For 'contain' mode or if SmartCrop is unavailable, use CSS object-fit (faster)
+    if (mode === 'contain' || smartCropFailed) {
+      imgEl.style.objectFit = mode === 'contain' ? 'contain' : 'cover';
+      imgEl.style.objectPosition = 'center';
+      return new Promise((resolve, reject) => {
+        const temp = new Image();
+        temp.crossOrigin = 'anonymous';
+        temp.onload = () => {
+          imgEl.src = srcURL;
+          imgEl.setAttribute('data-processed', '1');
+          resolve(srcURL);
+        };
+        temp.onerror = () => reject(new Error('Image load failed: ' + srcURL));
+        temp.src = srcURL;
+      });
+    }
+
+    // For 'cover-smart': use SmartCrop for face/object-aware cropping
     await ensureSmartCrop();
+    if (!window.smartcrop) {
+      // SmartCrop not available, fall back to CSS
+      imgEl.style.objectFit = 'cover';
+      imgEl.style.objectPosition = 'center';
+      return new Promise((resolve, reject) => {
+        const temp = new Image();
+        temp.crossOrigin = 'anonymous';
+        temp.onload = () => { imgEl.src = srcURL; resolve(srcURL); };
+        temp.onerror = () => reject(new Error('Image load failed: ' + srcURL));
+        temp.src = srcURL;
+      });
+    }
+
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -478,37 +628,26 @@
           canvas.width = tw; canvas.height = th;
           const ctx = canvas.getContext('2d');
 
-          if (mode === 'contain') {
-            if (bg && bg !== 'transparent') { ctx.fillStyle = bg; ctx.fillRect(0, 0, tw, th); }
-            const scale = Math.min(tw / img.width, th / img.height);
-            const dw = Math.round(img.width * scale);
-            const dh = Math.round(img.height * scale);
-            const dx = Math.round((tw - dw) / 2);
-            const dy = Math.round((th - dh) / 2);
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, dx, dy, dw, dh);
-          } else {
-            const crop = await window.smartcrop.crop(img, { width: tw, height: th, minScale: 1.0, ruleOfThirds: true });
-            const top = crop?.topCrop || crop?.crops?.[0] || { x: 0, y: 0, width: img.width, height: img.height };
-            const sx = clamp(Math.round(top.x), 0, img.width);
-            const sy = clamp(Math.round(top.y), 0, img.height);
-            const sw = clamp(Math.round(top.width),  1, img.width  - sx);
-            const sh = clamp(Math.round(top.height), 1, img.height - sy);
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
-          }
+          const crop = await window.smartcrop.crop(img, { width: tw, height: th, minScale: 1.0, ruleOfThirds: true });
+          const top = crop?.topCrop || crop?.crops?.[0] || { x: 0, y: 0, width: img.width, height: img.height };
+          const sx = clamp(Math.round(top.x), 0, img.width);
+          const sy = clamp(Math.round(top.y), 0, img.height);
+          const sw = clamp(Math.round(top.width),  1, img.width  - sx);
+          const sh = clamp(Math.round(top.height), 1, img.height - sy);
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
 
           canvas.toBlob((blob) => {
             if (!blob) return reject(new Error('toBlob failed'));
-            // Revoke previous object URL to avoid leaks
             const prev = imgEl.getAttribute('data-blob');
             if (prev) { try { URL.revokeObjectURL(prev); } catch(_){} }
             const url = URL.createObjectURL(blob);
             imgEl.src = url;
+            imgEl.style.objectFit = 'cover';
             imgEl.setAttribute('data-blob', url);
             imgEl.setAttribute('data-processed', '1');
             resolve(url);
-          }, 'image/png');
+          }, 'image/jpeg', 0.92); // JPEG is faster than PNG for photos
         } catch (e) { reject(e); }
       };
       img.onerror = () => reject(new Error('Image load failed: ' + srcURL));
@@ -516,49 +655,60 @@
     });
   }
 
-  /* ======================= CANCEL-STALE PAINTS / PREFETCH ======================= */
-  let paintToken = 0; // increment per request; ignore late responses
-  const prefetchCache = new Map(); // label -> URL (blob/objectURL)
+  /* ======================= CANCEL-STALE / PREFETCH ======================= */
+  let paintToken = 0;
+  const prefetchCache = new Map();
 
   async function resolveAndRender(item) {
     const { img, itemLabel } = els();
     if (!img || !item) return false;
 
-    // label text
     if (itemLabel) itemLabel.textContent = item.label || '';
 
-    // cancel-stale: token for this render
     const myToken = ++paintToken;
     setBusy(true);
     img.alt = item.label || '';
 
+    // Get topic-level hints to pass to resolver
+    const topic = App.currentTopic();
+    const topicHints = {
+      provider:  topic?.provider  || '',
+      mediaType: topic?.mediaType || ''
+    };
+
     try {
-      const url = await resolveImageURL(item);
-      if (myToken !== paintToken) return false; // newer request in flight
-      if (!url) throw new Error('No exact image found for: ' + (item.label || ''));
+      // Check prefetch cache first
+      const cacheKey = normalize(item.label);
+      let url = prefetchCache.get(cacheKey) || null;
+      if (!url || isSeen(url)) {
+        prefetchCache.delete(cacheKey);
+        url = await resolveImageURL(item, topicHints);
+      }
+      if (myToken !== paintToken) return false;
+      if (!url) throw new Error('No image found for: ' + (item.label || ''));
 
       markSeen(url);
 
-      const cat  = inferCategory(item.label, item.hints);
+      const cat  = inferCategory(item.label, topicHints);
       const mode = chooseRenderMode(cat);
       await smartRenderInto(img, url, mode, 'transparent');
       if (myToken !== paintToken) return false;
 
       ariaAnnounce(`Loaded image for ${item.label}`);
       pulse(img);
-
-      // Prefetch next item (best-effort)
       prefetchNext();
       return true;
     } catch (err) {
-      console.error(err);
-      // fallback: context-enriched Pixabay
-      const cat = inferCategory(item.label, item.hints);
-      const ctx = buildContext(item.label, cat, item.hints);
+      console.warn('Image resolve failed:', err.message);
+      // Fallback: context-enriched Pixabay
+      if (myToken !== paintToken) return false;
+      const cat = inferCategory(item.label, topicHints);
+      const ctx = buildContext(item.label, cat);
       const pb  = await pixabayImage(ctx);
       if (pb && !isSeen(pb) && myToken === paintToken) {
         markSeen(pb);
-        img.src = pb; // direct
+        img.style.objectFit = 'cover';
+        img.src = pb;
         ariaAnnounce(`Loaded fallback image for ${item.label}`);
         pulse(img);
         prefetchNext();
@@ -580,13 +730,28 @@
     if (!next) return;
     const key = normalize(next.label);
     if (prefetchCache.has(key)) return;
+
+    const topic = App.currentTopic();
+    const topicHints = {
+      provider:  topic?.provider  || '',
+      mediaType: topic?.mediaType || ''
+    };
+
     try {
-      const url = await resolveImageURL(next);
+      const url = await resolveImageURL(next, topicHints);
       if (!url) return;
+      // Preload the image into browser cache
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      once(img, 'load', () => { prefetchCache.set(key, url); });
+      const loaded = new Promise((resolve) => {
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        // Timeout after 10s
+        setTimeout(() => resolve(false), 10000);
+      });
       img.src = url;
+      const ok = await loaded;
+      if (ok) prefetchCache.set(key, url);
     } catch(_) {}
   }
 
@@ -594,7 +759,7 @@
   function renderTopicTitle() {
     const t = App.currentTopic();
     const { topicTitle } = els();
-    if (topicTitle) topicTitle.textContent = t?.title || '';
+    if (topicTitle) topicTitle.textContent = t?.name || t?.title || '';
   }
 
   function bindPlaceButtons() {
@@ -604,13 +769,13 @@
       if (!Number.isFinite(r)) return;
       on(btn, 'click', async () => {
         App.ranks[r - 1] = App.currentItem();
-        // proceed to next item if any
+        App.persist();
         const t = App.currentTopic();
+        if (!t) return;
         if (App.itemIndex < (t.items.length - 1)) {
           App.itemIndex += 1;
           await resolveAndRender(App.currentItem());
         } else {
-          // finished placing items — confetti hook (respect reduced motion)
           const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           if (!reduce && window.fireConfetti) { try { window.fireConfetti(); } catch(_){} }
         }
@@ -626,23 +791,25 @@
       await resolveAndRender(App.currentItem());
     });
     on(newBtn, 'click', async () => {
+      if (!App.topics.length) return;
       App.topicIndex = (App.topicIndex + 1) % App.topics.length;
       App.itemIndex  = 0;
       App.ranks      = new Array(5).fill(null);
       resetSeen();
+      prefetchCache.clear();
       renderTopicTitle();
       await resolveAndRender(App.currentItem());
     });
   }
 
   function installKeyboardShortcuts() {
-    // Optional: number keys 1..5 to place quickly
     on(document, 'keydown', async (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const n = e.keyCode - 48; // '1'..'9'
+      const n = e.keyCode - 48;
       if (n >= 1 && n <= 5) {
         const t = App.currentTopic(); if (!t) return;
         App.ranks[n - 1] = App.currentItem();
+        App.persist();
         if (App.itemIndex < (t.items.length - 1)) {
           App.itemIndex += 1;
           await resolveAndRender(App.currentItem());
@@ -656,14 +823,13 @@
     installRipple(document);
     App.hydrate();
     if (!Array.isArray(App.topics) || App.topics.length === 0) {
-      console.warn('No topics found (window.TOPICS).');
+      console.warn('No topics found. Check that topics.js sets window.TOPICS.');
     }
     try { await ensureSmartCrop(); } catch(e) { console.warn('SmartCrop not available, continuing.', e); }
     renderTopicTitle();
     bindPlaceButtons();
     bindNavButtons();
     installKeyboardShortcuts();
-    // Start/resume
     if (!App.currentItem()) { App.reset(); }
     await resolveAndRender(App.currentItem());
   }
@@ -674,7 +840,6 @@
     boot();
   }
 
-  // expose a couple helpers if you need them elsewhere
   window.BR.resetSeen = resetSeen;
   window.BR.resolveAndRender = resolveAndRender;
 
