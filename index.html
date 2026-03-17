@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FIRESIDE Blind Rankings</title>
   <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#141218" />
 
-  <!-- Fonts -->
+  <!-- Fonts: Inter for MD3 feel -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Preconnects to image/API CDNs -->
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
@@ -18,102 +19,74 @@
   <link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
   <link rel="preconnect" href="https://api.tvmaze.com" crossorigin>
   <link rel="preconnect" href="https://itunes.apple.com" crossorigin>
-  <link rel="preconnect" href="https://ws.audioscrobbler.com" crossorigin>
-  <link rel="preconnect" href="https://www.theaudiodb.com" crossorigin>
   <link rel="preconnect" href="https://pixabay.com" crossorigin>
-  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link rel="preconnect" href="https://images.pexels.com" crossorigin>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header aligned with content container (no background) -->
   <header class="app-header">
     <div class="container">
-      <h1 class="brand" aria-label="FIRESIDE Blind Rankings">FIRESIDE Blind Rankings</h1>
+      <span class="brand">FIRESIDE</span>
+      <span class="brand-sub">Blind Rankings</span>
     </div>
   </header>
 
   <main class="layout container">
     <!-- Stage (left) -->
     <section class="stage" aria-labelledby="topicTag">
-      <div class="stage-bar">
+      <div class="stage-top">
         <span id="topicTag" class="chip" aria-live="polite">Topic</span>
+        <span id="progress" class="progress-text">1 / 5</span>
       </div>
 
-      <h2 id="itemTitle" class="item-title" aria-live="polite">Item title</h2>
+      <h2 id="itemTitle" class="item-title" aria-live="polite">Loading...</h2>
 
-      <!-- Card area -->
-      <article id="currentCard" class="card" aria-describedby="cardHelp">
+      <!-- Card -->
+      <article id="currentCard" class="card">
         <div id="cardLoading" class="card-loading" hidden aria-hidden="true">
           <div class="spinner" role="status" aria-label="Loading image"></div>
         </div>
         <img id="cardImg" class="card-img" alt="" decoding="async" fetchpriority="high" loading="eager">
-        <button id="nextTopicCta" class="next-topic-cta btn btn--pill btn--success" hidden>
-          Next Topic
-        </button>
       </article>
 
-      <p id="cardHelp" class="help">
-        <svg class="info-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M11 10h2v7h-2zM11 7h2v2h-2z"></path>
-        </svg>
-        Use the <strong>Place</strong> buttons to lock this into a rank. No drag needed.
-      </p>
-
-      <!-- Placement buttons: 1 row desktop / 2 columns mobile -->
+      <!-- Place buttons -->
       <div id="placeButtons" class="place-buttons" aria-label="Place into rank">
-        <button class="btn btn--pill btn--accent place" data-rank="1">Place in #1</button>
-        <button class="btn btn--pill btn--accent place" data-rank="2">Place in #2</button>
-        <button class="btn btn--pill btn--accent place" data-rank="3">Place in #3</button>
-        <button class="btn btn--pill btn--accent place" data-rank="4">Place in #4</button>
-        <button class="btn btn--pill btn--accent place" data-rank="5">Place in #5</button>
+        <button class="btn btn--tonal place" data-rank="1">#1</button>
+        <button class="btn btn--tonal place" data-rank="2">#2</button>
+        <button class="btn btn--tonal place" data-rank="3">#3</button>
+        <button class="btn btn--tonal place" data-rank="4">#4</button>
+        <button class="btn btn--tonal place" data-rank="5">#5</button>
       </div>
     </section>
 
-    <!-- Ranks (right) -->
+    <!-- Rankings (right) -->
     <section class="ranks" aria-label="Ranking slots">
-      <!-- New Topic above the rankings -->
-      <div class="actions actions-top">
-        <button id="nextTopicBtn" class="btn btn--pill btn--success">New Topic</button>
+      <div class="ranks-header">
+        <h3 class="ranks-title">Your Rankings</h3>
+        <button id="nextTopicBtn" class="btn btn--filled btn--success">New Topic</button>
       </div>
 
-      <ol class="rank-list" role="listbox" aria-label="Rankings 1 to 5">
-        <li class="rank-slot" data-rank="1" role="option" aria-selected="false" tabindex="0">
-          <div class="slot-label">#1</div>
-          <div class="slot-dropzone" aria-label="Rank 1"></div>
-        </li>
-        <li class="rank-slot" data-rank="2" role="option" aria-selected="false" tabindex="0">
-          <div class="slot-label">#2</div>
-          <div class="slot-dropzone" aria-label="Rank 2"></div>
-        </li>
-        <li class="rank-slot" data-rank="3" role="option" aria-selected="false" tabindex="0">
-          <div class="slot-label">#3</div>
-          <div class="slot-dropzone" aria-label="Rank 3"></div>
-        </li>
-        <li class="rank-slot" data-rank="4" role="option" aria-selected="false" tabindex="0">
-          <div class="slot-label">#4</div>
-          <div class="slot-dropzone" aria-label="Rank 4"></div>
-        </li>
-        <li class="rank-slot" data-rank="5" role="option" aria-selected="false" tabindex="0">
-          <div class="slot-label">#5</div>
-          <div class="slot-dropzone" aria-label="Rank 5"></div>
-        </li>
+      <ol id="rankList" class="rank-list" role="list" aria-label="Rankings 1 to 5">
+        <li class="rank-slot" data-rank="1"><div class="slot-num">#1</div><div class="slot-content empty">--</div></li>
+        <li class="rank-slot" data-rank="2"><div class="slot-num">#2</div><div class="slot-content empty">--</div></li>
+        <li class="rank-slot" data-rank="3"><div class="slot-num">#3</div><div class="slot-content empty">--</div></li>
+        <li class="rank-slot" data-rank="4"><div class="slot-num">#4</div><div class="slot-content empty">--</div></li>
+        <li class="rank-slot" data-rank="5"><div class="slot-num">#5</div><div class="slot-content empty">--</div></li>
       </ol>
-
-      <div id="results" class="results" aria-live="polite"></div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <small>images sourced via TMDB / Wikipedia / Wikidata where applicable.</small>
+    <small>Images via TMDB, Wikipedia, Wikidata, iTunes, TVMaze</small>
   </footer>
 
   <!-- Confetti overlay -->
   <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
 
-  <!-- Service worker (image cache) -->
+  <!-- Aria live region (hidden) -->
+  <div id="live" class="sr-only" aria-live="polite"></div>
+
+  <!-- Service worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(()=>{});

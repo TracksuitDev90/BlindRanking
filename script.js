@@ -1,16 +1,5 @@
 /* =========================================================
-   FIRESIDE Blind Rankings — accuracy + performance overhaul
-   - Topic-level provider/mediaType drives category (not keyword guessing)
-   - Cleaned TMDB label parsing (strips Wikipedia disambiguation)
-   - Wikidata P18 (main image) + P154 (logo) support
-   - iTunes Search API for music artists/albums
-   - TVMaze API for TV show fallback
-   - Wikipedia lead image as universal fallback
-   - Fetch timeout wrapper (8s default)
-   - Loading spinner shown/hidden properly
-   - Prefetch cache actually used on render
-   - SmartCrop only for cover mode
-   - Cancel-stale paints; localStorage resume; confetti hook
+   FIRESIDE Blind Rankings — v3
    ========================================================= */
 
 (() => {
@@ -18,705 +7,512 @@
 
   /* ====================== SELECTORS ====================== */
   const SELECTORS = {
-    previewImg: '#cardImg, .rank-card__img, .card img, img[data-role="preview"]',
-    liveRegion: '[aria-live], .sr-live, #live',
-    topicTitle: '#topicTag, .topic-title, #topic-title, [data-role="topic-title"]',
-    itemLabel:  '#itemTitle, .item-label, #item-label, [data-role="item-label"]',
-    placeWrap:  '#placeButtons, .place-buttons, [data-role="place-buttons"]',
-    placeBtns:  'button[data-rank], .btn-rank',
-    nextBtn:    '#next-topic, .btn-next, [data-role="next"]',
-    newBtn:     '#nextTopicBtn, #new-topic, .btn-new, [data-role="new"]',
+    previewImg: '#cardImg',
+    topicTitle: '#topicTag',
+    itemLabel:  '#itemTitle',
+    progress:   '#progress',
+    placeWrap:  '#placeButtons',
+    placeBtns:  '#placeButtons button[data-rank]',
+    newBtn:     '#nextTopicBtn',
     allBtns:    'button',
-    loading:    '#cardLoading'
+    loading:    '#cardLoading',
+    rankList:   '#rankList',
+    stage:      '.stage',
+    card:       '.card'
   };
 
-  /* ============================== UTILITIES =============================== */
   const $  = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
-  const once = (el, ev, fn, opts) => el && el.addEventListener(ev, (...a) => { fn(...a); el.removeEventListener(ev, fn, opts); }, opts);
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   function normalize(s) {
-    return (s || '')
-      .toLowerCase()
-      .replace(/&/g, 'and')
-      .replace(/["""'']/g, '')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
+    return (s || '').toLowerCase().replace(/&/g, 'and').replace(/["""'']/g, '')
+      .replace(/[^a-z0-9]+/g, ' ').trim();
   }
   function titlesEqual(a, b) { return normalize(a) === normalize(b); }
   function yearFrom(label) {
     const m = String(label).match(/\b(19|20)\d{2}\b/);
     return m ? +m[0] : null;
   }
-
-  // Strip Wikipedia-style disambiguation: "Up (2009 film)" → "Up", year extracted separately
   function cleanLabel(label) {
     return (label || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   }
 
-  function els() {
-    const img        = $(SELECTORS.previewImg);
-    const live       = $(SELECTORS.liveRegion);
-    const topicTitle = $(SELECTORS.topicTitle);
-    const itemLabel  = $(SELECTORS.itemLabel);
-    const placeWrap  = $(SELECTORS.placeWrap);
-    const placeBtns  = placeWrap ? $$(SELECTORS.placeBtns, placeWrap) : $$(SELECTORS.placeBtns);
-    const nextBtn    = $(SELECTORS.nextBtn);
-    const newBtn     = $(SELECTORS.newBtn);
-    const allBtns    = $$(SELECTORS.allBtns);
-    const loading    = $(SELECTORS.loading);
-    return { img, live, topicTitle, itemLabel, placeWrap, placeBtns, nextBtn, newBtn, allBtns, loading };
-  }
-
-  function ariaAnnounce(msg) {
-    const { live } = els();
-    if (!live) return;
-    live.textContent = '';
-    setTimeout(() => { live.textContent = msg; }, 30);
-  }
-
-  /* ============================== KEYS / CONFIG ============================== */
+  /* ============================== CONFIG ============================== */
   const cfg = {
-    TMDB_KEY:    (window.CONFIG && window.CONFIG.TMDB_KEY)    || (window.BR_CONFIG && window.BR_CONFIG.TMDB_KEY)    || '',
-    OMDB_KEY:    (window.CONFIG && window.CONFIG.OMDB_KEY)    || (window.BR_CONFIG && window.BR_CONFIG.OMDB_KEY)    || '',
-    LASTFM_KEY:  (window.CONFIG && window.CONFIG.LASTFM_KEY)  || (window.BR_CONFIG && window.BR_CONFIG.LASTFM_KEY)  || '',
-    AUDIO_KEY:   (window.CONFIG && window.CONFIG.AUDIO_KEY)   || (window.BR_CONFIG && window.BR_CONFIG.AUDIO_KEY)   || '',
-    PIXABAY_KEY: (window.CONFIG && window.CONFIG.PIXABAY_KEY) || (window.BR_CONFIG && window.BR_CONFIG.PIXABAY_KEY) || ''
+    TMDB_KEY:    (window.BR_CONFIG && window.BR_CONFIG.TMDB_KEY)    || '',
+    OMDB_KEY:    (window.BR_CONFIG && window.BR_CONFIG.OMDB_KEY)    || '',
+    LASTFM_KEY:  (window.BR_CONFIG && window.BR_CONFIG.LASTFM_KEY)  || '',
+    AUDIO_KEY:   (window.BR_CONFIG && window.BR_CONFIG.AUDIO_KEY)   || '',
+    PIXABAY_KEY: (window.BR_CONFIG && window.BR_CONFIG.PIXABAY_KEY) || ''
   };
 
   window.BR = window.BR || {};
-  window.BR.init = (overrides = {}) => { Object.assign(cfg, overrides); return ensureSmartCrop(); };
 
-  /* ============================= FETCH WITH TIMEOUT ============================= */
-  function fetchWithTimeout(url, opts = {}, timeoutMs = 8000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    return fetch(url, { ...opts, signal: controller.signal })
-      .finally(() => clearTimeout(timer));
+  /* ============================= FETCH ============================= */
+  function fetchT(url, timeoutMs = 8000) {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), timeoutMs);
+    return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
   }
 
-  /* ============================= APP STATE ============================= */
+  /* ============================= STATE ============================= */
   const STORAGE = {
-    key: 'br_state_v3',
-    save(state) { try { localStorage.setItem(this.key, JSON.stringify(state)); } catch(_){} },
-    load() { try { return JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(_){ return null; } },
-    clear() { try { localStorage.removeItem(this.key); } catch(_){} }
+    key: 'br_state_v4',
+    save(o) { try { localStorage.setItem(this.key, JSON.stringify(o)); } catch(_){} },
+    load()  { try { return JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(_){ return null; } },
   };
 
   const App = {
     topics: window.TOPICS || [],
     topicIndex: 0,
     itemIndex:  0,
-    ranks:      [],
+    ranks:      new Array(5).fill(null),
+    // Store resolved image URLs for placed items so we can show thumbnails
+    rankImages: new Array(5).fill(null),
 
     hydrate() {
-      const data = STORAGE.load();
-      if (!data) { this.reset(); return; }
-      if (Array.isArray(this.topics) && this.topics.length > 0 && data.topicIndex < this.topics.length) {
-        this.topicIndex = data.topicIndex|0;
-        this.itemIndex  = data.itemIndex|0;
-        this.ranks      = Array.isArray(data.ranks) ? data.ranks : new Array(5).fill(null);
+      const d = STORAGE.load();
+      if (!d) { this.reset(); return; }
+      if (this.topics.length > 0 && d.topicIndex < this.topics.length) {
+        this.topicIndex = d.topicIndex | 0;
+        this.itemIndex  = d.itemIndex  | 0;
+        this.ranks      = Array.isArray(d.ranks) ? d.ranks : new Array(5).fill(null);
+        this.rankImages = Array.isArray(d.rankImages) ? d.rankImages : new Array(5).fill(null);
       } else {
         this.reset();
       }
     },
     persist() {
-      STORAGE.save({ topicIndex: this.topicIndex, itemIndex: this.itemIndex, ranks: this.ranks });
+      STORAGE.save({
+        topicIndex: this.topicIndex,
+        itemIndex:  this.itemIndex,
+        ranks:      this.ranks,
+        rankImages: this.rankImages
+      });
     },
     reset() {
-      this.topicIndex = 0;
-      this.itemIndex  = 0;
-      this.ranks      = new Array(5).fill(null);
+      this.topicIndex = 0; this.itemIndex = 0;
+      this.ranks = new Array(5).fill(null);
+      this.rankImages = new Array(5).fill(null);
       this.persist();
     },
     currentTopic() { return this.topics[this.topicIndex] || null; },
     currentItem()  { const t = this.currentTopic(); return t?.items?.[this.itemIndex] || null; },
-    nextItem()     { const t = this.currentTopic(); if (!t) return null; return t.items?.[this.itemIndex + 1] || null; }
+    nextItem()     { const t = this.currentTopic(); return t?.items?.[this.itemIndex + 1] || null; },
+    isComplete()   { const t = this.currentTopic(); return t ? this.itemIndex >= t.items.length - 1 && this.ranks.some(Boolean) : false; }
   };
 
-  /* ========================= LOADER GATES & RIPPLE ========================= */
+  // Track the currently displayed image URL so we can store it for rank thumbnails
+  let currentResolvedURL = null;
+
+  /* ========================= UI HELPERS ========================= */
   function setBusy(busy = true) {
-    const { allBtns, loading } = els();
-    allBtns.forEach(b => b.disabled = !!busy);
-    if (loading) {
-      loading.hidden = !busy;
-      loading.setAttribute('aria-hidden', busy ? 'false' : 'true');
-    }
+    $$(SELECTORS.allBtns).forEach(b => b.disabled = !!busy);
+    const ld = $(SELECTORS.loading);
+    if (ld) { ld.hidden = !busy; }
   }
 
-  function installRipple(scope = document) {
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return;
-    scope.addEventListener('click', (e) => {
-      const target = e.target.closest('button');
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  function updateProgress() {
+    const el = $(SELECTORS.progress);
+    const t = App.currentTopic();
+    if (el && t) el.textContent = `${App.itemIndex + 1} / ${t.items.length}`;
+  }
+
+  function renderTopicTitle() {
+    const t = App.currentTopic();
+    const el = $(SELECTORS.topicTitle);
+    if (el) el.textContent = t?.name || t?.title || '';
+  }
+
+  function renderRankSlots() {
+    const slots = $$('.rank-slot');
+    slots.forEach((slot, i) => {
+      const item = App.ranks[i];
+      const imgUrl = App.rankImages[i];
+      const content = slot.querySelector('.slot-content');
+      if (!content) return;
+
+      if (item) {
+        slot.classList.add('filled');
+        content.classList.remove('empty');
+        const label = cleanLabel(item.label || '');
+        if (imgUrl) {
+          content.innerHTML = `<img class="slot-thumb" src="${imgUrl}" alt=""><span>${label}</span>`;
+        } else {
+          content.textContent = label;
+        }
+      } else {
+        slot.classList.remove('filled');
+        content.classList.add('empty');
+        content.innerHTML = '--';
+      }
+    });
+
+    // Update place button states
+    const btns = $$(SELECTORS.placeBtns);
+    btns.forEach(btn => {
+      const r = parseInt(btn.dataset.rank, 10);
+      if (App.ranks[r - 1]) {
+        btn.classList.add('placed');
+        btn.textContent = '#' + r + ' ✓';
+      } else {
+        btn.classList.remove('placed');
+        btn.textContent = '#' + r;
+      }
+    });
+  }
+
+  function installRipple() {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
       const r = document.createElement('span');
       r.className = 'ripple-effect';
       Object.assign(r.style, {
-        position: 'absolute',
-        left: `${x}px`, top: `${y}px`,
-        width: '8px', height: '8px', borderRadius: '50%',
-        pointerEvents: 'none', opacity: '0.3', transform: 'translate(-50%,-50%) scale(1)',
-        background: 'currentColor'
+        left: `${e.clientX - rect.left}px`,
+        top:  `${e.clientY - rect.top}px`,
+        width: '8px', height: '8px',
+        opacity: '0.25', transform: 'translate(-50%,-50%) scale(1)',
       });
-      target.style.position ||= 'relative';
-      target.appendChild(r);
+      btn.style.position ||= 'relative';
+      btn.appendChild(r);
       r.animate([
-        { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.3 },
-        { transform: 'translate(-50%,-50%) scale(18)', opacity: 0.0 }
-      ], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }).onfinish = () => r.remove();
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.25 },
+        { transform: 'translate(-50%,-50%) scale(20)', opacity: 0 }
+      ], { duration: 500, easing: 'cubic-bezier(.2,.8,.2,1)' }).onfinish = () => r.remove();
     }, true);
   }
 
-  function pulse(el) {
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || !el?.animate) return;
-    el.animate([{ transform: 'scale(0.985)' }, { transform: 'scale(1)' }], { duration: 120, easing: 'ease-out' });
-  }
-
-  /* ============================= SMARTCROP LOADER ============================= */
-  let smartCropLoaded = false;
-  let smartCropFailed = false;
+  /* ============================= SMARTCROP ============================= */
+  let scLoaded = false, scFailed = false;
   function ensureSmartCrop() {
-    if (smartCropLoaded || smartCropFailed) return Promise.resolve();
-    return new Promise((resolve) => {
-      if (window.smartcrop) { smartCropLoaded = true; return resolve(); }
+    if (scLoaded || scFailed) return Promise.resolve();
+    return new Promise(resolve => {
+      if (window.smartcrop) { scLoaded = true; return resolve(); }
       const s = document.createElement('script');
       s.src = 'https://unpkg.com/smartcrop@2.0.6/smartcrop.js';
       s.async = true;
-      s.onload = () => { smartCropLoaded = true; resolve(); };
-      s.onerror = () => { smartCropFailed = true; console.warn('SmartCrop unavailable, using CSS object-fit.'); resolve(); };
+      s.onload  = () => { scLoaded = true; resolve(); };
+      s.onerror = () => { scFailed = true; resolve(); };
       document.head.appendChild(s);
     });
   }
 
-  /* ============================ CATEGORY SYSTEM ============================ */
+  /* ============================ CATEGORIES ============================ */
   const CATS = {
-    MOVIE: 'movie', TV: 'tv', PERSON: 'person',
-    MUSIC_ARTIST: 'music-artist', MUSIC_ALBUM: 'music-album', MUSIC_TRACK: 'music-track',
-    GAME: 'game', TEAM: 'team', BRAND: 'brand', LOGO: 'logo',
-    FOOD: 'food', DEVICE: 'device', PLACE: 'place', GENERIC: 'generic'
+    MOVIE:'movie', TV:'tv', PERSON:'person',
+    MUSIC_ARTIST:'music-artist', MUSIC_ALBUM:'music-album', MUSIC_TRACK:'music-track',
+    GAME:'game', TEAM:'team', BRAND:'brand', LOGO:'logo',
+    FOOD:'food', DEVICE:'device', PLACE:'place', GENERIC:'generic'
   };
 
-  // Topic-level hints are the PRIMARY way to determine category.
-  // Keyword fallback only for topics that don't specify provider/mediaType.
-  function inferCategory(label, topicHints = {}) {
-    // Direct item-level override
-    if (topicHints.kind) return topicHints.kind;
-
-    // Topic-level provider + mediaType (this is the main accuracy driver)
-    const provider  = topicHints.provider  || '';
-    const mediaType = topicHints.mediaType || '';
-
-    if (provider === 'tmdb' && mediaType === 'movie') return CATS.MOVIE;
-    if (provider === 'tmdb' && mediaType === 'tv')    return CATS.TV;
-    if (mediaType === 'person')                        return CATS.PERSON;
-
-    // Keyword fallback for topics without explicit mediaType
+  function inferCategory(label, hints = {}) {
+    if (hints.kind) return hints.kind;
+    const p = hints.provider || '', m = hints.mediaType || '';
+    if (p === 'tmdb' && m === 'movie') return CATS.MOVIE;
+    if (p === 'tmdb' && m === 'tv')    return CATS.TV;
+    if (m === 'person')                 return CATS.PERSON;
     const n = normalize(label);
     if (/\bseason\b|\bs\d{1,2}\b/.test(n)) return CATS.TV;
     if (/\balbum\b/.test(n)) return CATS.MUSIC_ALBUM;
     if (/\btrack\b|\bsong\b/.test(n)) return CATS.MUSIC_TRACK;
     if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
     if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
-    if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b/.test(n)) return CATS.BRAND;
-    if (/\blogo\b/.test(n)) return CATS.LOGO;
-    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bfries\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b/.test(n)) return CATS.FOOD;
-    if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b|\bwatch\b/.test(n)) return CATS.DEVICE;
-    if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bstate\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
-    if (/\bactor\b|\bactress\b|\bdirector\b|\bproducer\b/.test(n)) return CATS.PERSON;
-
+    if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b|\blogo\b/.test(n)) return CATS.BRAND;
+    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b/.test(n)) return CATS.FOOD;
+    if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b/.test(n)) return CATS.DEVICE;
+    if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
     return CATS.GENERIC;
   }
 
   function buildContext(label, cat) {
-    const base = cleanLabel(label);
-    switch (cat) {
-      case CATS.PERSON:       return `${base} portrait photo`;
-      case CATS.MOVIE:        return `${base} official movie poster`;
-      case CATS.TV:           return `${base} official tv show poster`;
-      case CATS.MUSIC_ALBUM:  return `${base} official album cover`;
-      case CATS.MUSIC_TRACK:  return `${base} official single cover`;
-      case CATS.MUSIC_ARTIST: return `${base} artist photo portrait`;
-      case CATS.GAME:         return `${base} video game logo`;
-      case CATS.LOGO: case CATS.BRAND: case CATS.TEAM:
-                              return `${base} official logo`;
-      case CATS.FOOD:         return `${base} plated dish food photography`;
-      case CATS.DEVICE:       return `${base} product photo`;
-      case CATS.PLACE:        return `${base} landmark photo`;
-      default:                return `${base} photo`;
-    }
+    const b = cleanLabel(label);
+    const map = {
+      [CATS.PERSON]:      `${b} portrait photo`,
+      [CATS.MOVIE]:       `${b} official movie poster`,
+      [CATS.TV]:          `${b} tv show poster`,
+      [CATS.FOOD]:        `${b} plated dish food photography`,
+      [CATS.PLACE]:       `${b} landmark photo`,
+      [CATS.DEVICE]:      `${b} product photo`,
+    };
+    return map[cat] || `${b} photo`;
   }
 
-  /* ============================ DUPLICATE CONTROL ============================ */
+  /* ============================ SEEN SET ============================ */
   const seen = new Set();
   function resetSeen() { seen.clear(); }
   function markSeen(url) { if (url) seen.add(url.replace(/\?.*$/, '')); }
   function isSeen(url)   { return url ? seen.has(url.replace(/\?.*$/, '')) : false; }
 
-  /* ============================== PROVIDERS ============================== */
+  /* ============================ PROVIDERS ============================ */
+  function tmdbImg(path, sz = 'w500') { return path ? `https://image.tmdb.org/t/p/${sz}${path}` : null; }
 
-  // --- TMDB (movies, TV, people) ---
-  function tmdbImage(path, size = 'w500') { return path ? `https://image.tmdb.org/t/p/${size}${path}` : null; }
-
-  async function tmdbSearchMovie(title, year) {
+  async function tmdbMovie(title, year) {
     if (!cfg.TMDB_KEY) return null;
-    const clean = cleanLabel(title);
+    const c = cleanLabel(title);
     const u = new URL('https://api.themoviedb.org/3/search/movie');
-    u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', clean);
+    u.searchParams.set('api_key', cfg.TMDB_KEY); u.searchParams.set('query', c);
     if (year) u.searchParams.set('year', year);
     try {
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      // Try exact match first, then accept first result (topic already guarantees it's a movie)
-      const exact = j.results?.find(x => titlesEqual(x.title, clean) || titlesEqual(x.original_title, clean));
-      return exact || j.results?.[0] || null;
+      return j.results?.find(x => titlesEqual(x.title, c) || titlesEqual(x.original_title, c)) || j.results?.[0] || null;
     } catch(_) { return null; }
   }
 
-  async function tmdbSearchTV(title, year) {
+  async function tmdbTV(title, year) {
     if (!cfg.TMDB_KEY) return null;
-    const clean = cleanLabel(title);
+    const c = cleanLabel(title);
     const u = new URL('https://api.themoviedb.org/3/search/tv');
-    u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', clean);
+    u.searchParams.set('api_key', cfg.TMDB_KEY); u.searchParams.set('query', c);
     if (year) u.searchParams.set('first_air_date_year', year);
     try {
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      const exact = j.results?.find(x => titlesEqual(x.name, clean) || titlesEqual(x.original_name, clean));
-      return exact || j.results?.[0] || null;
+      return j.results?.find(x => titlesEqual(x.name, c) || titlesEqual(x.original_name, c)) || j.results?.[0] || null;
     } catch(_) { return null; }
   }
 
-  async function tmdbSearchPerson(name) {
+  async function tmdbPerson(name) {
     if (!cfg.TMDB_KEY) return null;
-    const clean = cleanLabel(name);
+    const c = cleanLabel(name);
     const u = new URL('https://api.themoviedb.org/3/search/person');
-    u.searchParams.set('api_key', cfg.TMDB_KEY);
-    u.searchParams.set('query', clean);
+    u.searchParams.set('api_key', cfg.TMDB_KEY); u.searchParams.set('query', c);
     try {
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      const exact = j.results?.find(x => titlesEqual(x.name, clean));
-      return exact || j.results?.[0] || null;
+      return j.results?.find(x => titlesEqual(x.name, c)) || j.results?.[0] || null;
     } catch(_) { return null; }
   }
 
-  // --- TheAudioDB (album/track covers) ---
-  async function theAudioDBAlbumCover(artist, album) {
-    if (!cfg.AUDIO_KEY) return null;
-    try {
-      const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchalbum.php`);
-      u.searchParams.set('s', artist);
-      u.searchParams.set('a', album);
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
-      const j = await r.json();
-      const exact = j?.album?.find(a => titlesEqual(a.strArtist, artist) && titlesEqual(a.strAlbum, album));
-      return exact?.strAlbumThumbHQ || exact?.strAlbumThumb || null;
-    } catch(_) { return null; }
-  }
-
-  async function theAudioDBTrackCover(artist, track) {
-    if (!cfg.AUDIO_KEY) return null;
-    try {
-      const u = new URL(`https://theaudiodb.com/api/v1/json/${cfg.AUDIO_KEY}/searchtrack.php`);
-      u.searchParams.set('s', artist);
-      u.searchParams.set('t', track);
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
-      const j = await r.json();
-      const exact = j?.track?.find(t => titlesEqual(t.strArtist, artist) && titlesEqual(t.strTrack, track));
-      return exact?.strTrackThumbHQ || exact?.strTrackThumb || null;
-    } catch(_) { return null; }
-  }
-
-  // --- iTunes Search API (music artists, albums — replaces deprecated Last.fm images) ---
-  async function itunesArtistImage(artist) {
-    const clean = cleanLabel(artist);
+  async function itunesArtwork(term) {
     try {
       const u = new URL('https://itunes.apple.com/search');
-      u.searchParams.set('term', clean);
-      u.searchParams.set('media', 'music');
-      u.searchParams.set('entity', 'musicArtist');
-      u.searchParams.set('limit', '5');
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
-      const j = await r.json();
-      const match = j?.results?.find(x => titlesEqual(x.artistName, clean));
-      // iTunes artist results don't have images directly, but musicArtist entity
-      // may not have artworkUrl. Try allMusic or fall through.
-      // Instead search for a top song to get artwork
-      if (!match) return null;
-      return await itunesArtistArtwork(clean);
-    } catch(_) { return null; }
-  }
-
-  async function itunesArtistArtwork(artist) {
-    try {
-      const u = new URL('https://itunes.apple.com/search');
-      u.searchParams.set('term', artist);
-      u.searchParams.set('media', 'music');
-      u.searchParams.set('entity', 'song');
-      u.searchParams.set('limit', '3');
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      u.searchParams.set('term', term); u.searchParams.set('media', 'music');
+      u.searchParams.set('entity', 'song'); u.searchParams.set('limit', '3');
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
       const hit = j?.results?.[0];
-      if (!hit?.artworkUrl100) return null;
-      // Upscale to 600x600
-      return hit.artworkUrl100.replace('100x100', '600x600');
+      return hit?.artworkUrl100 ? hit.artworkUrl100.replace('100x100', '600x600') : null;
     } catch(_) { return null; }
   }
 
-  // --- TVMaze (TV show fallback) ---
-  async function tvmazeImage(title) {
-    const clean = cleanLabel(title);
+  async function tvmazeImg(title) {
     try {
       const u = new URL('https://api.tvmaze.com/singlesearch/shows');
-      u.searchParams.set('q', clean);
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      u.searchParams.set('q', cleanLabel(title));
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
       return j?.image?.original || j?.image?.medium || null;
     } catch(_) { return null; }
   }
 
-  // --- Wikidata (P18 main image + P154 logo) ---
   async function wikidataQID(label) {
-    const clean = cleanLabel(label);
     try {
       const u = new URL('https://www.wikidata.org/w/api.php');
-      u.searchParams.set('action', 'wbsearchentities');
-      u.searchParams.set('search', clean);
-      u.searchParams.set('language', 'en');
-      u.searchParams.set('format', 'json');
-      u.searchParams.set('origin', '*');
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      u.searchParams.set('action','wbsearchentities'); u.searchParams.set('search', cleanLabel(label));
+      u.searchParams.set('language','en'); u.searchParams.set('format','json'); u.searchParams.set('origin','*');
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      const exact = j?.search?.find(e => titlesEqual(e.label, clean));
-      return (exact || j?.search?.[0])?.id || null;
+      const ex = j?.search?.find(e => titlesEqual(e.label, cleanLabel(label)));
+      return (ex || j?.search?.[0])?.id || null;
     } catch(_) { return null; }
   }
 
-  async function wikidataImageByQID(qid, property) {
+  async function wikidataImage(qid, prop) {
     if (!qid) return null;
     try {
       const u = new URL('https://www.wikidata.org/w/api.php');
-      u.searchParams.set('action', 'wbgetclaims');
-      u.searchParams.set('entity', qid);
-      u.searchParams.set('property', property);
-      u.searchParams.set('format', 'json');
-      u.searchParams.set('origin', '*');
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      u.searchParams.set('action','wbgetclaims'); u.searchParams.set('entity', qid);
+      u.searchParams.set('property', prop); u.searchParams.set('format','json'); u.searchParams.set('origin','*');
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      const claim = j?.claims?.[property]?.[0]?.mainsnak?.datavalue?.value;
-      if (!claim) return null;
-      const file = claim.replace(/ /g, '_');
-      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=800`;
+      const v = j?.claims?.[prop]?.[0]?.mainsnak?.datavalue?.value;
+      if (!v) return null;
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(v.replace(/ /g,'_'))}?width=800`;
     } catch(_) { return null; }
   }
 
-  // --- Wikipedia lead image (universal fallback) ---
-  async function wikipediaLeadImage(label) {
-    const clean = cleanLabel(label);
+  async function wikiImage(label) {
+    const c = cleanLabel(label);
     try {
-      const r = await fetchWithTimeout(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
-      if (!r.ok) {
-        // Try with cleaned label if original had disambiguation
-        if (clean !== label) {
-          const r2 = await fetchWithTimeout(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean)}`);
-          if (!r2.ok) return null;
-          const j2 = await r2.json();
-          return j2?.originalimage?.source || j2?.thumbnail?.source || null;
-        }
-        return null;
-      }
+      let r = await fetchT(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(label)}`);
+      if (!r.ok && c !== label)
+        r = await fetchT(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(c)}`);
+      if (!r.ok) return null;
       const j = await r.json();
       return j?.originalimage?.source || j?.thumbnail?.source || null;
     } catch(_) { return null; }
   }
 
-  // --- Pixabay (last-resort fallback) ---
-  async function pixabayImage(query) {
+  async function pixabay(query) {
     if (!cfg.PIXABAY_KEY) return null;
     try {
       const u = new URL('https://pixabay.com/api/');
-      u.searchParams.set('key', cfg.PIXABAY_KEY);
-      u.searchParams.set('q', query);
-      u.searchParams.set('image_type', 'photo');
-      u.searchParams.set('safesearch', 'true');
-      u.searchParams.set('per_page', '5');
-      const r = await fetchWithTimeout(u); if (!r.ok) return null;
+      u.searchParams.set('key', cfg.PIXABAY_KEY); u.searchParams.set('q', query);
+      u.searchParams.set('image_type','photo'); u.searchParams.set('safesearch','true');
+      u.searchParams.set('per_page','5');
+      const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
       return j?.hits?.[0]?.largeImageURL || j?.hits?.[0]?.webformatURL || null;
     } catch(_) { return null; }
   }
 
   /* ============================ RESOLVER ============================ */
-  // The resolver uses topic-level hints to pick the right provider chain.
-  // This is the key accuracy improvement: "Up" in a movie topic → TMDB movie search,
-  // not keyword guessing that would miss it entirely.
-
-  async function resolveImageURL(item, topicHints = {}) {
+  async function resolveImageURL(item, hints = {}) {
     const label = item?.label || '';
-    const hints = { ...topicHints, ...(item?.hints || {}) };
-    const cat = inferCategory(label, hints);
-    const y   = hints.year || yearFrom(label);
-
-    // If item has a hardcoded imageUrl, use it directly
+    const h = { ...hints, ...(item?.hints || {}) };
+    const cat = inferCategory(label, h);
+    const y = h.year || yearFrom(label);
     if (item?.imageUrl) return item.imageUrl;
 
-    // --- MOVIES (TMDB primary → Wikipedia fallback) ---
-    if (cat === CATS.MOVIE) {
-      const m = await tmdbSearchMovie(label, y);
-      const url = m ? (tmdbImage(m.poster_path, 'w500') || tmdbImage(m.backdrop_path, 'w780')) : null;
-      if (url && !isSeen(url)) return url;
-      // Fallback: Wikipedia
-      const wiki = await wikipediaLeadImage(label);
-      if (wiki && !isSeen(wiki)) return wiki;
+    // Helper: return first unseen URL from a series of async calls
+    async function first(...fns) {
+      for (const fn of fns) {
+        const url = await fn();
+        if (url && !isSeen(url)) return url;
+      }
       return null;
     }
 
-    // --- TV (TMDB primary → TVMaze → Wikipedia fallback) ---
-    if (cat === CATS.TV) {
-      const t = await tmdbSearchTV(label, y);
-      const url = t ? (tmdbImage(t.poster_path, 'w500') || tmdbImage(t.backdrop_path, 'w780')) : null;
-      if (url && !isSeen(url)) return url;
-      // Fallback: TVMaze
-      const tvmaze = await tvmazeImage(label);
-      if (tvmaze && !isSeen(tvmaze)) return tvmaze;
-      // Fallback: Wikipedia
-      const wiki = await wikipediaLeadImage(label);
-      if (wiki && !isSeen(wiki)) return wiki;
-      return null;
-    }
+    if (cat === CATS.MOVIE)
+      return first(
+        async () => { const m = await tmdbMovie(label, y); return m ? (tmdbImg(m.poster_path) || tmdbImg(m.backdrop_path,'w780')) : null; },
+        () => wikiImage(label)
+      );
 
-    // --- PEOPLE (TMDB person → Wikipedia → Wikidata P18) ---
-    if (cat === CATS.PERSON) {
-      const p = await tmdbSearchPerson(label);
-      const url = p ? tmdbImage(p.profile_path, 'w500') : null;
-      if (url && !isSeen(url)) return url;
-      // Fallback: Wikipedia
-      const wiki = await wikipediaLeadImage(label);
-      if (wiki && !isSeen(wiki)) return wiki;
-      // Fallback: Wikidata P18
-      const qid = await wikidataQID(label);
-      const wd = await wikidataImageByQID(qid, 'P18');
-      if (wd && !isSeen(wd)) return wd;
-      return null;
-    }
+    if (cat === CATS.TV)
+      return first(
+        async () => { const t = await tmdbTV(label, y); return t ? (tmdbImg(t.poster_path) || tmdbImg(t.backdrop_path,'w780')) : null; },
+        () => tvmazeImg(label),
+        () => wikiImage(label)
+      );
 
-    // --- MUSIC ALBUM ---
-    if (cat === CATS.MUSIC_ALBUM && hints.artist) {
-      const url = await theAudioDBAlbumCover(hints.artist, label);
-      if (url && !isSeen(url)) return url;
-      // iTunes fallback
-      const it = await itunesArtistArtwork(label + ' ' + hints.artist);
-      if (it && !isSeen(it)) return it;
-      return null;
-    }
+    if (cat === CATS.PERSON)
+      return first(
+        async () => { const p = await tmdbPerson(label); return p ? tmdbImg(p.profile_path) : null; },
+        () => wikiImage(label),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); }
+      );
 
-    // --- MUSIC TRACK ---
-    if (cat === CATS.MUSIC_TRACK && hints.artist) {
-      const url = await theAudioDBTrackCover(hints.artist, label);
-      if (url && !isSeen(url)) return url;
-      return null;
-    }
+    if (cat === CATS.MUSIC_ARTIST)
+      return first(
+        () => itunesArtwork(cleanLabel(label)),
+        () => wikiImage(label),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); }
+      );
 
-    // --- MUSIC ARTIST (iTunes artwork from top song → Wikipedia → Wikidata P18) ---
-    if (cat === CATS.MUSIC_ARTIST) {
-      const it = await itunesArtistArtwork(cleanLabel(label));
-      if (it && !isSeen(it)) return it;
-      const wiki = await wikipediaLeadImage(label);
-      if (wiki && !isSeen(wiki)) return wiki;
-      const qid = await wikidataQID(label);
-      const wd = await wikidataImageByQID(qid, 'P18');
-      if (wd && !isSeen(wd)) return wd;
-      return null;
-    }
+    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME)
+      return first(
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P154'); },
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => wikiImage(label)
+      );
 
-    // --- LOGOS / BRANDS / TEAMS / GAMES ---
-    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) {
-      const qid  = await wikidataQID(label);
-      // Try logo (P154) first, then main image (P18)
-      const logo = await wikidataImageByQID(qid, 'P154');
-      if (logo && !isSeen(logo)) return logo;
-      const p18 = await wikidataImageByQID(qid, 'P18');
-      if (p18 && !isSeen(p18)) return p18;
-      const wiki = await wikipediaLeadImage(label);
-      if (wiki && !isSeen(wiki)) return wiki;
-      return null;
-    }
-
-    // --- EVERYTHING ELSE (Wikipedia → Wikidata P18 → Pixabay) ---
-    // Wikipedia is the best free source for specific items (foods, animals, places, etc.)
-    const wiki = await wikipediaLeadImage(label);
-    if (wiki && !isSeen(wiki)) return wiki;
-
-    const qid = await wikidataQID(label);
-    const wd = await wikidataImageByQID(qid, 'P18');
-    if (wd && !isSeen(wd)) return wd;
-
-    // Last resort: Pixabay with context-enriched query
-    const ctx = buildContext(label, cat);
-    const pb  = await pixabayImage(ctx);
-    return pb && !isSeen(pb) ? pb : null;
+    // Generic: wiki → wikidata → pixabay
+    return first(
+      () => wikiImage(label),
+      async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+      () => pixabay(buildContext(label, cat))
+    );
   }
 
   /* =========================== RENDERING =========================== */
-  function chooseRenderMode(cat) {
-    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME) return 'contain';
-    if (cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) return 'contain';
-    return 'cover-smart';
-  }
-
-  function getTargetSizeFor(imgEl) {
-    const rect = imgEl.getBoundingClientRect();
-    let w = Math.max(1, Math.round(rect.width))  || 512;
-    let h = Math.max(1, Math.round(rect.height)) || 384;
-    const MAX = 1600;
-    if (w > MAX || h > MAX) {
-      const s = Math.min(MAX / w, MAX / h);
-      w = Math.round(w * s);
-      h = Math.round(h * s);
-    }
-    return { w, h };
-  }
-
-  async function smartRenderInto(imgEl, srcURL, mode, bg = 'transparent') {
-    // For 'contain' mode or if SmartCrop is unavailable, use CSS object-fit (faster)
-    if (mode === 'contain' || smartCropFailed) {
-      imgEl.style.objectFit = mode === 'contain' ? 'contain' : 'cover';
+  // Use CSS object-fit + object-position for display (no canvas processing).
+  // This preserves full image quality, shows faces/recognizable elements,
+  // and is much faster than canvas cropping.
+  function applyImageStyle(imgEl, cat) {
+    if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME ||
+        cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) {
+      imgEl.style.objectFit = 'contain';
       imgEl.style.objectPosition = 'center';
-      return new Promise((resolve, reject) => {
-        const temp = new Image();
-        temp.crossOrigin = 'anonymous';
-        temp.onload = () => {
-          imgEl.src = srcURL;
-          imgEl.setAttribute('data-processed', '1');
-          resolve(srcURL);
-        };
-        temp.onerror = () => reject(new Error('Image load failed: ' + srcURL));
-        temp.src = srcURL;
-      });
-    }
-
-    // For 'cover-smart': use SmartCrop for face/object-aware cropping
-    await ensureSmartCrop();
-    if (!window.smartcrop) {
-      // SmartCrop not available, fall back to CSS
+    } else if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
+      // People: show upper portion (faces at top)
+      imgEl.style.objectFit = 'cover';
+      imgEl.style.objectPosition = 'center 15%';
+    } else if (cat === CATS.MOVIE || cat === CATS.TV) {
+      // Posters: show full image
+      imgEl.style.objectFit = 'contain';
+      imgEl.style.objectPosition = 'center';
+    } else {
       imgEl.style.objectFit = 'cover';
       imgEl.style.objectPosition = 'center';
-      return new Promise((resolve, reject) => {
-        const temp = new Image();
-        temp.crossOrigin = 'anonymous';
-        temp.onload = () => { imgEl.src = srcURL; resolve(srcURL); };
-        temp.onerror = () => reject(new Error('Image load failed: ' + srcURL));
-        temp.src = srcURL;
-      });
     }
+  }
 
+  function loadImage(imgEl, url) {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = async () => {
-        try {
-          const { w: tw, h: th } = getTargetSizeFor(imgEl);
-          const canvas = document.createElement('canvas');
-          canvas.width = tw; canvas.height = th;
-          const ctx = canvas.getContext('2d');
-
-          const crop = await window.smartcrop.crop(img, { width: tw, height: th, minScale: 1.0, ruleOfThirds: true });
-          const top = crop?.topCrop || crop?.crops?.[0] || { x: 0, y: 0, width: img.width, height: img.height };
-          const sx = clamp(Math.round(top.x), 0, img.width);
-          const sy = clamp(Math.round(top.y), 0, img.height);
-          const sw = clamp(Math.round(top.width),  1, img.width  - sx);
-          const sh = clamp(Math.round(top.height), 1, img.height - sy);
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
-
-          canvas.toBlob((blob) => {
-            if (!blob) return reject(new Error('toBlob failed'));
-            const prev = imgEl.getAttribute('data-blob');
-            if (prev) { try { URL.revokeObjectURL(prev); } catch(_){} }
-            const url = URL.createObjectURL(blob);
-            imgEl.src = url;
-            imgEl.style.objectFit = 'cover';
-            imgEl.setAttribute('data-blob', url);
-            imgEl.setAttribute('data-processed', '1');
-            resolve(url);
-          }, 'image/jpeg', 0.92); // JPEG is faster than PNG for photos
-        } catch (e) { reject(e); }
+      const temp = new Image();
+      temp.crossOrigin = 'anonymous';
+      temp.onload = () => {
+        imgEl.src = url;
+        resolve(url);
       };
-      img.onerror = () => reject(new Error('Image load failed: ' + srcURL));
-      img.src = srcURL;
+      temp.onerror = () => reject(new Error('Load failed'));
+      temp.src = url;
     });
   }
 
-  /* ======================= CANCEL-STALE / PREFETCH ======================= */
+  /* ======================= PAINT SYSTEM ======================= */
   let paintToken = 0;
   const prefetchCache = new Map();
 
   async function resolveAndRender(item) {
-    const { img, itemLabel } = els();
+    const img = $(SELECTORS.previewImg);
+    const titleEl = $(SELECTORS.itemLabel);
     if (!img || !item) return false;
 
-    if (itemLabel) itemLabel.textContent = item.label || '';
+    if (titleEl) titleEl.textContent = cleanLabel(item.label) || '';
+    updateProgress();
 
     const myToken = ++paintToken;
     setBusy(true);
-    img.alt = item.label || '';
+    img.alt = cleanLabel(item.label) || '';
 
-    // Get topic-level hints to pass to resolver
     const topic = App.currentTopic();
-    const topicHints = {
-      provider:  topic?.provider  || '',
-      mediaType: topic?.mediaType || ''
-    };
+    const hints = { provider: topic?.provider || '', mediaType: topic?.mediaType || '' };
 
     try {
-      // Check prefetch cache first
       const cacheKey = normalize(item.label);
       let url = prefetchCache.get(cacheKey) || null;
       if (!url || isSeen(url)) {
         prefetchCache.delete(cacheKey);
-        url = await resolveImageURL(item, topicHints);
+        url = await resolveImageURL(item, hints);
       }
       if (myToken !== paintToken) return false;
-      if (!url) throw new Error('No image found for: ' + (item.label || ''));
+      if (!url) throw new Error('No image');
 
       markSeen(url);
+      currentResolvedURL = url;
 
-      const cat  = inferCategory(item.label, topicHints);
-      const mode = chooseRenderMode(cat);
-      await smartRenderInto(img, url, mode, 'transparent');
+      const cat = inferCategory(item.label, hints);
+      applyImageStyle(img, cat);
+      await loadImage(img, url);
       if (myToken !== paintToken) return false;
 
-      ariaAnnounce(`Loaded image for ${item.label}`);
-      pulse(img);
       prefetchNext();
       return true;
     } catch (err) {
-      console.warn('Image resolve failed:', err.message);
-      // Fallback: context-enriched Pixabay
       if (myToken !== paintToken) return false;
-      const cat = inferCategory(item.label, topicHints);
-      const ctx = buildContext(item.label, cat);
-      const pb  = await pixabayImage(ctx);
+      // Pixabay fallback
+      const cat = inferCategory(item.label, hints);
+      const pb = await pixabay(buildContext(item.label, cat));
       if (pb && !isSeen(pb) && myToken === paintToken) {
         markSeen(pb);
+        currentResolvedURL = pb;
         img.style.objectFit = 'cover';
+        img.style.objectPosition = 'center';
         img.src = pb;
-        ariaAnnounce(`Loaded fallback image for ${item.label}`);
-        pulse(img);
         prefetchNext();
         return true;
       }
       if (myToken === paintToken) {
+        currentResolvedURL = null;
         img.removeAttribute('src');
-        ariaAnnounce(`Couldn't load image for ${item.label}`);
       }
       return false;
     } finally {
@@ -730,107 +526,113 @@
     if (!next) return;
     const key = normalize(next.label);
     if (prefetchCache.has(key)) return;
-
     const topic = App.currentTopic();
-    const topicHints = {
-      provider:  topic?.provider  || '',
-      mediaType: topic?.mediaType || ''
-    };
-
+    const hints = { provider: topic?.provider || '', mediaType: topic?.mediaType || '' };
     try {
-      const url = await resolveImageURL(next, topicHints);
+      const url = await resolveImageURL(next, hints);
       if (!url) return;
-      // Preload the image into browser cache
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      const loaded = new Promise((resolve) => {
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        // Timeout after 10s
-        setTimeout(() => resolve(false), 10000);
-      });
-      img.src = url;
-      const ok = await loaded;
-      if (ok) prefetchCache.set(key, url);
+      await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 10000); img.src = url; });
+      prefetchCache.set(key, url);
     } catch(_) {}
   }
 
-  /* ============================== UI BINDINGS ============================== */
-  function renderTopicTitle() {
-    const t = App.currentTopic();
-    const { topicTitle } = els();
-    if (topicTitle) topicTitle.textContent = t?.name || t?.title || '';
+  /* ============================== TOPIC ADVANCE ============================== */
+  async function advanceToNextTopic() {
+    if (!App.topics.length) return;
+    App.topicIndex = (App.topicIndex + 1) % App.topics.length;
+    App.itemIndex = 0;
+    App.ranks = new Array(5).fill(null);
+    App.rankImages = new Array(5).fill(null);
+    resetSeen();
+    prefetchCache.clear();
+    currentResolvedURL = null;
+    renderTopicTitle();
+    renderRankSlots();
+    $(SELECTORS.stage)?.classList.remove('complete');
+    await resolveAndRender(App.currentItem());
   }
 
+  function showCompletion() {
+    const stage = $(SELECTORS.stage);
+    if (stage) stage.classList.add('complete');
+    // Auto-advance after 2.5 seconds
+    setTimeout(() => advanceToNextTopic(), 2500);
+  }
+
+  /* ============================== BINDINGS ============================== */
   function bindPlaceButtons() {
-    const { placeBtns } = els();
-    placeBtns.forEach(btn => {
-      const r = parseInt(btn.getAttribute('data-rank') || btn.dataset.rank || '', 10);
+    $$(SELECTORS.placeBtns).forEach(btn => {
+      const r = parseInt(btn.dataset.rank, 10);
       if (!Number.isFinite(r)) return;
       on(btn, 'click', async () => {
-        App.ranks[r - 1] = App.currentItem();
+        const item = App.currentItem();
+        if (!item) return;
+
+        // Place item in rank
+        App.ranks[r - 1] = item;
+        App.rankImages[r - 1] = currentResolvedURL;
         App.persist();
+        renderRankSlots();
+
         const t = App.currentTopic();
         if (!t) return;
-        if (App.itemIndex < (t.items.length - 1)) {
+
+        if (App.itemIndex < t.items.length - 1) {
+          // More items to go
           App.itemIndex += 1;
           await resolveAndRender(App.currentItem());
         } else {
-          const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          if (!reduce && window.fireConfetti) { try { window.fireConfetti(); } catch(_){} }
+          // All items placed — show completion + auto-advance
+          showCompletion();
         }
       });
     });
   }
 
   function bindNavButtons() {
-    const { nextBtn, newBtn } = els();
-    on(nextBtn, 'click', async () => {
-      const t = App.currentTopic(); if (!t) return;
-      App.itemIndex = Math.min(App.itemIndex + 1, t.items.length - 1);
-      await resolveAndRender(App.currentItem());
-    });
-    on(newBtn, 'click', async () => {
-      if (!App.topics.length) return;
-      App.topicIndex = (App.topicIndex + 1) % App.topics.length;
-      App.itemIndex  = 0;
-      App.ranks      = new Array(5).fill(null);
-      resetSeen();
-      prefetchCache.clear();
-      renderTopicTitle();
-      await resolveAndRender(App.currentItem());
-    });
+    on($(SELECTORS.newBtn), 'click', () => advanceToNextTopic());
   }
 
   function installKeyboardShortcuts() {
     on(document, 'keydown', async (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const n = e.keyCode - 48;
-      if (n >= 1 && n <= 5) {
-        const t = App.currentTopic(); if (!t) return;
-        App.ranks[n - 1] = App.currentItem();
-        App.persist();
-        if (App.itemIndex < (t.items.length - 1)) {
-          App.itemIndex += 1;
-          await resolveAndRender(App.currentItem());
-        }
+      const n = e.key >= '1' && e.key <= '5' ? parseInt(e.key, 10) : 0;
+      if (!n) return;
+
+      const item = App.currentItem();
+      const t = App.currentTopic();
+      if (!item || !t) return;
+
+      App.ranks[n - 1] = item;
+      App.rankImages[n - 1] = currentResolvedURL;
+      App.persist();
+      renderRankSlots();
+
+      if (App.itemIndex < t.items.length - 1) {
+        App.itemIndex += 1;
+        await resolveAndRender(App.currentItem());
+      } else {
+        showCompletion();
       }
     });
   }
 
   /* =============================== BOOT =============================== */
   async function boot() {
-    installRipple(document);
+    installRipple();
     App.hydrate();
-    if (!Array.isArray(App.topics) || App.topics.length === 0) {
-      console.warn('No topics found. Check that topics.js sets window.TOPICS.');
+    if (!App.topics.length) {
+      console.warn('No topics found. Ensure topics.js sets window.TOPICS.');
     }
-    try { await ensureSmartCrop(); } catch(e) { console.warn('SmartCrop not available, continuing.', e); }
+    ensureSmartCrop(); // preload in background, not blocking
     renderTopicTitle();
+    renderRankSlots();
     bindPlaceButtons();
     bindNavButtons();
     installKeyboardShortcuts();
-    if (!App.currentItem()) { App.reset(); }
+    if (!App.currentItem()) App.reset();
     await resolveAndRender(App.currentItem());
   }
 
@@ -841,6 +643,5 @@
   }
 
   window.BR.resetSeen = resetSeen;
-  window.BR.resolveAndRender = resolveAndRender;
-
+  window.BR.advanceToNextTopic = advanceToNextTopic;
 })();
