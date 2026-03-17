@@ -89,6 +89,11 @@ body {
   font-size: 16px;
   color: var(--muted);
 }
+.btn--mood-change {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 6px 14px;
+}
 
 /* =============== LAYOUT =============== */
 .layout {
@@ -335,8 +340,9 @@ body {
   inset: 0;
   background: rgba(18,18,18,.7);
   backdrop-filter: blur(2px);
+  z-index: 12;
 }
-.complete-overlay {
+.completion-overlay {
   position: absolute;
   inset: 0;
   display: flex;
@@ -345,11 +351,126 @@ body {
   justify-content: center;
   gap: 16px;
   z-index: 15;
+  opacity: 0;
+  transition: opacity .3s ease;
 }
-.complete-text {
-  font-weight: 700;
-  font-size: 20px;
+.completion-overlay.visible {
+  opacity: 1;
+}
+.completion-badge {
+  font-weight: 800;
+  font-size: clamp(22px, 5vw, 36px);
   color: var(--tertiary);
+  text-shadow: 0 2px 12px rgba(0,0,0,.6);
+  letter-spacing: 2px;
+  animation: badgePop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes badgePop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Rank slot glow when complete */
+.stage.complete ~ .ranks .rank-slot.filled {
+  border-color: var(--tertiary);
+  box-shadow: 0 0 8px rgba(168,219,139,.2);
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+
+/* =============== MOOD PICKER =============== */
+.mood-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.mood-picker-inner {
+  background: var(--surface-cont);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-xl);
+  padding: 32px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+}
+.mood-picker-title {
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--on-surface);
+  margin-bottom: 8px;
+}
+.mood-picker-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.mood-chip {
+  appearance: none;
+  border: 1.5px solid var(--outline);
+  background: transparent;
+  color: var(--on-surf-var);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.mood-chip:hover { border-color: var(--primary); color: var(--primary); }
+.mood-chip.selected {
+  background: var(--primary-cont);
+  border-color: var(--primary-cont);
+  color: var(--on-primary-c);
+}
+.mood-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* =============== SHARE BUTTON & TOAST =============== */
+.btn--share {
+  font-size: 13px;
+  padding: 8px 16px;
+}
+.ranks-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.share-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--primary-cont);
+  color: var(--on-primary-c);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
+}
+.share-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* =============== FOOTER =============== */
@@ -367,8 +488,8 @@ body {
   position: fixed; inset: 0;
   pointer-events: none;
   z-index: 999;
-  display: none;
 }
+.confetti.active { display: block; }
 
 /* =============== RIPPLE =============== */
 .ripple-effect {

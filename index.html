@@ -28,8 +28,22 @@
     <div class="container">
       <span class="brand">FIRESIDE</span>
       <span class="brand-sub">Blind Rankings</span>
+      <button id="changeMoodBtn" class="btn btn--tonal btn--mood-change">Moods</button>
     </div>
   </header>
+
+  <!-- Mood picker overlay -->
+  <div id="moodPicker" class="mood-picker" hidden>
+    <div class="mood-picker-inner">
+      <h2 class="mood-picker-title">What are you in the mood for?</h2>
+      <p class="mood-picker-sub">Pick a few categories or skip for a random mix</p>
+      <div id="moodChips" class="mood-chips" role="group" aria-label="Category moods"></div>
+      <div class="mood-actions">
+        <button id="moodSkipBtn" class="btn btn--tonal">Random Mix</button>
+        <button id="moodGoBtn" class="btn btn--filled" disabled>Let's Go</button>
+      </div>
+    </div>
+  </div>
 
   <main class="layout container">
     <!-- Stage (left) -->
@@ -47,6 +61,10 @@
           <div class="spinner" role="status" aria-label="Loading image"></div>
         </div>
         <img id="cardImg" class="card-img" alt="" decoding="async" fetchpriority="high" loading="eager">
+        <!-- Completion overlay inside card -->
+        <div id="completionOverlay" class="completion-overlay" hidden>
+          <div class="completion-badge">ALL RANKED</div>
+        </div>
       </article>
 
       <!-- Place buttons -->
@@ -63,7 +81,10 @@
     <section class="ranks" aria-label="Ranking slots">
       <div class="ranks-header">
         <h3 class="ranks-title">Your Rankings</h3>
-        <button id="nextTopicBtn" class="btn btn--filled btn--success">New Topic</button>
+        <div class="ranks-actions">
+          <button id="shareBtn" class="btn btn--tonal btn--share" hidden>Share</button>
+          <button id="nextTopicBtn" class="btn btn--filled btn--success">New Topic</button>
+        </div>
       </div>
 
       <ol id="rankList" class="rank-list" role="list" aria-label="Rankings 1 to 5">
@@ -75,6 +96,9 @@
       </ol>
     </section>
   </main>
+
+  <!-- Share toast -->
+  <div id="shareToast" class="share-toast" hidden>Copied to clipboard!</div>
 
   <footer class="app-footer">
     <small>Images via TMDB, Wikipedia, Wikidata, iTunes, TVMaze</small>

@@ -1,5 +1,5 @@
 /* =========================================================
-   FIRESIDE Blind Rankings — v3
+   FIRESIDE Blind Rankings — v4
    ========================================================= */
 
 (() => {
@@ -14,11 +14,19 @@
     placeWrap:  '#placeButtons',
     placeBtns:  '#placeButtons button[data-rank]',
     newBtn:     '#nextTopicBtn',
+    shareBtn:   '#shareBtn',
     allBtns:    'button',
     loading:    '#cardLoading',
     rankList:   '#rankList',
     stage:      '.stage',
-    card:       '.card'
+    card:       '.card',
+    moodPicker: '#moodPicker',
+    moodChips:  '#moodChips',
+    moodSkip:   '#moodSkipBtn',
+    moodGo:     '#moodGoBtn',
+    completionOverlay: '#completionOverlay',
+    confetti:   '#confetti',
+    shareToast: '#shareToast'
   };
 
   const $  = (sel, root = document) => root.querySelector(sel);
@@ -57,40 +65,82 @@
     return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
   }
 
+  /* ============================= SHUFFLE ============================= */
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   /* ============================= STATE ============================= */
   const STORAGE = {
-    key: 'br_state_v4',
+    key: 'br_state_v5',
     save(o) { try { localStorage.setItem(this.key, JSON.stringify(o)); } catch(_){} },
     load()  { try { return JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(_){ return null; } },
   };
 
+  const MOOD_STORAGE = {
+    key: 'br_moods_v1',
+    save(moods) { try { localStorage.setItem(this.key, JSON.stringify(moods)); } catch(_){} },
+    load() { try { return JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(_){ return null; } },
+    clear() { try { localStorage.removeItem(this.key); } catch(_){} }
+  };
+
   const App = {
-    topics: window.TOPICS || [],
+    allTopics: window.TOPICS || [],
+    topics: [],       // shuffled + filtered working set
     topicIndex: 0,
     itemIndex:  0,
     ranks:      new Array(5).fill(null),
-    // Store resolved image URLs for placed items so we can show thumbnails
     rankImages: new Array(5).fill(null),
+    selectedMoods: [], // mood IDs the user picked
+
+    buildTopicList(moods) {
+      let pool = this.allTopics;
+      if (moods && moods.length > 0) {
+        pool = pool.filter(t => moods.includes(t.mood));
+      }
+      this.topics = shuffle(pool);
+      this.selectedMoods = moods || [];
+    },
 
     hydrate() {
       const d = STORAGE.load();
-      if (!d) { this.reset(); return; }
+      const savedMoods = MOOD_STORAGE.load();
+      if (!d) { return false; } // signal no saved state
+      this.buildTopicList(savedMoods || []);
       if (this.topics.length > 0 && d.topicIndex < this.topics.length) {
-        this.topicIndex = d.topicIndex | 0;
+        // Restore the shuffled order from saved topic name matching
+        if (d.topicName) {
+          const idx = this.topics.findIndex(t => t.name === d.topicName);
+          if (idx >= 0) {
+            this.topicIndex = idx;
+          } else {
+            this.topicIndex = 0;
+          }
+        } else {
+          this.topicIndex = d.topicIndex | 0;
+        }
         this.itemIndex  = d.itemIndex  | 0;
         this.ranks      = Array.isArray(d.ranks) ? d.ranks : new Array(5).fill(null);
         this.rankImages = Array.isArray(d.rankImages) ? d.rankImages : new Array(5).fill(null);
-      } else {
-        this.reset();
+        return true;
       }
+      return false;
     },
     persist() {
+      const t = this.currentTopic();
       STORAGE.save({
         topicIndex: this.topicIndex,
+        topicName:  t?.name || '',
         itemIndex:  this.itemIndex,
         ranks:      this.ranks,
         rankImages: this.rankImages
       });
+      MOOD_STORAGE.save(this.selectedMoods);
     },
     reset() {
       this.topicIndex = 0; this.itemIndex = 0;
@@ -156,12 +206,22 @@
       const r = parseInt(btn.dataset.rank, 10);
       if (App.ranks[r - 1]) {
         btn.classList.add('placed');
-        btn.textContent = '#' + r + ' ✓';
+        btn.textContent = '#' + r + ' \u2713';
       } else {
         btn.classList.remove('placed');
         btn.textContent = '#' + r;
       }
     });
+
+    // Show/hide share button based on completion
+    updateShareButton();
+  }
+
+  function updateShareButton() {
+    const shareBtn = $(SELECTORS.shareBtn);
+    if (!shareBtn) return;
+    const allPlaced = App.ranks.every(r => r !== null);
+    shareBtn.hidden = !allPlaced;
   }
 
   function installRipple() {
@@ -223,21 +283,35 @@
     if (/\bgame\b|\bvideo game\b/.test(n)) return CATS.GAME;
     if (/\bfc\b|\bclub\b|\bunited\b|\bpatriots\b|\blakers\b|\bwarriors\b|\bceltics\b|\bsteelers\b|\bpackers\b|\bcowboys\b/.test(n)) return CATS.TEAM;
     if (/\binc\b|\bcorp\b|\bco\b|\bllc\b|\bltd\b|\bcompany\b|\bbrand\b|\blogo\b/.test(n)) return CATS.BRAND;
-    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b/.test(n)) return CATS.FOOD;
+    if (/\bburger\b|\bpizza\b|\btaco\b|\bsushi\b|\bcoffee\b|\btea\b|\bcheese\b|\bchicken\b|\bsoup\b|\bsalad\b|\bbread\b|\bpie\b|\bcake\b|\bice cream\b|\bbrownie\b|\bdoughnut\b|\bcookie\b|\bwaffle\b|\bpancake\b|\bchip\b|\bcereal\b|\bcandy\b/.test(n)) return CATS.FOOD;
     if (/\biphone\b|\bgalaxy\b|\bipad\b|\bmacbook\b|\bplaystation\b|\bxbox\b|\bcamera\b|\blaptop\b/.test(n)) return CATS.DEVICE;
     if (/\bpark\b|\bbridge\b|\blake\b|\bmountain\b|\bcity\b|\bcountry\b|\bbeach\b|\bcastle\b|\bmuseum\b|\btower\b/.test(n)) return CATS.PLACE;
     return CATS.GENERIC;
   }
 
-  function buildContext(label, cat) {
+  // Also infer category from topic-level mood when item-level detection returns generic
+  function inferCategoryWithMood(label, hints, topicMood) {
+    const cat = inferCategory(label, hints);
+    if (cat !== CATS.GENERIC) return cat;
+    // Use topic mood to improve generic inference
+    if (topicMood === 'food') return CATS.FOOD;
+    if (topicMood === 'music') return CATS.MUSIC_ARTIST;
+    if (topicMood === 'people') return CATS.PERSON;
+    if (topicMood === 'places') return CATS.PLACE;
+    if (topicMood === 'sports') return CATS.TEAM;
+    return cat;
+  }
+
+  function buildContext(label, cat, topicName) {
     const b = cleanLabel(label);
     const map = {
-      [CATS.PERSON]:      `${b} portrait photo`,
-      [CATS.MOVIE]:       `${b} official movie poster`,
-      [CATS.TV]:          `${b} tv show poster`,
-      [CATS.FOOD]:        `${b} plated dish food photography`,
-      [CATS.PLACE]:       `${b} landmark photo`,
-      [CATS.DEVICE]:      `${b} product photo`,
+      [CATS.PERSON]:       `${b} portrait photo face`,
+      [CATS.MUSIC_ARTIST]: `${b} artist portrait photo face`,
+      [CATS.MOVIE]:        `${b} official movie poster`,
+      [CATS.TV]:           `${b} tv show poster`,
+      [CATS.FOOD]:         `${b} ${topicName || ''} food close-up photography`,
+      [CATS.PLACE]:        `${b} landmark photo`,
+      [CATS.DEVICE]:       `${b} product photo`,
     };
     return map[cat] || `${b} photo`;
   }
@@ -285,7 +359,30 @@
     try {
       const r = await fetchT(u); if (!r.ok) return null;
       const j = await r.json();
-      return j.results?.find(x => titlesEqual(x.name, c)) || j.results?.[0] || null;
+      const match = j.results?.find(x => titlesEqual(x.name, c)) || j.results?.[0] || null;
+      // If we got a match, try to get a high-res profile image
+      if (match && match.id && match.profile_path) {
+        // Use h632 size for better face quality
+        return { ...match, _hrPath: tmdbImg(match.profile_path, 'h632') };
+      }
+      return match;
+    } catch(_) { return null; }
+  }
+
+  // Get TMDB person images endpoint for best face photo
+  async function tmdbPersonImages(personId) {
+    if (!cfg.TMDB_KEY || !personId) return null;
+    try {
+      const u = new URL(`https://api.themoviedb.org/3/person/${personId}/images`);
+      u.searchParams.set('api_key', cfg.TMDB_KEY);
+      const r = await fetchT(u); if (!r.ok) return null;
+      const j = await r.json();
+      // Pick the profile with highest vote_average (best quality face shot)
+      const profiles = j.profiles || [];
+      if (!profiles.length) return null;
+      // Sort by vote_average desc, then pick one with good aspect ratio (portrait)
+      const sorted = profiles.slice().sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+      return tmdbImg(sorted[0].file_path, 'h632');
     } catch(_) { return null; }
   }
 
@@ -366,7 +463,9 @@
   async function resolveImageURL(item, hints = {}) {
     const label = item?.label || '';
     const h = { ...hints, ...(item?.hints || {}) };
-    const cat = inferCategory(label, h);
+    const topic = App.currentTopic();
+    const topicMood = topic?.mood || '';
+    const cat = inferCategoryWithMood(label, h, topicMood);
     const y = h.year || yearFrom(label);
     if (item?.imageUrl) return item.imageUrl;
 
@@ -392,18 +491,35 @@
         () => wikiImage(label)
       );
 
+    // PERSON: prioritize TMDB person images API for best face photo
     if (cat === CATS.PERSON)
       return first(
-        async () => { const p = await tmdbPerson(label); return p ? tmdbImg(p.profile_path) : null; },
+        async () => {
+          const p = await tmdbPerson(label);
+          if (!p) return null;
+          // Try the images endpoint for highest-rated face photo
+          const best = await tmdbPersonImages(p.id);
+          if (best) return best;
+          // Fall back to the search result profile_path at high res
+          return p._hrPath || tmdbImg(p.profile_path, 'h632') || tmdbImg(p.profile_path);
+        },
         () => wikiImage(label),
         async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); }
       );
 
+    // MUSIC_ARTIST: prioritize TMDB person search for face photos over iTunes album art
     if (cat === CATS.MUSIC_ARTIST)
       return first(
-        () => itunesArtwork(cleanLabel(label)),
+        async () => {
+          const p = await tmdbPerson(label);
+          if (!p) return null;
+          const best = await tmdbPersonImages(p.id);
+          if (best) return best;
+          return p._hrPath || tmdbImg(p.profile_path, 'h632') || tmdbImg(p.profile_path);
+        },
         () => wikiImage(label),
-        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); }
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => itunesArtwork(cleanLabel(label))
       );
 
     if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME)
@@ -413,29 +529,33 @@
         () => wikiImage(label)
       );
 
+    // FOOD: use more specific search queries to avoid wrong images
+    if (cat === CATS.FOOD)
+      return first(
+        () => wikiImage(label),
+        async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
+        () => pixabay(buildContext(label, cat, topic?.name))
+      );
+
     // Generic: wiki → wikidata → pixabay
     return first(
       () => wikiImage(label),
       async () => { const q = await wikidataQID(label); return wikidataImage(q, 'P18'); },
-      () => pixabay(buildContext(label, cat))
+      () => pixabay(buildContext(label, cat, topic?.name))
     );
   }
 
   /* =========================== RENDERING =========================== */
-  // Use CSS object-fit + object-position for display (no canvas processing).
-  // This preserves full image quality, shows faces/recognizable elements,
-  // and is much faster than canvas cropping.
   function applyImageStyle(imgEl, cat) {
     if (cat === CATS.LOGO || cat === CATS.BRAND || cat === CATS.TEAM || cat === CATS.GAME ||
         cat === CATS.MUSIC_ALBUM || cat === CATS.MUSIC_TRACK) {
       imgEl.style.objectFit = 'contain';
       imgEl.style.objectPosition = 'center';
     } else if (cat === CATS.PERSON || cat === CATS.MUSIC_ARTIST) {
-      // People: show upper portion (faces at top)
+      // People: show upper portion (faces) — use top 20% to ensure full face
       imgEl.style.objectFit = 'cover';
-      imgEl.style.objectPosition = 'center 15%';
+      imgEl.style.objectPosition = 'center 20%';
     } else if (cat === CATS.MOVIE || cat === CATS.TV) {
-      // Posters: show full image
       imgEl.style.objectFit = 'contain';
       imgEl.style.objectPosition = 'center';
     } else {
@@ -489,7 +609,8 @@
       markSeen(url);
       currentResolvedURL = url;
 
-      const cat = inferCategory(item.label, hints);
+      const topicMood = topic?.mood || '';
+      const cat = inferCategoryWithMood(item.label, hints, topicMood);
       applyImageStyle(img, cat);
       await loadImage(img, url);
       if (myToken !== paintToken) return false;
@@ -498,9 +619,9 @@
       return true;
     } catch (err) {
       if (myToken !== paintToken) return false;
-      // Pixabay fallback
-      const cat = inferCategory(item.label, hints);
-      const pb = await pixabay(buildContext(item.label, cat));
+      const topicMood = topic?.mood || '';
+      const cat = inferCategoryWithMood(item.label, hints, topicMood);
+      const pb = await pixabay(buildContext(item.label, cat, topic?.name));
       if (pb && !isSeen(pb) && myToken === paintToken) {
         markSeen(pb);
         currentResolvedURL = pb;
@@ -538,8 +659,125 @@
     } catch(_) {}
   }
 
+  /* ============================== CONFETTI ============================== */
+  function fireConfetti() {
+    const canvas = $(SELECTORS.confetti);
+    if (!canvas) return;
+    canvas.classList.add('active');
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#d0bcff', '#a8db8b', '#ccc2dc', '#eaddff', '#ffb4ab', '#ffd700'];
+    const particles = [];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -Math.random() * 14 - 4,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 10,
+        life: 1
+      });
+    }
+
+    let frame = 0;
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      for (const p of particles) {
+        if (p.life <= 0) continue;
+        alive = true;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3; // gravity
+        p.rotation += p.rotSpeed;
+        p.life -= 0.012;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
+      frame++;
+      if (alive && frame < 120) {
+        requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.classList.remove('active');
+        canvas.style.display = 'none';
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  /* ============================== SHARING ============================== */
+  function buildShareText() {
+    const t = App.currentTopic();
+    if (!t) return '';
+    let text = `FIRESIDE Blind Rankings: ${t.name}\n\n`;
+    for (let i = 0; i < 5; i++) {
+      const item = App.ranks[i];
+      text += `#${i + 1} ${item ? cleanLabel(item.label) : '---'}\n`;
+    }
+    text += '\nfiresiderankings.com';
+    return text;
+  }
+
+  async function handleShare() {
+    const text = buildShareText();
+    if (!text) return;
+
+    // Try native share first (mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch(_) {
+        // User cancelled or share failed, fall through to clipboard
+      }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard!');
+    } catch(_) {
+      // Final fallback: textarea select
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast('Copied to clipboard!');
+    }
+  }
+
+  function showToast(msg) {
+    const toast = $(SELECTORS.shareToast);
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.hidden = false;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => { toast.hidden = true; }, 300);
+    }, 2000);
+  }
+
   /* ============================== TOPIC ADVANCE ============================== */
+  let autoAdvanceTimer = null;
+
   async function advanceToNextTopic() {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     if (!App.topics.length) return;
     App.topicIndex = (App.topicIndex + 1) % App.topics.length;
     App.itemIndex = 0;
@@ -550,15 +788,88 @@
     currentResolvedURL = null;
     renderTopicTitle();
     renderRankSlots();
-    $(SELECTORS.stage)?.classList.remove('complete');
+    const stage = $(SELECTORS.stage);
+    if (stage) stage.classList.remove('complete');
+    const overlay = $(SELECTORS.completionOverlay);
+    if (overlay) { overlay.hidden = true; overlay.classList.remove('visible'); }
     await resolveAndRender(App.currentItem());
   }
 
   function showCompletion() {
     const stage = $(SELECTORS.stage);
     if (stage) stage.classList.add('complete');
-    // Auto-advance after 2.5 seconds
-    setTimeout(() => advanceToNextTopic(), 2500);
+
+    // Show completion badge overlay
+    const overlay = $(SELECTORS.completionOverlay);
+    if (overlay) {
+      overlay.hidden = false;
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+    }
+
+    // Fire confetti
+    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      fireConfetti();
+    }
+
+    // Show share button
+    updateShareButton();
+
+    // NO auto-advance — user shares first, then clicks "New Topic"
+  }
+
+  /* ============================== MOOD PICKER ============================== */
+  let moodPickerBound = false;
+  let moodPickerSelected = new Set();
+
+  function showMoodPicker() {
+    const picker = $(SELECTORS.moodPicker);
+    const chipsContainer = $(SELECTORS.moodChips);
+    const goBtn = $(SELECTORS.moodGo);
+    if (!picker || !chipsContainer) return;
+
+    const moods = window.BR_MOODS || [];
+    moodPickerSelected = new Set();
+    if (goBtn) goBtn.disabled = true;
+
+    chipsContainer.innerHTML = '';
+    moods.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'mood-chip';
+      btn.textContent = m.label;
+      btn.dataset.mood = m.id;
+      on(btn, 'click', () => {
+        if (moodPickerSelected.has(m.id)) {
+          moodPickerSelected.delete(m.id);
+          btn.classList.remove('selected');
+        } else {
+          moodPickerSelected.add(m.id);
+          btn.classList.add('selected');
+        }
+        if (goBtn) goBtn.disabled = moodPickerSelected.size === 0;
+      });
+      chipsContainer.appendChild(btn);
+    });
+
+    if (!moodPickerBound) {
+      moodPickerBound = true;
+
+      on($(SELECTORS.moodSkip), 'click', () => {
+        App.buildTopicList([]);
+        App.reset();
+        picker.hidden = true;
+        startRanking();
+      });
+
+      on(goBtn, 'click', () => {
+        if (moodPickerSelected.size === 0) return;
+        App.buildTopicList(Array.from(moodPickerSelected));
+        App.reset();
+        picker.hidden = true;
+        startRanking();
+      });
+    }
+
+    picker.hidden = false;
   }
 
   /* ============================== BINDINGS ============================== */
@@ -580,11 +891,10 @@
         if (!t) return;
 
         if (App.itemIndex < t.items.length - 1) {
-          // More items to go
           App.itemIndex += 1;
           await resolveAndRender(App.currentItem());
         } else {
-          // All items placed — show completion + auto-advance
+          // All items placed
           showCompletion();
         }
       });
@@ -593,6 +903,11 @@
 
   function bindNavButtons() {
     on($(SELECTORS.newBtn), 'click', () => advanceToNextTopic());
+    on($('#changeMoodBtn'), 'click', () => showMoodPicker());
+  }
+
+  function bindShareButton() {
+    on($(SELECTORS.shareBtn), 'click', () => handleShare());
   }
 
   function installKeyboardShortcuts() {
@@ -619,21 +934,37 @@
     });
   }
 
-  /* =============================== BOOT =============================== */
-  async function boot() {
-    installRipple();
-    App.hydrate();
-    if (!App.topics.length) {
-      console.warn('No topics found. Ensure topics.js sets window.TOPICS.');
-    }
-    ensureSmartCrop(); // preload in background, not blocking
+  /* ============================== BOOT ============================== */
+  async function startRanking() {
     renderTopicTitle();
     renderRankSlots();
-    bindPlaceButtons();
-    bindNavButtons();
-    installKeyboardShortcuts();
     if (!App.currentItem()) App.reset();
     await resolveAndRender(App.currentItem());
+  }
+
+  async function boot() {
+    installRipple();
+    ensureSmartCrop();
+    bindPlaceButtons();
+    bindNavButtons();
+    bindShareButton();
+    installKeyboardShortcuts();
+
+    // Try to restore saved state
+    const restored = App.hydrate();
+    if (restored && App.topics.length > 0) {
+      // Continue where we left off
+      await startRanking();
+    } else {
+      // No saved state — show mood picker
+      App.buildTopicList([]);
+      if (window.BR_MOODS && window.BR_MOODS.length > 0) {
+        showMoodPicker();
+      } else {
+        App.reset();
+        await startRanking();
+      }
+    }
   }
 
   if (document.readyState === 'loading') {
@@ -644,4 +975,8 @@
 
   window.BR.resetSeen = resetSeen;
   window.BR.advanceToNextTopic = advanceToNextTopic;
+  window.BR.showMoodPicker = () => {
+    const picker = $(SELECTORS.moodPicker);
+    if (picker) showMoodPicker();
+  };
 })();
