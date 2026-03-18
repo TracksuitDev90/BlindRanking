@@ -1251,13 +1251,13 @@
     const cardText = $('#cardText');
     if (!item) return false;
 
-    if (titleEl) titleEl.textContent = cleanLabel(item.label) || '';
     updateProgress();
 
     const myToken = ++paintToken;
 
     // ——— Text mode: skip image fetching, show label as bold centred text ———
     if (USE_TEXT_MODE) {
+      if (titleEl) titleEl.textContent = '';
       if (img) img.hidden = true;
       if (cardText) {
         cardText.textContent = cleanLabel(item.label) || '';
@@ -1270,6 +1270,7 @@
     }
 
     // ——— Image mode (preserved for future use) ———
+    if (titleEl) titleEl.textContent = cleanLabel(item.label) || '';
     setBusy(true);
     if (cardText) cardText.hidden = true;
     if (img) { img.hidden = false; img.alt = cleanLabel(item.label) || ''; }
