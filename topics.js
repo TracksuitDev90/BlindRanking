@@ -310,14 +310,14 @@ window.TOPICS = [
   { name: "Game Consoles", mood: "tech", provider: "wiki", items: [
     {label:"Nintendo Switch"}, {label:"PlayStation 5"}, {label:"Xbox Series X and Series S"}, {label:"Steam Deck"}, {label:"Nintendo 3DS"}
   ]},
-  { name: "Programming Languages", mood: "tech", provider: "wiki", items: [
+  { name: "Programming Languages", mood: "tech", provider: "wiki", mediaType: "software", items: [
     {label:"JavaScript"}, {label:"Python (programming language)"}, {label:"Java (programming language)"},
     {label:"C Sharp (programming language)"}, {label:"Go (programming language)"}
   ]},
-  { name: "JS Frameworks", mood: "tech", provider: "wiki", items: [
+  { name: "JS Frameworks", mood: "tech", provider: "wiki", mediaType: "software", items: [
     {label:"React (software)"}, {label:"Vue.js"}, {label:"Angular (web framework)"}, {label:"Svelte"}, {label:"Next.js"}
   ]},
-  { name: "Databases", mood: "tech", provider: "wiki", items: [
+  { name: "Databases", mood: "tech", provider: "wiki", mediaType: "software", items: [
     {label:"PostgreSQL"}, {label:"MySQL"}, {label:"SQLite"}, {label:"MongoDB"}, {label:"Redis"}
   ]},
   { name: "Cloud Providers", mood: "tech", provider: "wiki", items: [
@@ -353,7 +353,7 @@ window.TOPICS = [
     {label:"The Legend of Zelda: Tears of the Kingdom"}
   ]},
   { name: "Comic Book Villains", mood: "culture", provider: "wiki", items: [
-    {label:"Joker (character)"}, {label:"Thanos"}, {label:"Loki (Marvel Comics)"}, {label:"Magneto (Marvel Comics)"}, {label:"Green Goblin"}
+    {label:"Joker (character)"}, {label:"Thanos"}, {label:"Loki (Marvel Comics)"}, {label:"Magneto (Marvel Comics)"}, {label:"Green Goblin (Marvel Comics)"}
   ]},
   { name: "Superheroes", mood: "culture", provider: "wiki", items: [
     {label:"Spider-Man"}, {label:"Batman"}, {label:"Superman"}, {label:"Wonder Woman"}, {label:"Iron Man"}
@@ -364,7 +364,7 @@ window.TOPICS = [
     {label:"Gucci"}, {label:"Prada"}, {label:"Louis Vuitton"}, {label:"Balenciaga"}, {label:"Off-White"}
   ]},
   { name: "Luxury Watches", mood: "culture", provider: "wiki", mediaType: "fashion", items: [
-    {label:"Rolex"}, {label:"Omega SA"}, {label:"Patek Philippe"}, {label:"Audemars Piguet"}, {label:"TAG Heuer"}
+    {label:"Rolex"}, {label:"Omega (watchmaker)"}, {label:"Patek Philippe SA"}, {label:"Audemars Piguet"}, {label:"TAG Heuer"}
   ]},
   { name: "Coffee Drinks", mood: "food", provider: "wiki", items: [
     {label:"Espresso"}, {label:"Latte"}, {label:"Cappuccino"}, {label:"Caffè Americano"}, {label:"Caffè mocha"}
@@ -375,8 +375,8 @@ window.TOPICS = [
   { name: "Ice Cream Flavors", mood: "food", provider: "wiki", items: [
     {label:"Vanilla ice cream"}, {label:"Chocolate ice cream"}, {label:"Strawberry ice cream"}, {label:"Mint chocolate chip"}, {label:"Cookies and cream"}
   ]},
-  { name: "Hobbies", mood: "culture", provider: "wiki", items: [
-    {label:"Reading (process)"}, {label:"Gardening"}, {label:"Painting"}, {label:"Cycling"}, {label:"Cooking"}
+  { name: "Hobbies", mood: "culture", provider: "wiki", mediaType: "activity", items: [
+    {label:"Reading (process)"}, {label:"Gardening"}, {label:"Painting"}, {label:"Cycling (sport)"}, {label:"Cooking"}
   ]},
   { name: "School Subjects", mood: "culture", provider: "wiki", items: [
     {label:"Mathematics"}, {label:"Science"}, {label:"History"}, {label:"Literature"}, {label:"Art"}
@@ -385,7 +385,7 @@ window.TOPICS = [
     {label:"Apollo 11"}, {label:"Voyager 1"}, {label:"Hubble Space Telescope"}, {label:"Curiosity (rover)"}, {label:"James Webb Space Telescope"}
   ]},
   { name: "Constellations", mood: "culture", provider: "wiki", items: [
-    {label:"Orion (constellation)"}, {label:"Ursa Major"}, {label:"Cassiopeia (constellation)"}, {label:"Scorpius"}, {label:"Leo (constellation)"}
+    {label:"Orion (constellation)"}, {label:"Ursa Major"}, {label:"Cassiopeia (constellation)"}, {label:"Scorpius (constellation)"}, {label:"Leo (constellation)"}
   ]},
   { name: "Planets", mood: "culture", provider: "wiki", items: [
     {label:"Mercury (planet)"}, {label:"Venus (planet)"}, {label:"Earth"}, {label:"Mars (planet)"}, {label:"Jupiter (planet)"}
@@ -555,7 +555,7 @@ const MORE_TOPICS = [
   { name:"Best Fantasy Book Series", mood: "culture", provider:"wiki", items:[{label:"Harry Potter"},{label:"The Lord of the Rings"},{label:"A Song of Ice and Fire"},{label:"The Wheel of Time"},{label:"The Stormlight Archive"}] },
   { name:"Best Sci-Fi Authors", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Isaac Asimov"},{label:"Arthur C. Clarke"},{label:"Philip K. Dick"},{label:"Ursula K. Le Guin"},{label:"Frank Herbert"}] },
   { name:"Best Comic Book Heroes", mood: "people", provider:"wiki", items:[{label:"Batman"},{label:"Spider-Man"},{label:"Superman"},{label:"Wonder Woman"},{label:"Wolverine (character)"}] },
-  { name:"Best Comic Book Villains", mood: "people", provider:"wiki", items:[{label:"Joker (character)"},{label:"Magneto (Marvel Comics)"},{label:"Loki (Marvel Comics)"},{label:"Thanos"},{label:"Green Goblin"}] },
+  { name:"Best Comic Book Villains", mood: "people", provider:"wiki", items:[{label:"Joker (character)"},{label:"Magneto (Marvel Comics)"},{label:"Loki (Marvel Comics)"},{label:"Thanos"},{label:"Green Goblin (Marvel Comics)"}] },
   { name:"Best 90s Sitcom Characters", mood: "tv", provider:"wiki", items:[{label:"Chandler Bing"},{label:"George Costanza"},{label:"Frasier Crane"},{label:"Will Smith (The Fresh Prince of Bel-Air)"},{label:"Elaine Benes"}] },
   { name:"Best 2000s TV Antiheroes", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Tony Soprano"},{label:"Walter White"},{label:"Don Draper"},{label:"Dexter Morgan"},{label:"Omar Little"}] },
 
@@ -570,30 +570,30 @@ const MORE_TOPICS = [
   { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (1965)"},{label:"Chevrolet Camaro (1969)"},{label:"Porsche 911 (1973)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
   { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}], mediaType:"brand" },
   { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion (productivity software)"},{label:"Trello"},{label:"Asana (software)"},{label:"Todoist"},{label:"Evernote"}] },
-  { name:"Best Web Browsers", mood: "tech", provider:"wiki", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
-  { name:"Best Programming Languages", mood: "tech", provider:"wiki", items:[{label:"Python (programming language)"},{label:"JavaScript"},{label:"Java (programming language)"},{label:"C Sharp (programming language)"},{label:"Go (programming language)"}] },
+  { name:"Best Web Browsers", mood: "tech", provider:"wiki", mediaType:"software", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
+  { name:"Best Programming Languages", mood: "tech", provider:"wiki", mediaType:"software", items:[{label:"Python (programming language)"},{label:"JavaScript"},{label:"Java (programming language)"},{label:"C Sharp (programming language)"},{label:"Go (programming language)"}] },
   { name:"Best Cloud Providers", mood: "tech", provider:"wiki", items:[{label:"Amazon Web Services"},{label:"Microsoft Azure"},{label:"Google Cloud Platform"},{label:"DigitalOcean"},{label:"Heroku"}] },
-  { name:"Best Web Frameworks", mood: "tech", provider:"wiki", items:[{label:"React (software)"},{label:"Vue.js"},{label:"Angular (web framework)"},{label:"Svelte"},{label:"Next.js"}] },
+  { name:"Best Web Frameworks", mood: "tech", provider:"wiki", mediaType:"software", items:[{label:"React (software)"},{label:"Vue.js"},{label:"Angular (web framework)"},{label:"Svelte"},{label:"Next.js"}] },
   { name:"Best AI Tools (Consumer)", mood: "tech", provider:"wiki", items:[{label:"ChatGPT"},{label:"Midjourney"},{label:"Stable Diffusion"},{label:"Claude (language model)"},{label:"Perplexity (chatbot)"}] },
   { name:"Best Operating Systems", mood: "tech", provider:"wiki", items:[{label:"Windows 11"},{label:"macOS"},{label:"Ubuntu"},{label:"Android"},{label:"iOS"}] },
   { name:"Best Smartwatches", mood: "tech", provider:"wiki", items:[{label:"Apple Watch"},{label:"Samsung Galaxy Watch"},{label:"Garmin Forerunner"},{label:"Fitbit Versa"},{label:"Google Pixel Watch"}] },
 
   // ————— Lifestyle / Culture —————
-  { name:"Best Fitness Activities", mood: "culture", provider:"wiki", items:[{label:"Running"},{label:"Cycling"},{label:"Swimming"},{label:"Yoga"},{label:"Weightlifting"}] },
+  { name:"Best Fitness Activities", mood: "culture", provider:"wiki", mediaType:"activity", items:[{label:"Running"},{label:"Cycling (sport)"},{label:"Swimming (sport)"},{label:"Yoga"},{label:"Weightlifting"}] },
   { name:"Best Hikes in the World", mood: "places", provider:"wiki", items:[{label:"Inca Trail"},{label:"Appalachian Trail"},{label:"Tour du Mont Blanc"},{label:"Mount Kilimanjaro"},{label:"Tongariro Alpine Crossing"}] },
   { name:"Best Museums", mood: "places", provider:"wiki", items:[{label:"Louvre"},{label:"British Museum"},{label:"The Metropolitan Museum of Art"},{label:"Museo del Prado"},{label:"Uffizi Gallery"}] },
   { name:"Best Universities", mood: "culture", provider:"wiki", items:[{label:"Harvard University"},{label:"Stanford University"},{label:"MIT"},{label:"University of Oxford"},{label:"University of Cambridge"}] },
   { name:"Best 20th-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Internet"},{label:"Penicillin"},{label:"Airplane"},{label:"Television"},{label:"Nuclear power"}] },
   { name:"Best 21st-Century Inventions", mood: "culture", provider:"wiki", items:[{label:"Smartphone"},{label:"CRISPR"},{label:"3D printing"},{label:"Social media"},{label:"Electric car"}] },
-  { name:"Best Startups of the 2010s", mood: "culture", provider:"wiki", items:[{label:"Uber"},{label:"Airbnb"},{label:"Slack (software)"},{label:"Stripe (company)"},{label:"Snapchat"}] },
+  { name:"Best Startups of the 2010s", mood: "culture", provider:"wiki", items:[{label:"Uber", hints:{kind:"brand"}},{label:"Airbnb", hints:{kind:"brand"}},{label:"Slack (software)", hints:{kind:"brand"}},{label:"Stripe (company)", hints:{kind:"brand"}},{label:"Snapchat", hints:{kind:"brand"}}] },
   { name:"Best Social Networks", mood: "culture", provider:"wiki", items:[{label:"Facebook"},{label:"Instagram"},{label:"TikTok"},{label:"X (social network)"},{label:"Reddit"}] },
-  { name:"Best Podcasts", mood: "culture", provider:"wiki", items:[{label:"The Joe Rogan Experience"},{label:"This American Life"},{label:"Radiolab"},{label:"Serial (podcast)"},{label:"The Daily (podcast)"}] },
+  { name:"Best Podcasts", mood: "culture", provider:"wiki", mediaType:"podcast", items:[{label:"The Joe Rogan Experience"},{label:"This American Life"},{label:"Radiolab"},{label:"Serial (podcast)"},{label:"The Daily (podcast)"}] },
   { name:"Best Late-Night Hosts", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Jimmy Fallon"},{label:"Jimmy Kimmel"},{label:"Stephen Colbert"},{label:"John Oliver"},{label:"Seth Meyers"}] },
   { name:"Best Stand-Up Comedians", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Dave Chappelle"},{label:"Jerry Seinfeld"},{label:"Kevin Hart"},{label:"Ali Wong"},{label:"John Mulaney"}] },
   { name:"Best YouTubers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"MrBeast"},{label:"PewDiePie"},{label:"Markiplier"},{label:"Dude Perfect"},{label:"Emma Chamberlain"}] },
   { name:"Best Twitch Streamers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ninja (streamer)"},{label:"Pokimane"},{label:"Shroud (streamer)"},{label:"xQc"},{label:"Valkyrae"}] },
   { name:"Best Soccer Clubs", mood: "sports", provider:"wiki", items:[{label:"Real Madrid"},{label:"FC Barcelona"},{label:"Manchester United"},{label:"Bayern Munich"},{label:"Liverpool"}] },
-  { name:"Best NFL Teams (All-Time)", mood: "sports", provider:"wiki", items:[{label:"1985 Chicago Bears"},{label:"2007 New England Patriots"},{label:"1972 Miami Dolphins"},{label:"1990s Dallas Cowboys"},{label:"2013 Seattle Seahawks"}] },
+  { name:"Best NFL Teams (All-Time)", mood: "sports", provider:"wiki", items:[{label:"1985 Chicago Bears season", hints:{kind:"team"}},{label:"2007 New England Patriots season", hints:{kind:"team"}},{label:"1972 Miami Dolphins season", hints:{kind:"team"}},{label:"1990s Dallas Cowboys", hints:{kind:"team"}},{label:"2013 Seattle Seahawks season", hints:{kind:"team"}}] },
   { name:"Best Olympic Sprinters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Usain Bolt"},{label:"Carl Lewis"},{label:"Michael Johnson"},{label:"Yohan Blake"},{label:"Justin Gatlin"}] },
   { name:"Best Swimmers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Michael Phelps"},{label:"Katie Ledecky"},{label:"Ian Thorpe"},{label:"Ryan Lochte"},{label:"Missy Franklin"}] },
   { name:"Best Chess Players", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Magnus Carlsen"},{label:"Garry Kasparov"},{label:"Bobby Fischer"},{label:"Anatoly Karpov"},{label:"Hikaru Nakamura"}] },
@@ -604,7 +604,7 @@ const MORE_TOPICS = [
   { name:"Best Sneakers", mood: "culture", provider:"wiki", mediaType:"sneaker",
     items:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"}],
     itemPool:[{label:"Air Jordan 1"},{label:"Nike Air Force 1"},{label:"Adidas Stan Smith"},{label:"Converse Chuck Taylor All Star"},{label:"Adidas Yeezy"},{label:"Nike Air Max 1"},{label:"New Balance 574"},{label:"Nike Dunk"},{label:"Adidas Superstar (shoe)"},{label:"Vans Old Skool"},{label:"Puma Suede"},{label:"Reebok Classic"}] },
-  { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega SA"},{label:"Patek Philippe"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
+  { name:"Best Watch Brands", mood: "culture", provider:"wiki", mediaType:"fashion", items:[{label:"Rolex"},{label:"Omega (watchmaker)"},{label:"Patek Philippe SA"},{label:"TAG Heuer"},{label:"Audemars Piguet"}] },
   { name:"Best Beer Styles", mood: "food", provider:"wiki", items:[{label:"India pale ale"},{label:"Stout"},{label:"Lager"},{label:"Pilsner"},{label:"Wheat beer"}] },
   { name:"Best Cocktails", mood: "food", provider:"wiki", items:[{label:"Old fashioned (cocktail)"},{label:"Margarita"},{label:"Mojito"},{label:"Negroni"},{label:"Martini (cocktail)"}] },
   { name:"Best Wine Varieties", mood: "food", provider:"wiki", items:[{label:"Cabernet Sauvignon"},{label:"Pinot noir"},{label:"Chardonnay"},{label:"Sauvignon blanc"},{label:"Merlot"}] },

@@ -12,7 +12,8 @@ const ALLOW = [
   'cdn.pixabay.com','pixabay.com',
   'images.unsplash.com',
   'images.pexels.com',
-  'assets.fanart.tv'
+  'assets.fanart.tv',
+  'live.staticflickr.com','farm66.staticflickr.com'
 ];
 
 // Limit cache size to prevent unbounded growth
