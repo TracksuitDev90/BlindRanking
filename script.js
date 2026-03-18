@@ -1241,17 +1241,38 @@
   let paintToken = 0;
   const prefetchCache = new Map();
 
+  // Text-based display mode: show item label as bold text in the card
+  // instead of fetching images. Image code is preserved for future use.
+  const USE_TEXT_MODE = true;
+
   async function resolveAndRender(item) {
     const img = $(SELECTORS.previewImg);
     const titleEl = $(SELECTORS.itemLabel);
-    if (!img || !item) return false;
+    const cardText = $('#cardText');
+    if (!item) return false;
 
     if (titleEl) titleEl.textContent = cleanLabel(item.label) || '';
     updateProgress();
 
     const myToken = ++paintToken;
+
+    // ——— Text mode: skip image fetching, show label as bold centred text ———
+    if (USE_TEXT_MODE) {
+      if (img) img.hidden = true;
+      if (cardText) {
+        cardText.textContent = cleanLabel(item.label) || '';
+        cardText.hidden = false;
+      }
+      currentResolvedURL = null;
+      if (myToken === paintToken) setBusy(false);
+      App.persist();
+      return true;
+    }
+
+    // ——— Image mode (preserved for future use) ———
     setBusy(true);
-    img.alt = cleanLabel(item.label) || '';
+    if (cardText) cardText.hidden = true;
+    if (img) { img.hidden = false; img.alt = cleanLabel(item.label) || ''; }
 
     const topic = App.currentTopic();
     const hints = { provider: topic?.provider || '', mediaType: topic?.mediaType || '' };
