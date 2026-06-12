@@ -1,0 +1,20 @@
+{
+  "name": "blindranking-build-images",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-time image resolution pipeline: resolves, validates and focal-points an image for every topic item, emitting images.manifest.json and images.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@vladmandic/face-api": "^1.7.15",
+    "sharp": "^0.32.6",
+    "smartcrop-sharp": "^2.0.8"
+  }
+}

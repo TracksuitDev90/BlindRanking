@@ -1,5 +1,5 @@
 // Simple image cache: stale-while-revalidate for faster repeat views
-const CACHE = 'br-img-v3';
+const CACHE = 'br-img-v4';
 const ALLOW = [
   'image.tmdb.org',
   'upload.wikimedia.org',
