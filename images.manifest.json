@@ -807,18 +807,29 @@
       "category": "music-track",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:24:32.808Z",
-      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/A_Song_of_Ice_and_Fire.svg?width=1000",
-      "source": "wikidata-p18",
-      "sourceId": "wikidata:Q45875",
-      "width": 1280,
-      "height": 485,
-      "contentHash": "sha256:01c281e1f6ef0aa96e23306c",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:26:33.948Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/A_Song_of_Ice_and_Fire_arms_of_House_Greyjoy_black_scroll.png",
+          "source": "commons-search:File:A Song of Ice and Fire arms of House Greyjoy black scroll.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c4/ASoIaF.jpg",
+          "source": "commons-search:File:ASoIaF.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Disfraces%2C_Game_of_Thrones%2C_Comic_Con_2024.jpg/1280px-Disfraces%2C_Game_of_Thrones%2C_Comic_Con_2024.jpg",
+          "source": "commons-search:File:Disfraces, Game of Thrones, Comic Con 2024.jpg"
+        },
+        {
+          "url": "https://live.staticflickr.com/5543/10774167984_21805f9557_b.jpg",
+          "source": "openverse"
+        }
+      ]
     },
     "a-tribe-called-quest": {
       "label": "A Tribe Called Quest",
@@ -1190,13 +1201,13 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:24:39.310Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Adidas_2022_logo.svg/1280px-Adidas_2022_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Adidas",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:26:34.332Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Adidas_2022_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q3895",
       "width": 1280,
       "height": 760,
       "contentHash": "sha256:e1f915129d44a5df0ec07cbb",
@@ -1204,8 +1215,8 @@
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Herzogenaurach_-_Adidas_-_2016.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Adidas_2022_logo.svg/1280px-Adidas_2022_logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -1813,16 +1824,15 @@
       "confidence": "auto",
       "reviewReason": null
     },
-    "alexander-mcqueen": {
+    "alexander-mcqueen@@best-fashion-designers": {
       "label": "Alexander McQueen",
       "topics": [
-        "Fashion Brands",
         "Best Fashion Designers"
       ],
       "category": "person",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:24:51.754Z",
+      "resolvedAt": "2026-06-12T07:26:36.566Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Alexander_McQueen_by_FashionWirePress.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Alexander McQueen",
@@ -1834,6 +1844,27 @@
           "source": "wikidata-p18"
         }
       ]
+    },
+    "alexander-mcqueen@@fashion-brands": {
+      "label": "Alexander McQueen",
+      "topics": [
+        "Fashion Brands"
+      ],
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:26:36.712Z",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Alexander_McQueen_by_FashionWirePress.jpg",
+      "source": "wikipedia",
+      "sourceId": "wikipedia:Alexander McQueen",
+      "width": 346,
+      "height": 511,
+      "contentHash": "sha256:9eacecd14601851c16b2cd84",
+      "focusX": 50,
+      "focusY": 50,
+      "candidates": [],
+      "confidence": "auto",
+      "reviewReason": null
     },
     "alfred-hitchcock": {
       "label": "Alfred Hitchcock",
@@ -3372,21 +3403,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:25:20.005Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Appalachian_Trail_Marker_Logo.svg/1280px-Appalachian_Trail_Marker_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Appalachian Trail",
+      "resolvedAt": "2026-06-12T07:26:50.381Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/AT_-_Franconia_Ridge.JPG?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q620648",
       "width": 1280,
-      "height": 1246,
-      "contentHash": "sha256:5932acd4d34e18e53220bf50",
-      "focusX": 39,
+      "height": 960,
+      "contentHash": "sha256:43c2c6f8e29b2e1393e10c62",
+      "focusX": 33,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/AT_-_Franconia_Ridge.JPG?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -4579,16 +4605,41 @@
       "confidence": "auto",
       "reviewReason": null
     },
-    "audemars-piguet": {
+    "audemars-piguet@@best-watch-brands": {
       "label": "Audemars Piguet",
       "topics": [
-        "Luxury Watches",
         "Best Watch Brands"
+      ],
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:26:54.525Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo_Audemars_Piguet.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q667425",
+      "width": 1280,
+      "height": 1280,
+      "contentHash": "sha256:69705e8800e4a4325e68f3cc",
+      "focusX": 50,
+      "focusY": 50,
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Place_de_la_Fusterie-03.jpg/1280px-Place_de_la_Fusterie-03.jpg",
+          "source": "wikipedia"
+        }
+      ],
+      "confidence": "auto",
+      "reviewReason": null
+    },
+    "audemars-piguet@@luxury-watches": {
+      "label": "Audemars Piguet",
+      "topics": [
+        "Luxury Watches"
       ],
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:25:47.643Z",
+      "resolvedAt": "2026-06-12T07:26:54.579Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Place_de_la_Fusterie-03.jpg/1280px-Place_de_la_Fusterie-03.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Audemars Piguet",
@@ -5202,26 +5253,21 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:26:03.708Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Balenciaga_%2854024638524%29.jpg/1280px-Balenciaga_%2854024638524%29.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Balenciaga",
-      "width": 1280,
-      "height": 720,
-      "contentHash": "sha256:6a2140e3593f129721601a1d",
-      "focusX": 50,
-      "focusY": 50,
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:07.018Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Balenciaga_Logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q1530892",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x132",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/HK_CWB_%E9%8A%85%E9%91%BC%E7%81%A3_Causeway_Bay_%E6%99%82%E4%BB%A3%E5%BB%A3%E5%A0%B4_Times_Square_mall_shop_June_2020_SS2_36.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Balenciaga_%2854024638524%29.jpg/1280px-Balenciaga_%2854024638524%29.jpg",
+          "source": "wikipedia"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "bali": {
       "label": "Bali",
@@ -5232,21 +5278,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:26:03.754Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Bali_in_Indonesia_%28special_marker%29.svg/1280px-Bali_in_Indonesia_%28special_marker%29.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Bali",
-      "width": 1280,
-      "height": 587,
-      "contentHash": "sha256:fc1a2111afc8370ce260b2ee",
-      "focusX": 49,
+      "resolvedAt": "2026-06-12T07:27:07.124Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bali_panorama.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q3125978",
+      "width": 1071,
+      "height": 723,
+      "contentHash": "sha256:1d1ddada0e8bbacacbde4cfa",
+      "focusX": 40,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bali_panorama.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -5255,23 +5296,15 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:26:03.985Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:07.306Z",
       "url": null,
       "source": null,
       "confidence": "review",
       "reviewReason": "disambiguation-page",
       "candidates": [
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Pierre_Balmain%2C_photographed_by_Carl_Van_Vechten%2C_November_9%2C_1947.jpg",
-          "source": "wikipedia-search:Pierre Balmain"
-        },
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Balmain-Darling-Street.jpg",
-          "source": "wikipedia-search:Balmain, New South Wales"
-        },
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Balmain_Court_House_Post_Office.JPG/1280px-Balmain_Court_House_Post_Office.JPG",
           "source": "commons-search:File:Balmain Court House Post Office.JPG"
@@ -5279,6 +5312,14 @@
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/2_b-iron_cove-balmain%2C_new_south_wales.jpg/1280px-2_b-iron_cove-balmain%2C_new_south_wales.jpg",
           "source": "commons-search:File:2 b-iron cove-balmain, new south wales.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Balmain-Darling-Street.jpg",
+          "source": "wikipedia-search:Balmain, New South Wales"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/Jacques_Bergerac_1950s.jpg",
+          "source": "wikipedia-search:Jacques Bergerac"
         }
       ]
     },
@@ -8062,26 +8103,21 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:27:02.995Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/BV_Munich.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Bottega Veneta",
-      "width": 904,
-      "height": 1000,
-      "contentHash": "sha256:b67f538c19a7a736d8ceb479",
-      "focusX": 50,
-      "focusY": 50,
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:23.012Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo_of_Bottega_Veneta.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q894874",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x113",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/BV_Paris.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/BV_Munich.jpg",
+          "source": "wikipedia"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "bowling-for-soup": {
       "label": "Bowling for Soup",
@@ -8546,21 +8582,16 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:27:13.483Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Logo_Breitling_2018_1884_P.png/1280px-Logo_Breitling_2018_1884_P.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Breitling SA",
+      "resolvedAt": "2026-06-12T07:27:23.874Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Breitling_MG_2683.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q665740",
       "width": 1280,
-      "height": 593,
-      "contentHash": "sha256:071dfe048578379383f6e1dc",
+      "height": 1320,
+      "contentHash": "sha256:efca2e621a559d8c1b211df2",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Breitling_MG_2683.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -9342,22 +9373,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:27:28.175Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Burberry_-_Store_%2851396234449%29.jpg/1280px-Burberry_-_Store_%2851396234449%29.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Burberry",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:36.420Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Burberry_Logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q390107",
       "width": 1280,
-      "height": 960,
-      "contentHash": "sha256:9f86fcee3dc52b19b98790ba",
+      "height": 203,
+      "contentHash": "sha256:efbbb68103b2d996d3ca89d3",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Burberry_Oslo.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Burberry_-_Store_%2851396234449%29.jpg/1280px-Burberry_-_Store_%2851396234449%29.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -9368,22 +9399,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:27:28.359Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Burger_King_2020.svg/1280px-Burger_King_2020.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Burger King",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:36.620Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Burger_King_2020.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q177054",
       "width": 1280,
       "height": 1395,
       "contentHash": "sha256:2e7f26471e6bc6c3963f86f9",
-      "focusX": 41,
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Burgerkingheadquarters.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Burger_King_2020.svg/1280px-Burger_King_2020.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -9902,10 +9933,10 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:27:40.108Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:37.483Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Calvin_Klein_2011_Shankbone.JPG/1280px-Calvin_Klein_2011_Shankbone.JPG",
       "source": "wikipedia",
       "sourceId": "wikipedia:Calvin Klein",
@@ -9914,12 +9945,7 @@
       "contentHash": "sha256:415c52bae3315bf3fd6ae7d4",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Calvin_Klein_2011_Shankbone.JPG?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -10421,21 +10447,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:27:52.046Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Cards_Against_Humanity_logo_2009.svg/1280px-Cards_Against_Humanity_logo_2009.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Cards Against Humanity",
+      "resolvedAt": "2026-06-12T07:27:50.241Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cards_Against_Humanity_(15711676205).jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q5038791",
       "width": 1280,
-      "height": 1280,
-      "contentHash": "sha256:f8cffddde324a9719c701c02",
+      "height": 961,
+      "contentHash": "sha256:eee5e316aa452165ed060b0c",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cards_Against_Humanity_(15711676205).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -10767,21 +10788,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:03.794Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Cassiopeia_IAU.svg/1280px-Cassiopeia_IAU.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Cassiopeia (constellation)",
-      "width": 1280,
-      "height": 1209,
-      "contentHash": "sha256:98bb65e923a22843f56ddce2",
+      "resolvedAt": "2026-06-12T07:27:51.685Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/CassiopeiaCC.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q10464",
+      "width": 427,
+      "height": 640,
+      "contentHash": "sha256:0461409c0058660a0dabc815",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/CassiopeiaCC.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -11016,22 +11032,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:28:08.773Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/20230417_Celine_store_at_David_Plaza.jpg/1280px-20230417_Celine_store_at_David_Plaza.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Celine (brand)",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:51.944Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Celine_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q948531",
       "width": 1280,
-      "height": 853,
-      "contentHash": "sha256:0092c78e60c8f8d123800406",
+      "height": 264,
+      "contentHash": "sha256:eb977848c5a2dedafd91f8c9",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Madrid_-_Celine_(Calle_de_Jos%C3%A9_Ortega_y_Gasset_16).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/20230417_Celine_store_at_David_Plaza.jpg/1280px-20230417_Celine_store_at_David_Plaza.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -11305,22 +11321,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:28:14.613Z",
-      "url": "https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Chanel_logo_interlocking_cs.svg/1280px-Chanel_logo_interlocking_cs.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Chanel",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:52.407Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Chanel_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q218115",
       "width": 1280,
-      "height": 820,
-      "contentHash": "sha256:3a42bcb868a2b62cc574215b",
+      "height": 214,
+      "contentHash": "sha256:6ecd212f5ded60b01d7ffec5",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/H%C3%B4tel_Duch%C3%A9_des_Tournelles.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Chanel_logo_interlocking_cs.svg/1280px-Chanel_logo_interlocking_cs.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -11827,18 +11843,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:24.568Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation VI Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:27:54.650Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mega_Tokyo_Pok%C3%A9mon_Center_1.jpg/1280px-Mega_Tokyo_Pok%C3%A9mon_Center_1.jpg",
+          "source": "commons-search:File:Mega Tokyo Pokémon Center 1.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mega_Tokyo_Pok%C3%A9mon_Center_wares_4.jpg/1280px-Mega_Tokyo_Pok%C3%A9mon_Center_wares_4.jpg",
+          "source": "commons-search:File:Mega Tokyo Pokémon Center wares 4.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Ako_Plat_Cinema_2016c.jpg/1280px-Ako_Plat_Cinema_2016c.jpg",
+          "source": "commons-search:File:Ako Plat Cinema 2016c.jpg"
+        }
+      ]
     },
     "chess": {
       "label": "Chess",
@@ -12134,22 +12161,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:28:32.930Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Chick-fil-A.jpg/1280px-Chick-fil-A.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Chick-fil-A",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:27:55.768Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Chick-fil-A_Logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q491516",
       "width": 1280,
-      "height": 1707,
-      "contentHash": "sha256:742da8d05e54aba885dc42fe",
+      "height": 579,
+      "contentHash": "sha256:0f252d52995429d8616835d9",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Chick_Fil_A_-_Cranberry_TWP%2C_PA_-_panoramio.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Chick-fil-A.jpg/1280px-Chick-fil-A.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -12215,18 +12242,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:34.612Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation II Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:27:57.520Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Pokemon_mini.png",
+          "source": "wikipedia-search:Pokémon Mini"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/53/POK%C3%89MON_TREE.jpg",
+          "source": "commons-search:File:POKÉMON TREE.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/PokemonCenterNagoya.jpg/1280px-PokemonCenterNagoya.jpg",
+          "source": "commons-search:File:PokemonCenterNagoya.jpg"
+        }
+      ]
     },
     "chilaquiles": {
       "label": "Chilaquiles",
@@ -12314,18 +12352,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:36.395Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation IV Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:27:59.278Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/PokemonCenterNagoya.jpg/1280px-PokemonCenterNagoya.jpg",
+          "source": "commons-search:File:PokemonCenterNagoya.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/POKEMON_card_battle.jpg/1280px-POKEMON_card_battle.jpg",
+          "source": "commons-search:File:POKEMON card battle.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/PokemonCenterYokohama.JPG",
+          "source": "commons-search:File:PokemonCenterYokohama.JPG"
+        }
+      ]
     },
     "chimpanzee": {
       "label": "Chimpanzee",
@@ -12493,21 +12542,16 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:39.689Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Logo_Chopard.svg/1280px-Logo_Chopard.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Chopard",
+      "resolvedAt": "2026-06-12T07:28:07.423Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Passeig_de_Gr%C3%A0cia%2C_Barcelona%2C_January_2015_(04).jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q670112",
       "width": 1280,
-      "height": 555,
-      "contentHash": "sha256:e033ba835ee637f05938e800",
+      "height": 960,
+      "contentHash": "sha256:f7553dd2dfa27c513e8a91c5",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Passeig_de_Gr%C3%A0cia%2C_Barcelona%2C_January_2015_(04).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -12949,21 +12993,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:28:48.952Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cinnamon_toastcrunch_logo.png/1280px-Cinnamon_toastcrunch_logo.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Cinnamon Toast Crunch",
+      "resolvedAt": "2026-06-12T07:28:08.740Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/A_Bowl_Of_Cinnamon_Toast_Crunch.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q3303481",
       "width": 1280,
-      "height": 893,
-      "contentHash": "sha256:b81197d3e2432f7540e3b3a5",
-      "focusX": 41,
+      "height": 960,
+      "contentHash": "sha256:ffdaaa044be2a999591b5102",
+      "focusX": 42,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/A_Bowl_Of_Cinnamon_Toast_Crunch.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -14814,21 +14853,16 @@
       "category": "activity",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:29:26.373Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Cycling_%28road%29_pictogram.svg/1280px-Cycling_%28road%29_pictogram.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Cycle sport",
+      "resolvedAt": "2026-06-12T07:28:22.948Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Petacchi_MSR_2005.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q2215841",
       "width": 1280,
-      "height": 1280,
-      "contentHash": "sha256:3d8953ef85b6ba7a5e49efde",
-      "focusX": 56,
+      "height": 853,
+      "contentHash": "sha256:9d8ac016ba1b4051af5239d8",
+      "focusX": 27,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Petacchi_MSR_2005.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -14840,18 +14874,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:29:26.436Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation II Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:28:23.010Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Otakon_2012_101_0101_%287675637998%29.jpg/1280px-Otakon_2012_101_0101_%287675637998%29.jpg",
+          "source": "commons-search:File:Otakon 2012 101 0101 (7675637998).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/At_Jewel_Changi%2C_Singapore_2023_66.jpg/1280px-At_Jewel_Changi%2C_Singapore_2023_66.jpg",
+          "source": "commons-search:File:At Jewel Changi, Singapore 2023 66.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/At_Jewel_Changi%2C_Singapore_2023_69.jpg/1280px-At_Jewel_Changi%2C_Singapore_2023_69.jpg",
+          "source": "commons-search:File:At Jewel Changi, Singapore 2023 69.jpg"
+        }
+      ]
     },
     "cypress-hill": {
       "label": "Cypress Hill",
@@ -16917,22 +16962,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:30:16.422Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Christian_Dior%2C_30_Avenue_Montaigne%2C_Paris_2016.jpg/1280px-Christian_Dior%2C_30_Avenue_Montaigne%2C_Paris_2016.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Dior",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:28:38.292Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Dior_Logo_2022.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q542767",
       "width": 1280,
-      "height": 851,
-      "contentHash": "sha256:804de9f01ba1274d149420c3",
+      "height": 358,
+      "contentHash": "sha256:89d0656b924ee2a5695cf86e",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Christian_Dior%2C_30_Avenue_Montaigne%2C_Paris_2016.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Christian_Dior%2C_30_Avenue_Montaigne%2C_Paris_2016.jpg/1280px-Christian_Dior%2C_30_Avenue_Montaigne%2C_Paris_2016.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -17090,18 +17135,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:30:20.194Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Disney%2B_2024.svg/1280px-Disney%2B_2024.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Disney+",
-      "width": 1280,
-      "height": 701,
-      "contentHash": "sha256:f9149f2a6466391dedeb6ad9",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:28:38.969Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Disney%2B_2024.svg/1280px-Disney%2B_2024.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/en/2/28/ESPN_DTC_promo_image.jpg",
+          "source": "wikipedia-search:ESPN (streaming service)"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Hulu_logo_%282018%29.svg/1280px-Hulu_logo_%282018%29.svg.png",
+          "source": "wikipedia-search:Hulu"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Image-Disney_Concert_Hall_by_Carol_Highsmith_edit.jpg/1280px-Image-Disney_Concert_Hall_by_Carol_Highsmith_edit.jpg",
+          "source": "commons-search:File:Image-Disney Concert Hall by Carol Highsmith edit.jpg"
+        }
+      ]
     },
     "disneyland": {
       "label": "Disneyland",
@@ -19677,18 +19733,29 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:31:16.071Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Fanta_2023.svg/1280px-Fanta_2023.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Fanta",
-      "width": 1280,
-      "height": 915,
-      "contentHash": "sha256:6adb83d6cc6da0b8bfeb625f",
-      "focusX": 31,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:28:53.285Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Fanta_2023.svg/1280px-Fanta_2023.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Fanta-kaka_%2802%29.jpg/1280px-Fanta-kaka_%2802%29.jpg",
+          "source": "wikipedia-search:Fanta cake"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1280px-Good_Food_Display_-_NCI_Visuals_Online.jpg",
+          "source": "wikipedia-search:Lists of foods"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Fanta_raspberry_330ml_can-front_PNr%C2%B00853.jpg/1280px-Fanta_raspberry_330ml_can-front_PNr%C2%B00853.jpg",
+          "source": "commons-search:File:Fanta raspberry 330ml can-front PNr°0853.jpg"
+        }
+      ]
     },
     "fantasia-1940-film": {
       "label": "Fantasia (1940 film)",
@@ -19933,13 +20000,13 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:31:19.488Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Fendi_logo.svg/1280px-Fendi_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Fendi",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:28:53.806Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Fendi_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q926575",
       "width": 1280,
       "height": 780,
       "contentHash": "sha256:9011335a82ddc600b29f6370",
@@ -19947,8 +20014,8 @@
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Palazzo_della_civilt%C3%A0_del_lavoro_(EUR%2C_Rome)_(5904657870).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Fendi_logo.svg/1280px-Fendi_logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -19962,18 +20029,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:31:20.183Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation VI Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:28:54.434Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Fokko_Tadama%2C_Public_Market%2C_Seattle.jpg",
+          "source": "commons-search:File:Fokko Tadama, Public Market, Seattle.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Fokko_Tadama%2C_Schelpenvissers.jpg",
+          "source": "commons-search:File:Fokko Tadama, Schelpenvissers.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Fokko_Tadama%2C_Lunching_Ladies.jpg",
+          "source": "commons-search:File:Fokko Tadama, Lunching Ladies.jpg"
+        }
+      ]
     },
     "ferenc-pusk-s": {
       "label": "Ferenc Puskás",
@@ -20042,21 +20120,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:31:22.164Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Ferrerorocher_brand_logo.png/1280px-Ferrerorocher_brand_logo.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Ferrero Rocher",
+      "resolvedAt": "2026-06-12T07:28:54.540Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2023_Ferrero_Rocher_(3).jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q526516",
       "width": 1280,
-      "height": 836,
-      "contentHash": "sha256:7347c518f55051b5e782375c",
-      "focusX": 35,
+      "height": 661,
+      "contentHash": "sha256:e3c60617f16f547f7c5c62c6",
+      "focusX": 52,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2023_Ferrero_Rocher_(3).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -20479,22 +20552,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:31:30.716Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Five_Guys%2C_Merritt_Island.JPG/1280px-Five_Guys%2C_Merritt_Island.JPG",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Five Guys",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:28:57.111Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Five_Guys_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q1131810",
       "width": 1280,
-      "height": 853,
-      "contentHash": "sha256:f4f1ea087973f9ed4fe9ba16",
-      "focusX": 73,
+      "height": 331,
+      "contentHash": "sha256:428bdd5d2524076df52017bd",
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2008-0830-UVA-FiveGuys.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Five_Guys%2C_Merritt_Island.JPG/1280px-Five_Guys%2C_Merritt_Island.JPG",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -21717,18 +21790,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:32:01.912Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation VI Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:09.599Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Mega_Tokyo_Pok%C3%A9mon_Center_wares_3.jpg/1280px-Mega_Tokyo_Pok%C3%A9mon_Center_wares_3.jpg",
+          "source": "commons-search:File:Mega Tokyo Pokémon Center wares 3.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/%E3%81%8A%E8%AA%95%E7%94%9F%E6%97%A5%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9_%E5%8F%97%E4%BB%98_2016_Pokemon_Store_%2828071711464%29.jpg/1280px-%E3%81%8A%E8%AA%95%E7%94%9F%E6%97%A5%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9_%E5%8F%97%E4%BB%98_2016_Pokemon_Store_%2828071711464%29.jpg",
+          "source": "commons-search:File:お誕生日サービス 受付 2016 Pokemon Store (28071711464).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Fanime_2014_161_%2814291136212%29.jpg/1280px-Fanime_2014_161_%2814291136212%29.jpg",
+          "source": "commons-search:File:Fanime 2014 161 (14291136212).jpg"
+        }
+      ]
     },
     "froot-loops": {
       "label": "Froot Loops",
@@ -21764,21 +21848,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:32:02.810Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Frostedflakes_brand_logo.png/1280px-Frostedflakes_brand_logo.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Frosted Flakes",
+      "resolvedAt": "2026-06-12T07:29:09.706Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2020-05-03_09_27_12_A_sample_of_Kellogg's_Frosted_Flakes_cereal_in_the_Franklin_Farm_section_of_Oak_Hill%2C_Fairfax_County%2C_Virginia.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q2625790",
       "width": 1280,
-      "height": 840,
-      "contentHash": "sha256:531c6b8afc5b797961739114",
-      "focusX": 74,
+      "height": 960,
+      "contentHash": "sha256:c8b95cb08f8a3bffdd93a7b0",
+      "focusX": 35,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2020-05-03_09_27_12_A_sample_of_Kellogg's_Frosted_Flakes_cereal_in_the_Franklin_Farm_section_of_Oak_Hill%2C_Fairfax_County%2C_Virginia.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -21842,23 +21921,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:32:03.576Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/FTL_Faster_Than_Light_Logo.svg/1280px-FTL_Faster_Than_Light_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:FTL: Faster Than Light",
-      "width": 1280,
-      "height": 418,
-      "contentHash": "sha256:260c816ac91b5dba64b720fa",
-      "focusX": 50,
-      "focusY": 50,
+      "resolvedAt": "2026-06-12T07:29:10.277Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/FTL_Faster_Than_Light_Logo.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/FTL_Faster_Than_Light_Logo.svg/1280px-FTL_Faster_Than_Light_Logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/70/Wormhole_travel_as_envisioned_by_Les_Bossinas_for_NASA.jpg",
+          "source": "commons-search:File:Wormhole travel as envisioned by Les Bossinas for NASA.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Subset_Games_at_IGF_2013_GDC.jpg/1280px-Subset_Games_at_IGF_2013_GDC.jpg",
+          "source": "commons-search:File:Subset Games at IGF 2013 GDC.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Subset_games_IGF_2013_GDC_cropped.jpg",
+          "source": "commons-search:File:Subset games IGF 2013 GDC cropped.jpg"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "fujifilm": {
       "label": "Fujifilm",
@@ -23014,21 +23099,16 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:32:27.944Z",
-      "url": "https://upload.wikimedia.org/wikipedia/en/thumb/7/77/Girard-Perregaux_Logo.svg/1280px-Girard-Perregaux_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Girard-Perregaux",
+      "resolvedAt": "2026-06-12T07:29:13.462Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ulysse_Nardin--Girard-Perregaux-Produktionsgeb%C3%A4ude_in_La_Chaux-de-Fonds.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q676416",
       "width": 1280,
-      "height": 432,
-      "contentHash": "sha256:ae26fc1115c636bf998f0373",
+      "height": 960,
+      "contentHash": "sha256:37c2ecd1531f9d73ad76f8db",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ulysse_Nardin--Girard-Perregaux-Produktionsgeb%C3%A4ude_in_La_Chaux-de-Fonds.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -23090,26 +23170,21 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:32:29.164Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Givenchy_%2854024750885%29.jpg/1280px-Givenchy_%2854024750885%29.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Givenchy",
-      "width": 1280,
-      "height": 720,
-      "contentHash": "sha256:208b5e7b2bff61c39b386751",
-      "focusX": 50,
-      "focusY": 50,
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:29:13.597Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Givenchy_-_wordmark_(France%2C_2003).svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q759210",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x125",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/HK_CWB_%E9%8A%85%E9%91%BC%E7%81%A3_Causeway_Bay_%E6%99%82%E4%BB%A3%E5%BB%A3%E5%A0%B4_Times_Square_mall_shop_Givenchy_June_2020_SS2_09.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Givenchy_%2854024750885%29.jpg/1280px-Givenchy_%2854024750885%29.jpg",
+          "source": "wikipedia"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "glacier-national-park": {
       "label": "Glacier National Park",
@@ -23987,18 +24062,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:32:50.405Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Grand_Theft_Auto_logo_series.svg/1280px-Grand_Theft_Auto_logo_series.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Grand Theft Auto",
-      "width": 1280,
-      "height": 1031,
-      "contentHash": "sha256:63685e7e4ec0be5ec1a01a69",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:16.359Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Grand_Theft_Auto_logo_series.svg/1280px-Grand_Theft_Auto_logo_series.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Grand_Theft_Auto_Vice_City_Stories_%28VCS%29_logo.png",
+          "source": "commons-search:File:Grand Theft Auto Vice City Stories (VCS) logo.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Grand_Theft_Auto%2C_NY_Chinatown.jpg/1280px-Grand_Theft_Auto%2C_NY_Chinatown.jpg",
+          "source": "commons-search:File:Grand Theft Auto, NY Chinatown.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Grand-Theft-Auto.png",
+          "source": "commons-search:File:Grand-Theft-Auto.png"
+        }
+      ]
     },
     "grand-theft-auto-v": {
       "label": "Grand Theft Auto V",
@@ -24566,18 +24652,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:08.883Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation VIII Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:28.936Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/DAI06009_%2849137888056%29.jpg/1280px-DAI06009_%2849137888056%29.jpg",
+          "source": "commons-search:File:DAI06009 (49137888056).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/DAI06015_%2849137888381%29.jpg/1280px-DAI06015_%2849137888381%29.jpg",
+          "source": "commons-search:File:DAI06015 (49137888381).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/DAI06019_%2849138085157%29.jpg/1280px-DAI06019_%2849138085157%29.jpg",
+          "source": "commons-search:File:DAI06019 (49138085157).jpg"
+        }
+      ]
     },
     "groot": {
       "label": "Groot",
@@ -24763,22 +24860,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:33:12.260Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gucci_NYC_Flagship_%2848064046878%29.jpg/1280px-Gucci_NYC_Flagship_%2848064046878%29.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Gucci",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:29:29.384Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Gucci_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q178516",
       "width": 1280,
-      "height": 960,
-      "contentHash": "sha256:ca899ec4cb3f3995a7430f07",
+      "height": 1316,
+      "contentHash": "sha256:395bf9e315bbf4536f6e6383",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Gucci_NYC_Flagship_(48064046878).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gucci_NYC_Flagship_%2848064046878%29.jpg/1280px-Gucci_NYC_Flagship_%2848064046878%29.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -25405,21 +25502,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:23.689Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Harry_Potter_logo.svg/1280px-Harry_Potter_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Harry Potter",
+      "resolvedAt": "2026-06-12T07:29:30.014Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Harry_Potter_7_boxes.JPG?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8337",
       "width": 1280,
-      "height": 464,
-      "contentHash": "sha256:bdc6d72b807f03d69c83ba40",
+      "height": 960,
+      "contentHash": "sha256:39a5185f9276d4de68cf651f",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Harry_Potter_7_boxes.JPG?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -25531,18 +25623,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:27.867Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:HBO Max",
-      "width": 1280,
-      "height": 924,
-      "contentHash": "sha256:c4826976ae79d45857eb8a62",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:31.847Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Max_Original_2023.svg/1280px-Max_Original_2023.svg.png",
+          "source": "wikipedia-search:List of HBO Max original films"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/HBO_Max_locations.png",
+          "source": "commons-search:File:HBO Max locations.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/20240612_224444_Tauron_Arena_Krak%C3%B3w_and_HBO_Max_advertisement.jpg/1280px-20240612_224444_Tauron_Arena_Krak%C3%B3w_and_HBO_Max_advertisement.jpg",
+          "source": "commons-search:File:20240612 224444 Tauron Arena Kraków and HBO Max advertisement.jpg"
+        }
+      ]
     },
     "hearthstone": {
       "label": "Hearthstone",
@@ -25748,22 +25851,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:33:32.359Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Rue_du_Faubourg-Saint-Honor%C3%A9%2C_Paris_May_2006.jpg/1280px-Rue_du_Faubourg-Saint-Honor%C3%A9%2C_Paris_May_2006.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Hermès",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:29:32.737Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Hermes_wordmark.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q843887",
       "width": 1280,
-      "height": 960,
-      "contentHash": "sha256:898cd56ece8bef74a4e942ee",
+      "height": 226,
+      "contentHash": "sha256:b1aeb3e4fd174a63dbd2e3d9",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Herm%C3%A8s_Store%2C_Avenue_George_V%2C_Paris_8e_003.JPG?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Rue_du_Faubourg-Saint-Honor%C3%A9%2C_Paris_May_2006.jpg/1280px-Rue_du_Faubourg-Saint-Honor%C3%A9%2C_Paris_May_2006.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -26185,21 +26288,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:38.166Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Flag_of_Hong_Kong.svg/1280px-Flag_of_Hong_Kong.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Hong Kong",
+      "resolvedAt": "2026-06-12T07:29:33.685Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Hong_Kong_from_Victoria_Peak1.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8646",
       "width": 1280,
-      "height": 854,
-      "contentHash": "sha256:0b903f67e2673b3bec0b9f6a",
-      "focusX": 50,
+      "height": 613,
+      "contentHash": "sha256:f052e373deb546dc9d8f9090",
+      "focusX": 42,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Hong_Kong_from_Victoria_Peak1.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -26770,21 +26868,16 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:55.754Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Hublot-logo.svg/1280px-Hublot-logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Hublot",
+      "resolvedAt": "2026-06-12T07:29:46.178Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Hublot_Manufacture_Nyon_Passerelle.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q691958",
       "width": 1280,
-      "height": 573,
-      "contentHash": "sha256:7f2f55a5635eeaac63941332",
+      "height": 768,
+      "contentHash": "sha256:59bf4b73b10453f8fc489327",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Hublot_Manufacture_Nyon_Passerelle.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -26818,18 +26911,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:33:56.741Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Hulu_logo_%282018%29.svg/1280px-Hulu_logo_%282018%29.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Hulu",
-      "width": 1280,
-      "height": 422,
-      "contentHash": "sha256:f6c8f7bab625ec27b15f019a",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:46.244Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Hulu_logo_%282018%29.svg/1280px-Hulu_logo_%282018%29.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Rebecca_Rittenhouse_2014.jpg",
+          "source": "wikipedia-search:Rebecca Rittenhouse"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Hulu_Japan_green_logo.svg/1280px-Hulu_Japan_green_logo.svg.png",
+          "source": "wikipedia-search:Hulu Japan"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Kampung_Hulu_Mosque.JPG/1280px-Kampung_Hulu_Mosque.JPG",
+          "source": "commons-search:File:Kampung Hulu Mosque.JPG"
+        }
+      ]
     },
     "hunter-hunter": {
       "label": "Hunter × Hunter",
@@ -27067,21 +27171,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:34:00.993Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Iceland.svg/1280px-Flag_of_Iceland.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Iceland",
+      "resolvedAt": "2026-06-12T07:29:46.761Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cloud-free_Iceland_ESA22181280_(cropped).jpeg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q189",
       "width": 1280,
-      "height": 922,
-      "contentHash": "sha256:bfede2ffb18b9f47c7643c0d",
-      "focusX": 40,
+      "height": 852,
+      "contentHash": "sha256:6d15bccb3a412109119dc6fe",
+      "focusX": 44,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cloud-free_Iceland_ESA22181280_(cropped).jpeg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -27222,22 +27321,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:34:04.412Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/InNOut_2021_logo.svg/1280px-InNOut_2021_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:In-N-Out Burger",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:29:47.543Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/InNOut_2021_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q1205312",
       "width": 1280,
       "height": 741,
       "contentHash": "sha256:8a70ebe5fa3ff70161594404",
-      "focusX": 72,
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UC_Irvine_University_Tower.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/InNOut_2021_logo.svg/1280px-InNOut_2021_logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -27967,23 +28066,29 @@
       "category": "device",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:34:18.258Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/IPhone_X_vector.svg/1280px-IPhone_X_vector.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:IPhone X",
-      "width": 1280,
-      "height": 2568,
-      "contentHash": "sha256:dd81229512d628da28e51c49",
-      "focusX": 50,
-      "focusY": 50,
+      "resolvedAt": "2026-06-12T07:29:50.033Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/IPhone_X_vector.svg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/IPhone_X_vector.svg/1280px-IPhone_X_vector.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/IPhones_6%2C_7%2C_8%2C_SE2_black_-_back_camera_view.jpg/1280px-IPhones_6%2C_7%2C_8%2C_SE2_black_-_back_camera_view.jpg",
+          "source": "wikipedia-search:List of iPhone models"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/IPhone_16_Vector.svg/1280px-IPhone_16_Vector.svg.png",
+          "source": "wikipedia-search:IPhone 16"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/IPhone_X_with_packaging_and_accessories.jpg/1280px-IPhone_X_with_packaging_and_accessories.jpg",
+          "source": "commons-search:File:IPhone X with packaging and accessories.jpg"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "irish-coffee": {
       "label": "Irish coffee",
@@ -28309,18 +28414,29 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:34:24.934Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/International_Watch_Company_logo.svg/1280px-International_Watch_Company_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:IWC Schaffhausen",
-      "width": 1280,
-      "height": 573,
-      "contentHash": "sha256:c2fad3a5467a5ccae2291c5e",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:29:50.659Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/International_Watch_Company_logo.svg/1280px-International_Watch_Company_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/Gerald_Genta.jpg",
+          "source": "wikipedia-search:Gérald Genta"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/1_schaffhausen_2012.jpg/1280px-1_schaffhausen_2012.jpg",
+          "source": "wikipedia-search:Schaffhausen"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/ETH-BIB-Schaffhausen%2C_Uhrenfabrik_IWC_%28International_Watch_Company%29-Inlandfl%C3%BCge-LBS_MH03-1245.tif/lossy-page1-1280px-ETH-BIB-Schaffhausen%2C_Uhrenfabrik_IWC_%28International_Watch_Company%29-Inlandfl%C3%BCge-LBS_MH03-1245.tif.jpg",
+          "source": "commons-search:File:ETH-BIB-Schaffhausen, Uhrenfabrik IWC (International Watch Company)-Inlandflüge-LBS MH03-1245.tif"
+        }
+      ]
     },
     "j-cole": {
       "label": "J. Cole",
@@ -31226,23 +31342,13 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:36:01.048Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Logo_of_the_KitKat.svg/1280px-Logo_of_the_KitKat.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:KitKat",
-      "width": 1280,
-      "height": 840,
-      "contentHash": "sha256:4534b1ab661f11f94b39de11",
-      "focusX": 33,
-      "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Kit-Kat-Split.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:30:18.365Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Kit-Kat-Split.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q367251",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x277",
+      "candidates": []
     },
     "kiwifruit": {
       "label": "Kiwifruit",
@@ -32165,13 +32271,13 @@
       "topics": [
         "Camera Brands"
       ],
-      "category": "device",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:36:21.306Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Leica_Camera.svg/1280px-Leica_Camera.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Leica Camera",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:30:19.376Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Leica_Camera.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q161833",
       "width": 1280,
       "height": 1280,
       "contentHash": "sha256:5fb0b4203d7d590e5601016f",
@@ -32179,8 +32285,8 @@
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Neubau_Leica_Camera_Fassade.JPG?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Leica_Camera.svg/1280px-Leica_Camera.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -32252,21 +32358,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:36:22.282Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Leo_IAU.svg/1280px-Leo_IAU.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Leo (constellation)",
-      "width": 1280,
-      "height": 1573,
-      "contentHash": "sha256:78d766a298179276cd7a709e",
+      "resolvedAt": "2026-06-12T07:30:19.378Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/LeoCC.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8853",
+      "width": 446,
+      "height": 640,
+      "contentHash": "sha256:43faa3fde6a22ebf4e815749",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/LeoCC.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -33009,23 +33110,15 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:37:11.648Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:30:31.504Z",
       "url": null,
       "source": null,
       "confidence": "review",
       "reviewReason": "disambiguation-page",
       "candidates": [
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Calle_de_Serrano_con_Goya_by_Lou_1.jpg/1280px-Calle_de_Serrano_con_Goya_by_Lou_1.jpg",
-          "source": "wikipedia-search:Loewe (fashion brand)"
-        },
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Frederick_Loewe_%281962%29.jpg",
-          "source": "wikipedia-search:Frederick Loewe"
-        },
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/5/52/Carl_Loewe.jpg",
           "source": "commons-search:File:Carl Loewe.jpg"
@@ -33033,6 +33126,14 @@
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Loewe_frontal.JPG/1280px-Loewe_frontal.JPG",
           "source": "commons-search:File:Loewe frontal.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/DWM_logo.svg/1280px-DWM_logo.svg.png",
+          "source": "wikipedia-search:Deutsche Waffen- und Munitionsfabriken"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Calle_de_Serrano_con_Goya_by_Lou_1.jpg/1280px-Calle_de_Serrano_con_Goya_by_Lou_1.jpg",
+          "source": "wikipedia-search:Loewe (fashion brand)"
         }
       ]
     },
@@ -33449,22 +33550,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:37:21.695Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Boutique_Louis_Vuitton_au_101_avenue_des_Champs-Elys%C3%A9es_%C3%A0_Paris.JPG/1280px-Boutique_Louis_Vuitton_au_101_avenue_des_Champs-Elys%C3%A9es_%C3%A0_Paris.JPG",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Louis Vuitton",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:30:33.520Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Louis_Vuitton_logo_and_wordmark.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q191485",
       "width": 1280,
-      "height": 1707,
-      "contentHash": "sha256:0f16a7b4486cdb092d6c03d4",
+      "height": 1561,
+      "contentHash": "sha256:a80cf8c06b1a8c6f936666fe",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Louis_Vuitton_flagship_store_at_Avenue_des_Champs-%C3%89lys%C3%A9es_(22288053650).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Boutique_Louis_Vuitton_au_101_avenue_des_Champs-Elys%C3%A9es_%C3%A0_Paris.JPG/1280px-Boutique_Louis_Vuitton_au_101_avenue_des_Champs-Elys%C3%A9es_%C3%A0_Paris.JPG",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -34315,21 +34416,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:38:08.779Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Magic_the_Gathering_2017.svg/1280px-Magic_the_Gathering_2017.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Magic: The Gathering",
-      "width": 1280,
-      "height": 459,
-      "contentHash": "sha256:92bcd99c056bf6c63dee33ad",
+      "resolvedAt": "2026-06-12T07:30:34.499Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Magicgathering1.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q207302",
+      "width": 1241,
+      "height": 850,
+      "contentHash": "sha256:f4f6bda869f43b6bd8b5007b",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Magicgathering1.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -34512,18 +34608,29 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:38:12.982Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Flag_of_Maldives.svg/1280px-Flag_of_Maldives.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Maldives",
-      "width": 1280,
-      "height": 854,
-      "contentHash": "sha256:cbe78d4092a3ce5a5ce7695e",
-      "focusX": 54,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:30:34.648Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Flag_of_Maldives.svg/1280px-Flag_of_Maldives.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Mal%C3%A9.jpg/1280px-Mal%C3%A9.jpg",
+          "source": "wikipedia-search:Malé"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Prime_Minister_Ibrahim_Nasir_signs_independence_papers.jpg",
+          "source": "wikipedia-search:Independence of the Maldives"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Male-total.jpg/1280px-Male-total.jpg",
+          "source": "commons-search:File:Male-total.jpg"
+        }
+      ]
     },
     "malt-drink": {
       "label": "Malt (drink)",
@@ -34681,23 +34788,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:38:17.520Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Guanhua_swapped.svg/1280px-Guanhua_swapped.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Mandarin Chinese",
-      "width": 1280,
-      "height": 1152,
-      "contentHash": "sha256:8f6af54a8cf679bfa0fab7a5",
-      "focusX": 50,
-      "focusY": 50,
+      "resolvedAt": "2026-06-12T07:30:36.666Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Guanhua_swapped.svg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Guanhua_swapped.svg/1280px-Guanhua_swapped.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Mandarin_sphere.svg/1280px-Mandarin_sphere.svg.png",
+          "source": "wikipedia-search:Standard Chinese"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Taiwanese_Mandarin_Usage_Map.svg/1280px-Taiwanese_Mandarin_Usage_Map.svg.png",
+          "source": "wikipedia-search:Taiwanese Mandarin"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Mandarin_Oranges_%28Citrus_Reticulata%29.jpg/1280px-Mandarin_Oranges_%28Citrus_Reticulata%29.jpg",
+          "source": "commons-search:File:Mandarin Oranges (Citrus Reticulata).jpg"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "mandms": {
       "label": "M&M's",
@@ -34809,16 +34922,15 @@
         }
       ]
     },
-    "marc-jacobs": {
+    "marc-jacobs@@best-fashion-designers": {
       "label": "Marc Jacobs",
       "topics": [
-        "Fashion Brands",
         "Best Fashion Designers"
       ],
       "category": "person",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:38:19.762Z",
+      "resolvedAt": "2026-06-12T07:30:36.977Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Marc_Jacobs-3325_%28cropped%29.jpg/1280px-Marc_Jacobs-3325_%28cropped%29.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Marc Jacobs",
@@ -34833,6 +34945,27 @@
           "source": "wikidata-p18"
         }
       ],
+      "confidence": "auto",
+      "reviewReason": null
+    },
+    "marc-jacobs@@fashion-brands": {
+      "label": "Marc Jacobs",
+      "topics": [
+        "Fashion Brands"
+      ],
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:30:37.180Z",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Marc_Jacobs-3325_%28cropped%29.jpg/1280px-Marc_Jacobs-3325_%28cropped%29.jpg",
+      "source": "wikipedia",
+      "sourceId": "wikipedia:Marc Jacobs",
+      "width": 1280,
+      "height": 1708,
+      "contentHash": "sha256:cee18d38c50d5b60ff9e79d8",
+      "focusX": 50,
+      "focusY": 50,
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -35921,22 +36054,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:39:16.122Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/1280px-McDonald%27s_Golden_Arches.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:McDonald's",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:30:50.598Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/McDonald's_with_slogan_2020.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q38076",
       "width": 1280,
-      "height": 1120,
-      "contentHash": "sha256:4d5213037efa031c1e65c53f",
-      "focusX": 66,
+      "height": 1778,
+      "contentHash": "sha256:f821d919a55a3b44c49ad71a",
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/New-McDonald-HU-lg_(43261171540).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/1280px-McDonald%27s_Golden_Arches.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -38615,21 +38748,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:41:16.031Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Mountain_Dew_2025_logo.svg/1280px-Mountain_Dew_2025_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Mountain Dew",
+      "resolvedAt": "2026-06-12T07:31:17.105Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain_Dew_Flasche_(cropped).jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q896",
       "width": 1280,
-      "height": 1002,
-      "contentHash": "sha256:9bef3c4dfc14f00b108d6e31",
-      "focusX": 68,
-      "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain_Dew_Flasche_(cropped).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "height": 1921,
+      "contentHash": "sha256:e2f57f936ec85cc0ac857cc7",
+      "focusX": 50,
+      "focusY": 55,
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -38816,18 +38944,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:41:18.618Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation III Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:31:17.591Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/4chan_logo.svg/1280px-4chan_logo.svg.png",
+          "source": "wikipedia-search:4chan"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/1280px-Axolotl_ganz.jpg",
+          "source": "wikipedia-search:Axolotl"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/53/POK%C3%89MON_TREE.jpg",
+          "source": "commons-search:File:POKÉMON TREE.jpg"
+        }
+      ]
     },
     "muffuletta": {
       "label": "Muffuletta",
@@ -40796,22 +40935,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:43:03.045Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nike_Campus%2C_Beaverton_-_DPLA_-_ffa63f1bbaf5cd21aeada3d3978db2b0.jpg/1280px-Nike_Campus%2C_Beaverton_-_DPLA_-_ffa63f1bbaf5cd21aeada3d3978db2b0.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Nike, Inc.",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:31:32.476Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo_NIKE.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q483915",
       "width": 1280,
-      "height": 854,
-      "contentHash": "sha256:1411d4b94c4ea2df43acb92d",
+      "height": 457,
+      "contentHash": "sha256:0b1fa98a31d53f301d55e7f7",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Nikeworldheadquarters.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nike_Campus%2C_Beaverton_-_DPLA_-_ffa63f1bbaf5cd21aeada3d3978db2b0.jpg/1280px-Nike_Campus%2C_Beaverton_-_DPLA_-_ffa63f1bbaf5cd21aeada3d3978db2b0.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -41561,10 +41700,10 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:43:18.684Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:31:33.795Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Color_icon_white.svg/1280px-Color_icon_white.svg.png",
       "source": "wikipedia",
       "sourceId": "wikipedia:Shades of white",
@@ -41735,16 +41874,47 @@
         }
       ]
     },
-    "omega-watchmaker": {
+    "omega-watchmaker@@best-watch-brands": {
       "label": "Omega (watchmaker)",
       "topics": [
-        "Luxury Watches",
         "Best Watch Brands"
+      ],
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:31:34.826Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-wikipedia-page",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Omega_%28egy%C3%BCttes%29.jpg/1280px-Omega_%28egy%C3%BCttes%29.jpg",
+          "source": "commons-search:File:Omega (együttes).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/93/%CE%A9_%284139613655%29.jpg",
+          "source": "commons-search:File:Ω (4139613655).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Omega_Logo.svg/1280px-Omega_Logo.svg.png",
+          "source": "wikipedia-search:Omega SA"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Omega_Engineering_Logo.png",
+          "source": "wikipedia-search:Omega Engineering"
+        }
+      ]
+    },
+    "omega-watchmaker@@luxury-watches": {
+      "label": "Omega (watchmaker)",
+      "topics": [
+        "Luxury Watches"
       ],
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:43:22.940Z",
+      "resolvedAt": "2026-06-12T07:31:34.979Z",
       "url": null,
       "source": null,
       "confidence": "review",
@@ -41759,8 +41929,8 @@
           "source": "wikipedia-search:Watchmaker"
         },
         {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Swatch-Bienne-4.jpg/1280px-Swatch-Bienne-4.jpg",
-          "source": "wikipedia-search:Swatch"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Place_de_la_Fusterie-03.jpg/1280px-Place_de_la_Fusterie-03.jpg",
+          "source": "wikipedia-search:Audemars Piguet"
         },
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Omega_%28egy%C3%BCttes%29.jpg/1280px-Omega_%28egy%C3%BCttes%29.jpg",
@@ -42304,21 +42474,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:44:04.678Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Orion_IAU.svg/1280px-Orion_IAU.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Orion (constellation)",
-      "width": 1280,
-      "height": 1588,
-      "contentHash": "sha256:12fec4c31d0d97dc8aa68d6d",
+      "resolvedAt": "2026-06-12T07:31:46.892Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/OrionCC.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8860",
+      "width": 451,
+      "height": 640,
+      "contentHash": "sha256:46296a0ad35167e3c3f31e24",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/OrionCC.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -42434,18 +42599,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:44:07.721Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation V Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:31:47.046Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/FanimeCon_2012_054_%287293461318%29.jpg/1280px-FanimeCon_2012_054_%287293461318%29.jpg",
+          "source": "commons-search:File:FanimeCon 2012 054 (7293461318).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Oshawott_cosplayer_%2832113383696%29.jpg/1280px-Oshawott_cosplayer_%2832113383696%29.jpg",
+          "source": "commons-search:File:Oshawott cosplayer (32113383696).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/35/Bak-Anime_2012_%286962463138%29.jpg",
+          "source": "commons-search:File:Bak-Anime 2012 (6962463138).jpg"
+        }
+      ]
     },
     "osso-buco": {
       "label": "Osso buco",
@@ -43457,16 +43633,41 @@
       "confidence": "auto",
       "reviewReason": null
     },
-    "patek-philippe-sa": {
+    "patek-philippe-sa@@best-watch-brands": {
       "label": "Patek Philippe SA",
       "topics": [
-        "Luxury Watches",
         "Best Watch Brands"
+      ],
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:31:49.287Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Patek_Philippe_%26_Co._sign_on_Gran_Via_in_Madrid%2C_photographed_in_black_and_white.JPG?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q659096",
+      "width": 1280,
+      "height": 960,
+      "contentHash": "sha256:d29a09823162a1920bb5a047",
+      "focusX": 50,
+      "focusY": 50,
+      "candidates": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/HK_%E5%B0%96%E6%B2%99%E5%92%80%E6%9D%B1_TST_East_%E9%BA%BC%E5%9C%B0%E9%81%93_69_Mody_Road_Royal_Garden_Hotel_shop_night_November_2022_Px3.jpg?width=1000",
+          "source": "wikidata-p18"
+        }
+      ],
+      "confidence": "auto",
+      "reviewReason": null
+    },
+    "patek-philippe-sa@@luxury-watches": {
+      "label": "Patek Philippe SA",
+      "topics": [
+        "Luxury Watches"
       ],
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:44:26.225Z",
+      "resolvedAt": "2026-06-12T07:31:49.337Z",
       "url": "https://commons.wikimedia.org/wiki/Special:FilePath/HK_%E5%B0%96%E6%B2%99%E5%92%80%E6%9D%B1_TST_East_%E9%BA%BC%E5%9C%B0%E9%81%93_69_Mody_Road_Royal_Garden_Hotel_shop_night_November_2022_Px3.jpg?width=1000",
       "source": "wikidata-p18",
       "sourceId": "wikidata:Q659096",
@@ -43918,18 +44119,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:45:08.614Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Penicillin_core.svg/1280px-Penicillin_core.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Penicillin",
-      "width": 1280,
-      "height": 855,
-      "contentHash": "sha256:722f3e31783bffec69968d66",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:32:00.907Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Penicillin_core.svg/1280px-Penicillin_core.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Glass_phial_of_British_Standard_penicillin%2C_London%2C_England%2C_Wellcome_L0059573.jpg/1280px-Glass_phial_of_British_Standard_penicillin%2C_London%2C_England%2C_Wellcome_L0059573.jpg",
+          "source": "wikipedia-search:History of penicillin"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Sample_of_penicillin_mould_presented_by_Alexander_Fleming_to_Douglas_Macleod%2C_1935_%289672239344%29.jpg/1280px-Sample_of_penicillin_mould_presented_by_Alexander_Fleming_to_Douglas_Macleod%2C_1935_%289672239344%29.jpg",
+          "source": "wikipedia-search:Discovery of penicillin"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Penicillin_cures_gonorrhea.jpg",
+          "source": "commons-search:File:Penicillin cures gonorrhea.jpg"
+        }
+      ]
     },
     "penne": {
       "label": "Penne",
@@ -44091,21 +44303,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:45:10.684Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pepsi_2023.svg/1280px-Pepsi_2023.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Pepsi",
-      "width": 1280,
-      "height": 1280,
-      "contentHash": "sha256:1e093c2b3bc4b9fa2b6d228c",
-      "focusX": 38,
+      "resolvedAt": "2026-06-12T07:32:01.209Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pepsi_Blue.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q47719",
+      "width": 1175,
+      "height": 880,
+      "contentHash": "sha256:0e64aa37efbf2ab494388def",
+      "focusX": 54,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pepsi_Blue.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -44909,18 +45116,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:46:03.263Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation IV Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:32:03.971Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Anime_California_2015_Sunday_Piplup_2.jpg/1280px-Anime_California_2015_Sunday_Piplup_2.jpg",
+          "source": "commons-search:File:Anime California 2015 Sunday Piplup 2.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Fanime_2016-_Piplup.jpg/1280px-Fanime_2016-_Piplup.jpg",
+          "source": "commons-search:File:Fanime 2016- Piplup.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Fanime_2016-_Piplup_-_25060801467.jpg/1280px-Fanime_2016-_Piplup_-_25060801467.jpg",
+          "source": "commons-search:File:Fanime 2016- Piplup - 25060801467.jpg"
+        }
+      ]
     },
     "pirates-of-the-caribbean-the-curse-of-the-black-pearl": {
       "label": "Pirates of the Caribbean: The Curse of the Black Pearl",
@@ -45315,18 +45533,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:46:11.528Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:32:06.282Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/76/Pokemon_Center_Singapore.jpg",
+          "source": "commons-search:File:Pokemon Center Singapore.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/41/Pok%C3%A9mon_Nuzlocke_Diagram.png",
+          "source": "commons-search:File:Pokémon Nuzlocke Diagram.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Pok%C3%A9mon_sealed_collection.jpg",
+          "source": "commons-search:File:Pokémon sealed collection.jpg"
+        }
+      ]
     },
     "pok-mon-scarlet-and-violet": {
       "label": "Pokémon Scarlet and Violet",
@@ -45581,24 +45810,19 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:46:17.515Z",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:16.174Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Popeyes_Louisiana_Kitchen_%2851195358373%29.jpg/1280px-Popeyes_Louisiana_Kitchen_%2851195358373%29.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Popeyes",
       "width": 1280,
       "height": 960,
       "contentHash": "sha256:22349fa54e13bc7e78ec76c1",
-      "focusX": 52,
+      "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Popeyes_Louisiana_Kitchen_(51195358373).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -45934,26 +46158,21 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:46:25.768Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Prada_milano.JPG/1280px-Prada_milano.JPG",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Prada",
-      "width": 1280,
-      "height": 960,
-      "contentHash": "sha256:da0f6e57a5d4343bef073652",
-      "focusX": 50,
-      "focusY": 50,
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:17.020Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Prada-Logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q193136",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x199",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Prada_milano.JPG?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Prada_milano.JPG/1280px-Prada_milano.JPG",
+          "source": "wikipedia"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "prado-museum": {
       "label": "Prado Museum",
@@ -46790,10 +47009,10 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:47:14.391Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:18.515Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/d/da/Ralph_Lauren_2013.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Ralph Lauren",
@@ -46802,12 +47021,7 @@
       "contentHash": "sha256:702846fd9efd269a949da5bd",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ralph_Lauren_2013.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -47508,21 +47722,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:48:02.645Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Reese%27s_logo.svg/1280px-Reese%27s_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Reese's Peanut Butter Cups",
+      "resolvedAt": "2026-06-12T07:32:20.987Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Reeses-PB-Cups-Size-Trio.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q2136612",
       "width": 1280,
-      "height": 461,
-      "contentHash": "sha256:a45cc75dd45a28d49350c331",
-      "focusX": 25,
+      "height": 418,
+      "contentHash": "sha256:973f9b4f221bc86658daee3b",
+      "focusX": 56,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Reeses-PB-Cups-Size-Trio.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -47840,21 +48049,16 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:48:10.752Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Rice_Krispies_logo.svg/1280px-Rice_Krispies_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Rice Krispies",
+      "resolvedAt": "2026-06-12T07:32:30.229Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2020-05-03_09_09_37_A_sample_of_Kellogg's_Rice_Krispies_cereal_in_the_Franklin_Farm_section_of_Oak_Hill%2C_Fairfax_County%2C_Virginia.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q1763921",
       "width": 1280,
-      "height": 880,
-      "contentHash": "sha256:275ce5beb808b5e3f3c860bc",
-      "focusX": 47,
+      "height": 960,
+      "contentHash": "sha256:616d9f691585b1a407c6102f",
+      "focusX": 63,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2020-05-03_09_09_37_A_sample_of_Kellogg's_Rice_Krispies_cereal_in_the_Franklin_Farm_section_of_Oak_Hill%2C_Fairfax_County%2C_Virginia.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -48493,19 +48697,18 @@
       "confidence": "auto",
       "reviewReason": null
     },
-    "rolex": {
+    "rolex@@best-watch-brands": {
       "label": "Rolex",
       "topics": [
-        "Luxury Watches",
         "Best Watch Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:48:24.935Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Logo_da_Rolex.png/1280px-Logo_da_Rolex.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Rolex",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:30.927Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo_da_Rolex.png?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q62288",
       "width": 1280,
       "height": 720,
       "contentHash": "sha256:f724a5ba30779e4b524d9535",
@@ -48513,10 +48716,31 @@
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Rolex_Geneva_13.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Logo_da_Rolex.png/1280px-Logo_da_Rolex.png",
+          "source": "wikipedia"
         }
       ],
+      "confidence": "auto",
+      "reviewReason": null
+    },
+    "rolex@@luxury-watches": {
+      "label": "Rolex",
+      "topics": [
+        "Luxury Watches"
+      ],
+      "category": "fashion",
+      "fit": "contain",
+      "pad": false,
+      "resolvedAt": "2026-06-12T07:32:31.087Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Rolex_Geneva_13.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q62288",
+      "width": 1280,
+      "height": 494,
+      "contentHash": "sha256:884ff00a8a0ec6250938d153",
+      "focusX": 50,
+      "focusY": 50,
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -48894,18 +49118,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:49:07.354Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation VII Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:32:31.577Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Entrance_of_The_Pok%C3%A9mon_Company_in_Tokyo.jpg/1280px-Entrance_of_The_Pok%C3%A9mon_Company_in_Tokyo.jpg",
+          "source": "commons-search:File:Entrance of The Pokémon Company in Tokyo.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%88%E3%82%A6%E3%83%9B%E3%82%AF_%2830648496386%29.jpg/1280px-%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%88%E3%82%A6%E3%83%9B%E3%82%AF_%2830648496386%29.jpg",
+          "source": "commons-search:File:ポケモンセンタートウホク (30648496386).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Pokemon_Hub_HK_TST_20180316.jpg/1280px-Pokemon_Hub_HK_TST_20180316.jpg",
+          "source": "commons-search:File:Pokemon Hub HK TST 20180316.jpg"
+        }
+      ]
     },
     "roxanne-shant": {
       "label": "Roxanne Shanté",
@@ -49341,15 +49576,23 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:49:13.616Z",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:33.510Z",
       "url": null,
       "source": null,
       "confidence": "review",
       "reviewReason": "no-wikipedia-page",
       "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/%C3%89glise_St-Laurent-sur-Sa%C3%B4ne_2.JPG/1280px-%C3%89glise_St-Laurent-sur-Sa%C3%B4ne_2.JPG",
+          "source": "commons-search:File:Église St-Laurent-sur-Saône 2.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/SNCF_X73500_La_Bastide_Saint-Laurent_-_Villefort.jpg/1280px-SNCF_X73500_La_Bastide_Saint-Laurent_-_Villefort.jpg",
+          "source": "commons-search:File:SNCF X73500 La Bastide Saint-Laurent - Villefort.jpg"
+        },
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Saint_Laurent_Paris_-_Store_%2851395501701%29.jpg/1280px-Saint_Laurent_Paris_-_Store_%2851395501701%29.jpg",
           "source": "wikipedia-search:Yves Saint Laurent (fashion house)"
@@ -49357,14 +49600,6 @@
         {
           "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Mairie_d%27arrondissement_Saint-Laurent.JPG/1280px-Mairie_d%27arrondissement_Saint-Laurent.JPG",
           "source": "wikipedia-search:Saint-Laurent, Quebec"
-        },
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/%C3%89glise_St-Laurent-sur-Sa%C3%B4ne_2.JPG/1280px-%C3%89glise_St-Laurent-sur-Sa%C3%B4ne_2.JPG",
-          "source": "commons-search:File:Église St-Laurent-sur-Saône 2.JPG"
-        },
-        {
-          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Aerial_photograph_of_Saint-Laurent-du-Var_01.jpg/1280px-Aerial_photograph_of_Saint-Laurent-du-Var_01.jpg",
-          "source": "commons-search:File:Aerial photograph of Saint-Laurent-du-Var 01.jpg"
         }
       ]
     },
@@ -50269,18 +50504,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:50:07.282Z",
-      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stylised_atom_with_three_Bohr_model_orbits_and_stylised_nucleus_(encircled).svg?width=1000",
-      "source": "wikidata-p18",
-      "sourceId": "wikidata:Q336",
-      "width": 1280,
-      "height": 1280,
-      "contentHash": "sha256:f70ceb2c37e3591a7815abf7",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:32:46.586Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Carina_Nebula.jpg/1280px-Carina_Nebula.jpg",
+          "source": "wikipedia-search:Natural science"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Half_Adder.svg/1280px-Half_Adder.svg.png",
+          "source": "wikipedia-search:Computer science"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Science%2C_vol._1%2C_1883%2C_title_page.png",
+          "source": "commons-search:File:Science, vol. 1, 1883, title page.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Black_hole_-_Messier_87_crop_max_res.jpg/1280px-Black_hole_-_Messier_87_crop_max_res.jpg",
+          "source": "commons-search:File:Black hole - Messier 87 crop max res.jpg"
+        }
+      ]
     },
     "scorbunny": {
       "label": "Scorbunny",
@@ -50322,21 +50568,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:50:07.666Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Scorpius_IAU.svg/1280px-Scorpius_IAU.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Scorpius",
-      "width": 1280,
-      "height": 1585,
-      "contentHash": "sha256:99860708738ca5378f21d2ef",
+      "resolvedAt": "2026-06-12T07:32:46.600Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/ScorpiusCC.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8865",
+      "width": 640,
+      "height": 428,
+      "contentHash": "sha256:dad454ba42866a11caa0ff2d",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/ScorpiusCC.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -51009,21 +51250,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:50:20.055Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Flag_of_Seychelles.svg/1280px-Flag_of_Seychelles.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Seychelles",
+      "resolvedAt": "2026-06-12T07:32:48.970Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Grand_Anse-La_Digue-Seychellen.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q1042",
       "width": 1280,
-      "height": 640,
-      "contentHash": "sha256:962f514f35c20739ea0e64f6",
-      "focusX": 22,
+      "height": 780,
+      "contentHash": "sha256:85ab42424f38ae28141ff1f6",
+      "focusX": 23,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Grand_Anse-La_Digue-Seychellen.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -51170,19 +51406,24 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:50:21.145Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Shake_Shack_Madison_Square.jpg/1280px-Shake_Shack_Madison_Square.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Shake Shack",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:32:49.288Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Shake_Shack_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q1058722",
       "width": 1280,
-      "height": 791,
-      "contentHash": "sha256:4ddd3f149915fecbb064b305",
-      "focusX": 52,
+      "height": 281,
+      "contentHash": "sha256:3eaeedcc258e7687396b3205",
+      "focusX": 50,
       "focusY": 50,
-      "candidates": [],
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Shake_Shack_Madison_Square.jpg/1280px-Shake_Shack_Madison_Square.jpg",
+          "source": "wikipedia"
+        }
+      ],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -52022,21 +52263,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:51:12.744Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Flag_of_Singapore.svg/1280px-Flag_of_Singapore.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Singapore",
+      "resolvedAt": "2026-06-12T07:33:01.542Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Raffles_Place.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q334",
       "width": 1280,
-      "height": 854,
-      "contentHash": "sha256:293bd16b62d54cb8a45b5b6e",
-      "focusX": 27,
+      "height": 853,
+      "contentHash": "sha256:5841266973a07485a77de0ba",
+      "focusX": 25,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Raffles_Place.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -52566,18 +52802,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:51:20.609Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation V Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:02.623Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Marcador_RA_de_Snivy.png",
+          "source": "commons-search:File:Marcador RA de Snivy.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Pokemon_Center_Tohoku.JPG/1280px-Pokemon_Center_Tohoku.JPG",
+          "source": "commons-search:File:Pokemon Center Tohoku.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Pok%C3%A9mon_Snivy_cosplay.jpg/1280px-Pok%C3%A9mon_Snivy_cosplay.jpg",
+          "source": "commons-search:File:Pokémon Snivy cosplay.jpg"
+        }
+      ]
     },
     "snoop-dogg": {
       "label": "Snoop Dogg",
@@ -52677,21 +52924,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:51:22.739Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Social_media_platter.svg/1280px-Social_media_platter.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Social media",
-      "width": 1280,
-      "height": 787,
-      "contentHash": "sha256:eea7d3f52d09666ec28f005c",
+      "resolvedAt": "2026-06-12T07:33:02.697Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Conversationprism.jpeg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q202833",
+      "width": 995,
+      "height": 1062,
+      "contentHash": "sha256:78bb4de7030218550ea8d1a4",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Conversationprism.jpeg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -52782,18 +53024,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:51:25.373Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Sonic_The_Hedgehog.svg/1280px-Sonic_The_Hedgehog.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Sonic the Hedgehog",
-      "width": 1280,
-      "height": 496,
-      "contentHash": "sha256:31c6dbe84ecd60e19060c4cb",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:02.852Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Sonic_The_Hedgehog.svg/1280px-Sonic_The_Hedgehog.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/WW_Chicago_2011_-_Sonic_the_Hedgehog_%288168360292%29.jpg/1280px-WW_Chicago_2011_-_Sonic_the_Hedgehog_%288168360292%29.jpg",
+          "source": "commons-search:File:WW Chicago 2011 - Sonic the Hedgehog (8168360292).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Sonic_The_Hedgehog_logo_%282006%29.png/1280px-Sonic_The_Hedgehog_logo_%282006%29.png",
+          "source": "commons-search:File:Sonic The Hedgehog logo (2006).png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Sonic_the_Hedgehog_1991_logo.webp",
+          "source": "commons-search:File:Sonic the Hedgehog 1991 logo.webp"
+        }
+      ]
     },
     "sony": {
       "label": "Sony",
@@ -55071,18 +55324,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:53:12.719Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Mario_Series_Logo.svg/1280px-Mario_Series_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Super Mario",
-      "width": 1280,
-      "height": 599,
-      "contentHash": "sha256:ef10bd0c7ce2ce6ed8dd9fc5",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:18.964Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Mario_Series_Logo.svg/1280px-Mario_Series_Logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Game_and_Watch_Super_Mario_Bros.PNG/1280px-Game_and_Watch_Super_Mario_Bros.PNG",
+          "source": "commons-search:File:Game and Watch Super Mario Bros.PNG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Cosplayer_of_Mario%2C_Mario_Kart_at_Otakuthon_20160807.jpg/1280px-Cosplayer_of_Mario%2C_Mario_Kart_at_Otakuthon_20160807.jpg",
+          "source": "commons-search:File:Cosplayer of Mario, Mario Kart at Otakuthon 20160807.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Game_and_Watch_crystal_super_mario_bros.png/1280px-Game_and_Watch_crystal_super_mario_bros.png",
+          "source": "commons-search:File:Game and Watch crystal super mario bros.png"
+        }
+      ]
     },
     "super-mario-odyssey": {
       "label": "Super Mario Odyssey",
@@ -55561,23 +55825,13 @@
       "category": "food",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:53:20.466Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Tabasco_Logo.svg/1280px-Tabasco_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Tabasco sauce",
-      "width": 1280,
-      "height": 1280,
-      "contentHash": "sha256:b48656a33dd575e3e439146a",
-      "focusX": 47,
-      "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tabasco_sauce.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:19.963Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tabasco_sauce.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q335016",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:303x1010",
+      "candidates": []
     },
     "tabbouleh": {
       "label": "Tabbouleh",
@@ -55657,24 +55911,19 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:53:23.125Z",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:33:20.131Z",
       "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Tacobellheadquartersirvine.jpg/1280px-Tacobellheadquartersirvine.jpg",
       "source": "wikipedia",
       "sourceId": "wikipedia:Taco Bell",
       "width": 1280,
       "height": 909,
       "contentHash": "sha256:ab4725a04d2d70499e07f6d1",
-      "focusX": 67,
+      "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Taco_bell_old.JPG?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -55705,32 +55954,47 @@
       "confidence": "auto",
       "reviewReason": null
     },
-    "tag-heuer": {
+    "tag-heuer@@best-watch-brands": {
       "label": "TAG Heuer",
       "topics": [
-        "Luxury Watches",
         "Best Watch Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:53:23.870Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/TAG_Heuer_Logo.svg/1280px-TAG_Heuer_Logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:TAG Heuer",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:33:20.435Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/TAG_HEUER_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q645984",
       "width": 1280,
-      "height": 1108,
-      "contentHash": "sha256:fd14846b164134611c8d9010",
+      "height": 211,
+      "contentHash": "sha256:542afb13f898a52bedcf3f2f",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tagheuer-indy500.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/TAG_Heuer_Logo.svg/1280px-TAG_Heuer_Logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
       "reviewReason": null
+    },
+    "tag-heuer@@luxury-watches": {
+      "label": "TAG Heuer",
+      "topics": [
+        "Luxury Watches"
+      ],
+      "category": "fashion",
+      "fit": "contain",
+      "pad": false,
+      "resolvedAt": "2026-06-12T07:33:21.578Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tagheuer-indy500.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q645984",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:349x318",
+      "candidates": []
     },
     "tagliatelle": {
       "label": "Tagliatelle",
@@ -56456,18 +56720,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:54:11.369Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation V Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:24.031Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/FanimeCon_2012_054_%287293461318%29.jpg/1280px-FanimeCon_2012_054_%287293461318%29.jpg",
+          "source": "commons-search:File:FanimeCon 2012 054 (7293461318).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/FanimeCon_2012_117_%287293997504%29.jpg/1280px-FanimeCon_2012_117_%287293997504%29.jpg",
+          "source": "commons-search:File:FanimeCon 2012 117 (7293997504).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Bak-Anime_2012_%286962461166%29.jpg",
+          "source": "commons-search:File:Bak-Anime 2012 (6962461166).jpg"
+        }
+      ]
     },
     "terminator-2-judgment-day": {
       "label": "Terminator 2: Judgment Day",
@@ -58384,18 +58659,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:55:06.567Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Zelda_2017.svg/1280px-Zelda_2017.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:The Legend of Zelda",
-      "width": 1280,
-      "height": 508,
-      "contentHash": "sha256:26acf1c38f59324cff887a8a",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:38.126Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Zelda_2017.svg/1280px-Zelda_2017.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/91/The_Legend_of_Zelda_Skyward_Sword.png",
+          "source": "commons-search:File:The Legend of Zelda Skyward Sword.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/The_Legend_of_Zelda_Link%27s_Awakening_%282019%29.png/1280px-The_Legend_of_Zelda_Link%27s_Awakening_%282019%29.png",
+          "source": "commons-search:File:The Legend of Zelda Link's Awakening (2019).png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/The_legend_of_Zelda_-_35%C2%B0_anniversary.jpg",
+          "source": "commons-search:File:The legend of Zelda - 35° anniversary.jpg"
+        }
+      ]
     },
     "the-legend-of-zelda-breath-of-the-wild": {
       "label": "The Legend of Zelda: Breath of the Wild",
@@ -61006,26 +61292,21 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:56:17.785Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Tom_Ford_Store_Design_District.jpg/1280px-Tom_Ford_Store_Design_District.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Tom Ford (brand)",
-      "width": 1280,
-      "height": 927,
-      "contentHash": "sha256:8ddb86d323871d112643e276",
-      "focusX": 50,
-      "focusY": 50,
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:33:41.016Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tom_Ford_Logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q105476592",
+      "confidence": "review",
+      "reviewReason": "validation-failed:too-small:1280x191",
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tom_Ford_2009.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Tom_Ford_Store_Design_District.jpg/1280px-Tom_Ford_Store_Design_District.jpg",
+          "source": "wikipedia"
         }
-      ],
-      "confidence": "auto",
-      "reviewReason": null
+      ]
     },
     "tom-hanks": {
       "label": "Tom Hanks",
@@ -61381,18 +61662,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:56:24.434Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation III Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:41.402Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lewes_Bonfire%2C_discarded_torch.jpg/1280px-Lewes_Bonfire%2C_discarded_torch.jpg",
+          "source": "wikipedia-search:Torch"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Flashlight.jpg",
+          "source": "commons-search:File:Flashlight.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/High_power_torch.jpg/1280px-High_power_torch.jpg",
+          "source": "commons-search:File:High power torch.jpg"
+        }
+      ]
     },
     "toronto-blue-jays": {
       "label": "Toronto Blue Jays",
@@ -61471,18 +61763,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:56:26.165Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation II Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:41.851Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/64/Pok%C3%A9mon_trainer_Lyra_cosplay.jpg",
+          "source": "commons-search:File:Pokémon trainer Lyra cosplay.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Pokemon_Center_Tohoku.JPG/1280px-Pokemon_Center_Tohoku.JPG",
+          "source": "commons-search:File:Pokemon Center Tohoku.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Photo_of_Pok%C3%A9mon_Go_Pok%C3%A9Stop_at_San_Jos%C3%A9_Library_in_San_Jos%C3%A9%2C_California.jpg/1280px-Photo_of_Pok%C3%A9mon_Go_Pok%C3%A9Stop_at_San_Jos%C3%A9_Library_in_San_Jos%C3%A9%2C_California.jpg",
+          "source": "commons-search:File:Photo of Pokémon Go PokéStop at San José Library in San José, California.jpg"
+        }
+      ]
     },
     "tottenham-hotspur-f-c": {
       "label": "Tottenham Hotspur F.C.",
@@ -61698,18 +62001,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:57:04.421Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation III Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:43.533Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Opro%C5%A1taj_treecko_luka.JPG/1280px-Opro%C5%A1taj_treecko_luka.JPG",
+          "source": "commons-search:File:Oproštaj treecko luka.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Treecko_1.JPG",
+          "source": "commons-search:File:Treecko 1.JPG"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/53/POK%C3%89MON_TREE.jpg",
+          "source": "commons-search:File:POKÉMON TREE.jpg"
+        }
+      ]
     },
     "trello": {
       "label": "Trello",
@@ -62114,18 +62428,29 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:57:11.552Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:List of generation IV Pokémon",
-      "width": 1280,
-      "height": 470,
-      "contentHash": "sha256:42cd3175625234193ecd6f61",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:33:45.034Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1280px-International_Pok%C3%A9mon_logo.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/New_chitose_airport_pokemon_center.jpg/1280px-New_chitose_airport_pokemon_center.jpg",
+          "source": "commons-search:File:New chitose airport pokemon center.jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/%E8%B0%B7%E4%B8%AD16_%282961399405%29.jpg/1280px-%E8%B0%B7%E4%B8%AD16_%282961399405%29.jpg",
+          "source": "commons-search:File:谷中16 (2961399405).jpg"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/59/PokemonCenterNihonbashi_Biew.JPG",
+          "source": "commons-search:File:PokemonCenterNihonbashi Biew.JPG"
+        }
+      ]
     },
     "twenty-five-twenty-one": {
       "label": "Twenty-Five Twenty-One",
@@ -62853,21 +63178,16 @@
       "category": "generic",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:57:27.507Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Ursa_Major_IAU.svg/1280px-Ursa_Major_IAU.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Ursa Major",
-      "width": 1280,
-      "height": 1113,
-      "contentHash": "sha256:20abc03fc39869a7b5689209",
+      "resolvedAt": "2026-06-12T07:33:47.654Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UrsaMajorCC.jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q8918",
+      "width": 426,
+      "height": 640,
+      "contentHash": "sha256:cfd850cf61b2c8171a5e155e",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UrsaMajorCC.jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -63104,13 +63424,13 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:58:04.869Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Valentino_logo.svg/1280px-Valentino_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Valentino (fashion house)",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:33:48.044Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Valentino_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q649646",
       "width": 1280,
       "height": 631,
       "contentHash": "sha256:7ac160e578e28aff1e10d22d",
@@ -63118,8 +63438,8 @@
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Valentino_(in_the_Back_Bay%2C_Newbury_Street%2C_Boston).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Valentino_logo.svg/1280px-Valentino_logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -63519,22 +63839,22 @@
       "topics": [
         "Fashion Brands"
       ],
-      "category": "fashion",
+      "category": "brand",
       "fit": "contain",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:58:13.963Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Berlin_-_Kurf%C3%BCrstendamm_193-194.jpg/1280px-Berlin_-_Kurf%C3%BCrstendamm_193-194.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Versace",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:34:00.203Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Versace_old_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q696376",
       "width": 1280,
-      "height": 854,
-      "contentHash": "sha256:0382a89fb2b30c9b7bbca6ce",
+      "height": 284,
+      "contentHash": "sha256:966963a5e3ca210fadb03ac8",
       "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Berlin_-_Kurf%C3%BCrstendamm_193-194.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Berlin_-_Kurf%C3%BCrstendamm_193-194.jpg/1280px-Berlin_-_Kurf%C3%BCrstendamm_193-194.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -64546,22 +64866,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:59:09.576Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Wendy%27s_flagship_restaurant_%28Dublin%2C_Ohio%29.jpg/1280px-Wendy%27s_flagship_restaurant_%28Dublin%2C_Ohio%29.jpg",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Wendy's",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:34:02.669Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Wendy's_logo_2012.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q550258",
       "width": 1280,
-      "height": 798,
-      "contentHash": "sha256:31deb13b40d53dd7630b619a",
-      "focusX": 64,
+      "height": 548,
+      "contentHash": "sha256:ca845f5928dcb384563516f9",
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Wendy's_flagship_restaurant_(Dublin%2C_Ohio).jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Wendy%27s_flagship_restaurant_%28Dublin%2C_Ohio%29.jpg/1280px-Wendy%27s_flagship_restaurant_%28Dublin%2C_Ohio%29.jpg",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -64705,22 +65025,22 @@
       "topics": [
         "Best Fast-Food Chains (US)"
       ],
-      "category": "food",
-      "fit": "cover",
-      "pad": false,
-      "resolvedAt": "2026-06-12T06:59:11.202Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Whataburger_logo.svg/1280px-Whataburger_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Whataburger",
+      "category": "brand",
+      "fit": "contain",
+      "pad": true,
+      "resolvedAt": "2026-06-12T07:34:02.944Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Whataburger_logo.svg?width=1000",
+      "source": "wikidata-p154",
+      "sourceId": "wikidata:Q376627",
       "width": 1280,
       "height": 1212,
       "contentHash": "sha256:21ac1a241d57509e15246b1e",
-      "focusX": 47,
+      "focusX": 50,
       "focusY": 50,
       "candidates": [
         {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Whataburger-Frisco.jpg?width=1000",
-          "source": "wikidata-p18"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Whataburger_logo.svg/1280px-Whataburger_logo.svg.png",
+          "source": "wikipedia"
         }
       ],
       "confidence": "auto",
@@ -64788,21 +65108,16 @@
       "category": "place",
       "fit": "cover",
       "pad": false,
-      "resolvedAt": "2026-06-12T06:59:12.899Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Flag_of_Whistler.svg/1280px-Flag_of_Whistler.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Whistler, British Columbia",
+      "resolvedAt": "2026-06-12T07:34:03.040Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Autumn_colours_and_plenty_of_dogs_to_pet_(37560004544).jpg?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q203122",
       "width": 1280,
-      "height": 640,
-      "contentHash": "sha256:87323d75030e4b6dd57e8085",
-      "focusX": 48,
+      "height": 961,
+      "contentHash": "sha256:7d6e8ae384223e1c8f08cf06",
+      "focusX": 54,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Autumn_colours_and_plenty_of_dogs_to_pet_(37560004544).jpg?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
@@ -65553,18 +65868,29 @@
       "category": "device",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T07:00:01.225Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Xbox_Series_X_S_color.svg/1280px-Xbox_Series_X_S_color.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Xbox Series X and Series S",
-      "width": 1280,
-      "height": 629,
-      "contentHash": "sha256:7f5500c3bd6e58f6053fe9f3",
-      "focusX": 50,
-      "focusY": 50,
-      "candidates": [],
-      "confidence": "auto",
-      "reviewReason": null
+      "resolvedAt": "2026-06-12T07:34:16.056Z",
+      "url": null,
+      "source": null,
+      "confidence": "review",
+      "reviewReason": "no-image-on-entity",
+      "candidates": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Xbox_Series_X_S_color.svg/1280px-Xbox_Series_X_S_color.svg.png",
+          "source": "wikipedia"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Xbox_Cloud_Gaming_logo.png",
+          "source": "wikipedia-search:Xbox Cloud Gaming"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Optimized_for_xbox_series_x_branding.png",
+          "source": "commons-search:File:Optimized for xbox series x branding.png"
+        },
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Xbox_series_s_controller.jpg/1280px-Xbox_series_s_controller.jpg",
+          "source": "commons-search:File:Xbox series s controller.jpg"
+        }
+      ]
     },
     "xena-warrior-princess": {
       "label": "Xena: Warrior Princess",
@@ -66311,21 +66637,16 @@
       "category": "fashion",
       "fit": "contain",
       "pad": false,
-      "resolvedAt": "2026-06-12T07:00:15.469Z",
-      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Zenith_logo.svg/1280px-Zenith_logo.svg.png",
-      "source": "wikipedia",
-      "sourceId": "wikipedia:Zenith (watchmaker)",
+      "resolvedAt": "2026-06-12T07:34:17.344Z",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Le_Locle%2C_Zenith_1.JPG?width=1000",
+      "source": "wikidata-p18",
+      "sourceId": "wikidata:Q189601",
       "width": 1280,
-      "height": 484,
-      "contentHash": "sha256:594b34da82b0a68285061847",
+      "height": 960,
+      "contentHash": "sha256:74388be7786cb7ed0d712581",
       "focusX": 50,
       "focusY": 50,
-      "candidates": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Le_Locle%2C_Zenith_1.JPG?width=1000",
-          "source": "wikidata-p18"
-        }
-      ],
+      "candidates": [],
       "confidence": "auto",
       "reviewReason": null
     },
