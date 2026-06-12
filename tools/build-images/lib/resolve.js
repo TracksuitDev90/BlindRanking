@@ -53,11 +53,12 @@ async function pinEntity(unit, { requireContext }) {
 
 function pageImagePick(page, wd, category, sourceIdPrefix) {
   // Article lead image first (often a curated, non-free-permitted image),
-  // then the Wikidata P18 image.
+  // then the Wikidata P18 image. Both are screened against the blocklist
+  // (flags, locator maps, logos-on-photo-categories, …).
   if (page?.imageUrl && !isBlockedWikiFile(page.imageName, category)) {
     return { url: page.imageUrl, source: 'wikipedia', sourceId: `${sourceIdPrefix}:${page.title}`, exact: true };
   }
-  if (wd?.image) {
+  if (wd?.image && !isBlockedWikiFile(wd.image, category)) {
     return { url: commonsFileUrl(wd.image), source: 'wikidata-p18', sourceId: `wikidata:${wd.qid}`, exact: true };
   }
   return null;

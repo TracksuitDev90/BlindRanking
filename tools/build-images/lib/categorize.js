@@ -101,6 +101,9 @@ export function inferCategoryWithMood(label, hints, topicMood) {
 export function categoryForBuild(label, hints, topicMood) {
   const cat = inferCategoryWithMood(label, hints, topicMood);
   const tn = normalize(hints.topicName || '');
+  // Topics about brands or chains contain companies — the right image is the
+  // official logo (P154, contain+pad), not a storefront/product photo.
+  if (/\bbrands?\b|\bchains\b|\bfast food\b/.test(tn)) return CATS.BRAND;
   if (topicMood === 'sports') {
     if (/\bstadiums?\b|\barenas?\b|\bballparks?\b/.test(tn)) return CATS.PLACE;
     if (/\bteams?\b|\bclubs?\b|\bfranchises?\b/.test(tn) && cat !== CATS.PERSON) return CATS.TEAM;

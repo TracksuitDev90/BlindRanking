@@ -64,16 +64,21 @@ export function commonsFileUrl(fileName, width = 1000) {
 }
 
 // File-name blocklist for lead images that are technically on the article but
-// wrong for display (locator maps, flags, heraldry). Ported from
-// validateRelevance() in script.js.
-const WIKI_BLOCK_PATTERNS = [
-  /\bflag[-_ ]of\b/i, /\bcoat[-_ ]of[-_ ]arms\b/i, /\bmap[-_ ]of\b/i,
-  /\blocator[-_ ]map\b/i, /\bblank[-_ ]map\b/i
+// wrong for display: locator maps, flags, heraldry, pictograms, and logos
+// (for photo categories — a country article's lead is often its flag, a
+// brand-adjacent product's lead is often a logo SVG). File names are
+// normalized first because Wikipedia uses underscores, which defeat \b.
+const PHOTO_BLOCK_PATTERNS = [
+  /\bflag of\b/, /\bcoat of arms\b/, /\bmap of\b/, /\blocator map\b/,
+  /\bblank map\b/, /\bspecial marker\b/, /\bmarker\b/, /\bpictogram\b/,
+  /\blogo\b/, /\bemblem\b/, /\bseal of\b/, /\bsvg\b/
 ];
 export function isBlockedWikiFile(fileName, cat) {
   if (!fileName) return false;
-  if (cat === 'place' || cat === 'team') return false;
-  return WIKI_BLOCK_PATTERNS.some(p => p.test(String(fileName)));
+  // Logo categories (brand/team/game/software/podcast) WANT logos and crests.
+  if (['brand', 'team', 'game', 'software', 'podcast', 'logo'].includes(cat)) return false;
+  const norm = String(fileName).toLowerCase().replace(/%2[02]/g, ' ').replace(/[_\-.]+/g, ' ');
+  return PHOTO_BLOCK_PATTERNS.some(p => p.test(norm));
 }
 
 // Candidate gathering only (review page): Wikipedia full-text search images.

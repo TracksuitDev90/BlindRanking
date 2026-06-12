@@ -22,6 +22,7 @@ import { resolveItem, fitFor } from './lib/resolve.js';
 import { validateImage, revalidateUrl } from './lib/validate.js';
 import { computeFocal } from './lib/focal.js';
 import { FACE_CATS, normalize } from './lib/categorize.js';
+import { isBlockedWikiFile } from './lib/sources/wikimedia.js';
 import { loadJson, writeManifest, writeImagesJs, summarize, SHIPPABLE } from './lib/manifest.js';
 
 // BR_ROOT override exists for the offline test harness (test/run-tests.sh).
@@ -45,9 +46,17 @@ function parseArgs(argv) {
   return args;
 }
 
+// A URL that is clearly a rendered logo/pictogram must never be cover-cropped,
+// whatever the category says (e.g. a soda brand inside a food topic whose
+// best available image is its logo).
+function looksLikeLogoUrl(url) {
+  const norm = String(url || '').toLowerCase().replace(/%2[02]/g, ' ').replace(/[_\-.]+/g, ' ');
+  return /\blogo\b|\bpictogram\b|\bsvg\b/.test(norm);
+}
+
 // Resolve + validate + focal-point one unit into a manifest entry.
 async function buildEntry(unit, keys, log) {
-  const { fit, pad } = fitFor(unit);
+  let { fit, pad } = fitFor(unit);
   const base = {
     label: unit.label,
     topics: unit.topics,
@@ -78,6 +87,11 @@ async function buildEntry(unit, keys, log) {
       ...base, url: res.pick.url, source: res.pick.source, sourceId: res.pick.sourceId,
       confidence: 'review', reviewReason: `validation-failed:${v.reason}`, candidates
     };
+  }
+
+  if (fit === 'cover' && looksLikeLogoUrl(res.pick.url)) {
+    fit = 'contain'; pad = true;
+    base.fit = fit; base.pad = pad;
   }
 
   const focal = await computeFocal(v.bytes, unit.category, fit, unit.label);
@@ -165,8 +179,18 @@ async function processUnit(unit, ctx) {
     }, unit, keys, log);
   }
 
+  // Machine-vetted entries are re-resolved when the rules changed under them:
+  // the unit's category differs, or the stored URL would now be rejected
+  // (blocklist/fit-guard improvements). Human-approved entries are never
+  // second-guessed — overrides own those.
+  const rulesChanged = existing && existing.confidence === 'auto' && (
+    existing.category !== unit.category ||
+    isBlockedWikiFile(existing.url, unit.category) ||
+    (existing.fit === 'cover' && looksLikeLogoUrl(existing.url))
+  );
+
   // Vetted entries: link-rot check only (unless --force or a url override).
-  if (existing && SHIPPABLE.has(existing.confidence) && !args.force && !ov?.url) {
+  if (existing && SHIPPABLE.has(existing.confidence) && !args.force && !ov?.url && !rulesChanged) {
     const alive = await revalidateUrl(existing.url);
     if (alive) {
       // Keep byte-identical to avoid noisy diffs; refresh topics in case the
@@ -182,9 +206,10 @@ async function processUnit(unit, ctx) {
     return applyOverride(key, ov, fresh, unit, keys, log);
   }
 
-  // Review entries await a human; don't hammer the APIs again unless forced
-  // or an override arrived.
-  if (existing && existing.confidence === 'review' && !args.force && !ov) {
+  // Review entries await a human; don't hammer the APIs again unless forced,
+  // an override arrived, or the categorization rules changed.
+  if (existing && existing.confidence === 'review' && !args.force && !ov &&
+      existing.category === unit.category) {
     return { ...existing, topics: unit.topics };
   }
 

@@ -43,6 +43,18 @@ const WIKI_PAGES = {
   'Test Brand': {
     title: 'Test Brand', description: 'technology company',
     pageprops: { wikibase_item: 'Q300' }
+  },
+  'Test Island': {
+    title: 'Test Island', description: 'island in the test ocean',
+    pageprops: { wikibase_item: 'Q500' },
+    pageimage: 'Flag_of_Test_Island.svg',
+    thumbnail: { source: 'https://upload.wikimedia.org/thumb/Flag_of_Test_Island.svg/1000px-Flag_of_Test_Island.svg.png', width: 1000, height: 600 }
+  },
+  'Test Chain': {
+    title: 'Test Chain', description: 'fast food restaurant chain',
+    pageprops: { wikibase_item: 'Q600' },
+    pageimage: 'Test_Chain_2020.svg',
+    thumbnail: { source: 'https://upload.wikimedia.org/thumb/Test_Chain_2020.svg/1000px-Test_Chain_2020.svg.png', width: 1000, height: 1000 }
   }
 };
 
@@ -50,7 +62,9 @@ const WIKIDATA = {
   Q100: { descriptions: { en: { value: 'American football quarterback' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test QB.jpg' } } }] } },
   Q400: { descriptions: { en: { value: 'Australian cricketer' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Wrong Guy.jpg' } } }] } },
   Q200: { descriptions: { en: { value: 'dish' } }, claims: {} },
-  Q300: { descriptions: { en: { value: 'technology company' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Brand logo.svg' } } }] } }
+  Q300: { descriptions: { en: { value: 'technology company' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Brand logo.svg' } } }] } },
+  Q500: { descriptions: { en: { value: 'island' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test Island beach.jpg' } } }] } },
+  Q600: { descriptions: { en: { value: 'fast food chain' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Chain logo.svg' } } }] } }
 };
 
 globalThis.fetch = async (url) => {

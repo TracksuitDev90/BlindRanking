@@ -12,5 +12,11 @@ window.TOPICS = [
   ]},
   { name: "Tech Brands Test", mood: "tech", provider: "wiki", items: [
     { label: "Test Brand" }
+  ]},
+  { name: "Island Paradises Test", mood: "places", provider: "wiki", items: [
+    { label: "Test Island" }
+  ]},
+  { name: "Best Fast-Food Chains Test", mood: "food", provider: "wiki", items: [
+    { label: "Test Chain" }
   ]}
 ];

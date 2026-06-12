@@ -41,8 +41,12 @@ check "missing wikipedia page goes to review" \
   "m['missing-thing'].confidence==='review' && m['missing-thing'].reviewReason==='no-wikipedia-page'"
 check "brand logo via Wikidata P154, contain+pad" \
   "m['test-brand'].confidence==='auto' && m['test-brand'].source==='wikidata-p154' && m['test-brand'].pad===true"
+check "place flag lead image skipped for the P18 photo" \
+  "m['test-island'].confidence==='auto' && m['test-island'].source==='wikidata-p18' && !m['test-island'].url.includes('Flag')"
+check "chains topic resolves as brand logo, contain+pad" \
+  "m['test-chain'].confidence==='auto' && m['test-chain'].category==='brand' && m['test-chain'].source==='wikidata-p154' && m['test-chain'].pad===true"
 check "images.js ships only vetted entries" \
-  "Object.keys(shipped).length===3 && shipped['test-movie-2020-film'] && shipped['test-burger'] && shipped['test-brand'] && !shipped['test-qb']"
+  "Object.keys(shipped).length===5 && shipped['test-movie-2020-film'] && shipped['test-burger'] && shipped['test-brand'] && shipped['test-island'] && shipped['test-chain'] && !shipped['test-qb']"
 
 echo "=== Run 2: idempotence ==="
 cp "$WORK/images.manifest.json" "$WORK/manifest.run1.json"
