@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlindRanking — Image Review</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #141218; color: #e6e0e9; font: 14px/1.45 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: #1d1b22; padding: 12px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  .tab { background: #2b2930; border: 1px solid #49454f; color: inherit; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .tab.active { background: #d0bcff; color: #1d1b22; border-color: #d0bcff; font-weight: 700; }
+  #search { background: #2b2930; border: 1px solid #49454f; color: inherit; padding: 6px 12px; border-radius: 8px; min-width: 200px; }
+  #copyBtn { margin-left: auto; background: #a8db8b; color: #102000; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  #stats { padding: 10px 16px; color: #cac4d0; }
+  main { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 16px; }
+  .card { background: #1d1b22; border: 1px solid #2b2930; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .card.decided-approve { outline: 2px solid #a8db8b; }
+  .card.decided-reject { outline: 2px solid #ffb4ab; opacity: .65; }
+  .imgbox { aspect-ratio: 3/4; background: #0f0e13; position: relative; }
+  .imgbox img { width: 100%; height: 100%; display: block; }
+  .imgbox .noimg { position: absolute; inset: 0; display: grid; place-items: center; color: #938f99; font-weight: 700; font-size: 18px; text-align: center; padding: 12px; }
+  .badge { position: absolute; top: 8px; left: 8px; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge.auto { background: #284b2a; color: #a8db8b; }
+  .badge.review { background: #4d2f00; color: #ffcc80; }
+  .badge.approved { background: #a8db8b; color: #102000; }
+  .badge.rejected { background: #93000a; color: #ffdad6; }
+  .body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .label { font-weight: 700; font-size: 15px; }
+  .meta { color: #938f99; font-size: 12px; word-break: break-word; }
+  .reason { color: #ffcc80; font-size: 12px; }
+  .cands { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cands img { width: 52px; height: 68px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; cursor: pointer; background: #0f0e13; }
+  .cands img.selected { border-color: #d0bcff; }
+  .row { display: flex; gap: 6px; }
+  .row input { flex: 1; background: #2b2930; border: 1px solid #49454f; color: inherit; padding: 6px 10px; border-radius: 8px; min-width: 0; }
+  .btn { border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-weight: 700; }
+  .btn.approve { background: #2e4b2f; color: #a8db8b; }
+  .btn.reject { background: #4b2e2e; color: #ffb4ab; }
+  .btn.clear { background: #2b2930; color: #cac4d0; }
+  .topicgroup { grid-column: 1 / -1; margin: 8px 0 -6px; font-size: 13px; font-weight: 700; color: #d0bcff; letter-spacing: .04em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Image Review</h1>
+  <button class="tab active" data-filter="review">Needs review</button>
+  <button class="tab" data-filter="shipped">Shipped</button>
+  <button class="tab" data-filter="all">All</button>
+  <input id="search" placeholder="Filter by label or topic…">
+  <button id="copyBtn">Copy overrides JSON (0)</button>
+</header>
+<div id="stats">Loading manifest…</div>
+<main id="grid"></main>
+
+<script>
+// Serve over HTTP from the repo root, e.g.:  python3 -m http.server
+// then open  http://localhost:8000/tools/review.html
+// Decisions accumulate locally; "Copy overrides JSON" exports the full
+// images.overrides.json to paste back into the repo and commit.
+(async () => {
+  const grid = document.getElementById('grid');
+  const stats = document.getElementById('stats');
+  let manifest = {}, overrides = {};
+  try {
+    manifest = (await (await fetch('../images.manifest.json')).json()).items || {};
+  } catch (e) {
+    stats.textContent = 'Could not load ../images.manifest.json — run the build first, and serve this page over HTTP (python3 -m http.server from the repo root).';
+    return;
+  }
+  try { overrides = await (await fetch('../images.overrides.json')).json(); } catch (_) {}
+
+  // decisions[key] = {approve:true} | {reject:true} | {url:"..."}
+  const decisions = JSON.parse(localStorage.getItem('br_review_decisions') || '{}');
+  let filter = 'review', query = '';
+
+  const SHIPPED = new Set(['auto', 'approved']);
+  const persist = () => localStorage.setItem('br_review_decisions', JSON.stringify(decisions));
+
+  function effectiveStatus(key, e) {
+    const d = decisions[key];
+    if (d?.reject) return 'rejected';
+    if (d?.approve || d?.url) return 'approved';
+    return e.confidence;
+  }
+
+  function updateHeader() {
+    const n = Object.keys(decisions).length;
+    document.getElementById('copyBtn').textContent = `Copy overrides JSON (${n})`;
+    const entries = Object.entries(manifest);
+    const need = entries.filter(([k, e]) => effectiveStatus(k, e) === 'review').length;
+    const shipped = entries.filter(([k, e]) => SHIPPED.has(effectiveStatus(k, e))).length;
+    stats.textContent = `${entries.length} items — ${shipped} shipped, ${need} need review, ${entries.length - shipped - need} rejected. ` +
+      `Decisions here are saved locally until you copy them into images.overrides.json.`;
+  }
+
+  function matches(key, e) {
+    const st = effectiveStatus(key, e);
+    if (filter === 'review' && st !== 'review') return false;
+    if (filter === 'shipped' && !SHIPPED.has(st)) return false;
+    if (query) {
+      const hay = (e.label + ' ' + (e.topics || []).join(' ')).toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  }
+
+  function imgStyle(e) {
+    return `object-fit:${e.fit || 'contain'};object-position:${e.focusX ?? 50}% ${e.focusY ?? 50}%;` +
+           (e.pad ? 'padding:12px;' : '');
+  }
+
+  function render() {
+    updateHeader();
+    grid.innerHTML = '';
+    const groups = new Map();
+    for (const [key, e] of Object.entries(manifest)) {
+      if (!matches(key, e)) continue;
+      const topic = (e.topics || ['(no topic)'])[0];
+      if (!groups.has(topic)) groups.set(topic, []);
+      groups.get(topic).push([key, e]);
+    }
+    for (const [topic, items] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const h = document.createElement('div');
+      h.className = 'topicgroup';
+      h.textContent = topic;
+      grid.appendChild(h);
+      for (const [key, e] of items) grid.appendChild(card(key, e));
+    }
+    if (!grid.children.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;color:#938f99;padding:40px;text-align:center">Nothing matches this filter 🎉</div>';
+    }
+  }
+
+  function card(key, e) {
+    const d = decisions[key] || {};
+    const st = effectiveStatus(key, e);
+    const shownUrl = d.url || e.url;
+    const el = document.createElement('div');
+    el.className = 'card' + (d.reject ? ' decided-reject' : (d.approve || d.url) ? ' decided-approve' : '');
+    el.innerHTML = `
+      <div class="imgbox">
+        ${shownUrl
+          ? `<img loading="lazy" src="${esc(shownUrl)}" style="${imgStyle(e)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'image failed to load'}))">`
+          : `<div class="noimg">${esc(e.label)}<br><small>(text fallback)</small></div>`}
+        <span class="badge ${st}">${st}</span>
+      </div>
+      <div class="body">
+        <div class="label">${esc(e.label)}</div>
+        <div class="meta">${esc((e.topics || []).join(' · '))} — ${esc(e.category)} — ${esc(e.source || 'no source')}</div>
+        ${e.reviewReason ? `<div class="reason">${esc(e.reviewReason)}</div>` : ''}
+        ${(e.candidates || []).length ? `<div class="cands">${e.candidates.map(c =>
+          `<img loading="lazy" src="${esc(c.url)}" title="${esc(c.source)}" data-url="${esc(c.url)}" class="${d.url === c.url ? 'selected' : ''}">`).join('')}</div>` : ''}
+        <div class="row"><input placeholder="…or paste an image URL" value="${d.url && !(e.candidates || []).some(c => c.url === d.url) ? esc(d.url) : ''}"></div>
+        <div class="row">
+          <button class="btn approve">Approve</button>
+          <button class="btn reject">Reject</button>
+          <button class="btn clear">Clear</button>
+        </div>
+      </div>`;
+
+    el.querySelectorAll('.cands img').forEach(img => img.addEventListener('click', () => {
+      decisions[key] = { url: img.dataset.url };
+      persist(); render();
+    }));
+    const urlInput = el.querySelector('input');
+    urlInput.addEventListener('change', () => {
+      const v = urlInput.value.trim();
+      if (v) { decisions[key] = { url: v }; persist(); render(); }
+    });
+    el.querySelector('.approve').addEventListener('click', () => {
+      const v = urlInput.value.trim();
+      decisions[key] = v && v !== e.url ? { url: v } : { approve: true };
+      persist(); render();
+    });
+    el.querySelector('.reject').addEventListener('click', () => { decisions[key] = { reject: true }; persist(); render(); });
+    el.querySelector('.clear').addEventListener('click', () => { delete decisions[key]; persist(); render(); });
+    return el;
+  }
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+    filter = t.dataset.filter; render();
+  }));
+  document.getElementById('search').addEventListener('input', ev => {
+    query = ev.target.value.trim().toLowerCase(); render();
+  });
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    const merged = { ...overrides, ...decisions };
+    const json = JSON.stringify(merged, null, 2) + '\n';
+    try { await navigator.clipboard.writeText(json); } catch (_) { prompt('Copy this into images.overrides.json:', json); return; }
+    alert('Copied! Paste into images.overrides.json, commit, and the workflow will rebuild images.js with your decisions.');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

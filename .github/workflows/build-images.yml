@@ -1,0 +1,60 @@
+name: Build image manifest
+
+on:
+  push:
+    paths:
+      - "topics.js"
+      - "images.overrides.json"
+      - "tools/build-images/**"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Re-resolve every item from scratch (ignore the existing manifest)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # The commit-back step pushes generated files only; the paths filter above
+    # doesn't match them, and this actor guard is a second loop protection.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/build-images/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefix tools/build-images
+
+      - name: Build image manifest
+        env:
+          # TMDB/Fanart/Pixabay keys are read from config.js (public read-only
+          # keys). These optional secrets enable extra review-page candidates.
+          PEXELS_KEY: ${{ secrets.PEXELS_KEY }}
+          UNSPLASH_KEY: ${{ secrets.UNSPLASH_KEY }}
+        run: node tools/build-images/build.js ${{ inputs.force == true && '--force' || '' }}
+
+      - name: Commit and push manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add images.manifest.json images.js
+          if git diff --cached --quiet; then
+            echo "Manifest unchanged — nothing to commit."
+          else
+            git commit -m "chore: rebuild image manifest"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
