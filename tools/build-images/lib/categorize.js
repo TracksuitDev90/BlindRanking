@@ -22,6 +22,7 @@ export const CATS = {
   FOOD: 'food', DEVICE: 'device', PLACE: 'place',
   PRODUCT: 'product', SNEAKER: 'sneaker', FASHION: 'fashion',
   PODCAST: 'podcast', SOFTWARE: 'software', ACTIVITY: 'activity',
+  CHARACTER: 'character',
   GENERIC: 'generic'
 };
 
@@ -98,9 +99,35 @@ export function inferCategoryWithMood(label, hints, topicMood) {
 // matches the food regex, "Oklahoma City Thunder" the place regex): inside a
 // sports "Teams/Clubs" topic everything is a team, inside a "Stadiums" topic
 // everything is a place.
+// Topics whose items are fictional characters: not real people (no face or
+// "is a human" requirement), not logos.
+export const CHARACTER_TOPIC_RE = /\bcharacters?\b|\bheroes\b|\bsuperheroes\b|\bvillains?\b|\bantiheroes\b|\bmascots?\b|\bprincesses\b|\bsidekicks?\b|\bpok ?mon\b/;
+// Topics whose items are specific products (a car model, a phone): the right
+// image is a photo of that exact model, never the maker's logo — even though
+// labels like "Porsche Taycan" trip the brand regexes in inferCategory().
+const PRODUCT_TOPIC_RE = /\bcars?\b|\bsupercars?\b|\bvehicles?\b|\btrucks?\b|\bsuvs?\b|\bmotorcycles?\b|\bconsoles?\b|\bdevices?\b|\bsmartphones?\b|\bphones?\b|\blaptops?\b|\bheadphones?\b|\bearbuds?\b|\bcameras?\b|\bsmartwatches?\b|\bgadgets?\b|\btablets?\b/;
+
 export function categoryForBuild(label, hints, topicMood) {
+  if (hints.kind) return hints.kind; // explicit per-item override wins
   const cat = inferCategoryWithMood(label, hints, topicMood);
   const tn = normalize(hints.topicName || '');
+  // Topics about brands or chains contain companies — the right image is the
+  // official logo (P154, contain+pad), not a storefront/product photo.
+  if (/\bbrands?\b|\bchains\b|\bfast food\b|\bmakers?\b|\bmanufacturers?\b|\bcompanies\b/.test(tn)) return CATS.BRAND;
+  if (CHARACTER_TOPIC_RE.test(tn) && (cat === CATS.PERSON || cat === CATS.GENERIC)) return CATS.CHARACTER;
+  // (Label regexes misfire here: "Galaxy S10" / "Nissan S30" look like TV
+  // seasons, "Porsche Taycan" like a brand.)
+  if (topicMood === 'tech' && PRODUCT_TOPIC_RE.test(tn) &&
+      cat !== CATS.PERSON && cat !== CATS.MUSIC_ARTIST) return CATS.DEVICE;
+  // Music topics list artists and bands (MusicBrainz/Fanart.tv photos, no
+  // "must be one human" rule for bands) — whatever the label regexes say
+  // ("Dierks Bentley" is not the car maker).
+  if (topicMood === 'music' && cat !== CATS.MUSIC_ALBUM && cat !== CATS.MUSIC_TRACK) return CATS.MUSIC_ARTIST;
+  // Food topics (brand/chain topics returned above) are food: "Apple pie"
+  // is a pie, not Apple Inc.
+  if (topicMood === 'food') return CATS.FOOD;
+  // Space missions, rovers and telescopes are photographed, not logos.
+  if (topicMood === 'tech' && /\bspace\b|\bmissions?\b|\brovers?\b|\btelescopes?\b/.test(tn)) return CATS.GENERIC;
   if (topicMood === 'sports') {
     if (/\bstadiums?\b|\barenas?\b|\bballparks?\b/.test(tn)) return CATS.PLACE;
     if (/\bteams?\b|\bclubs?\b|\bfranchises?\b/.test(tn) && cat !== CATS.PERSON) return CATS.TEAM;
@@ -150,7 +177,10 @@ export function wikiHintsForCategory(cat) {
     [CATS.MUSIC_ALBUM]: ['album'],
     [CATS.MUSIC_TRACK]: ['song'],
     [CATS.GAME]: ['video game', 'game'],
-    [CATS.TEAM]: ['team', 'sports team'],
+    // Matched against the entity description, so it must cover how
+    // Wikidata/Wikipedia describe clubs, franchises and team seasons.
+    [CATS.TEAM]: ['team', 'club', 'franchise', 'football', 'soccer', 'basketball', 'baseball',
+      'hockey', 'league', 'season', 'sports', 'racing', 'esports', 'cricket', 'rugby'],
     [CATS.FOOD]: ['food', 'dish'],
     [CATS.PLACE]: ['place', 'city'],
     [CATS.DEVICE]: ['device', 'product'],

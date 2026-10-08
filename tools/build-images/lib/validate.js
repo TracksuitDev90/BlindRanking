@@ -23,12 +23,16 @@ export async function validateImage(url, category) {
   // categories — mirrors the SVG rule in validateRelevance().
   if (meta.format === 'svg' && !isLogo) return { ok: false, reason: 'svg-for-photo-category' };
 
-  const minSide = isLogo ? 200 : 400;
-  if (Math.min(width, height) < minSide) return { ok: false, reason: `too-small:${width}x${height}` };
+  // Logos are shown contained with padding, and many are wide wordmarks
+  // (1280×110): judge them by their long side.
+  const tooSmall = isLogo
+    ? Math.max(width, height) < 300 || Math.min(width, height) < 48
+    : Math.min(width, height) < 400;
+  if (tooSmall) return { ok: false, reason: `too-small:${width}x${height}` };
 
   const aspect = width / height;
-  const maxAspect = isLogo ? 8 : 4;
-  const minAspect = isLogo ? 0.08 : 0.15;
+  const maxAspect = isLogo ? 12 : 4;
+  const minAspect = isLogo ? 1 / 12 : 0.15;
   if (aspect > maxAspect || aspect < minAspect) return { ok: false, reason: `bad-aspect:${aspect.toFixed(2)}` };
 
   return {
@@ -42,13 +46,15 @@ export async function validateImage(url, category) {
 }
 
 // Cheap link-rot check for already-vetted entries on incremental runs.
+// Returns the image bytes when the URL is alive (so the vision gate can check
+// it without a second download), otherwise null.
 export async function revalidateUrl(url) {
   const dl = await fetchBytes(url);
-  if (!dl.ok) return false;
+  if (!dl.ok) return null;
   try {
     await sharp(dl.bytes, { limitInputPixels: 1e9 }).metadata();
-    return true;
+    return dl.bytes;
   } catch {
-    return false;
+    return null;
   }
 }

@@ -1,6 +1,9 @@
 // topics.js
-// 200 categories, 5 items each. Movies/TV use TMDB (needs TMDB key). Others use Wikipedia PageImages.
-// You can override any item's image with: { label: "X", imageUrl: "https://..." }
+// Ranking topics. Each topic deals 5 items per visit from its pool
+// (items ∪ itemPool ∪ POOL_EXTRAS at the bottom), so replays vary.
+// Labels are exact Wikipedia article titles: tools/build-images pins each one
+// to its article and only vetted images ship (images.js); the rest are text.
+// Per-item escape hatch: { label: "X", imageUrl: "https://..." }.
 // Each topic has a `mood` tag for the mood filter picker.
 
 // Available moods: movies, tv, music, food, sports, animals, places, tech, games, culture, people
@@ -596,7 +599,7 @@ window.TOPICS = [
     {label:"Usain Bolt"}, {label:"Carl Lewis"}, {label:"Florence Griffith-Joyner"}, {label:"Shelly-Ann Fraser-Pryce"}, {label:"Yohan Blake"}
   ], itemPool: [
     {label:"Usain Bolt"}, {label:"Carl Lewis"}, {label:"Florence Griffith-Joyner"}, {label:"Shelly-Ann Fraser-Pryce"}, {label:"Yohan Blake"},
-    {label:"Jesse Owens"}, {label:"Michael Johnson"}, {label:"Justin Gatlin"}, {label:"Allyson Felix"},
+    {label:"Jesse Owens"}, {label:"Michael Johnson (sprinter)"}, {label:"Justin Gatlin"}, {label:"Allyson Felix"},
     {label:"Elaine Thompson-Herah"}, {label:"Sha'Carri Richardson"}, {label:"Tyson Gay"},
     {label:"Asafa Powell"}, {label:"Marion Jones"}, {label:"Ben Johnson (sprinter)"},
     {label:"Wayde van Niekerk"}, {label:"Donovan Bailey"}, {label:"Linford Christie"},
@@ -990,7 +993,7 @@ const MORE_TOPICS = [
   { name:"Best Cameras", mood: "tech", provider:"wiki", items:[{label:"Canon EOS R5"},{label:"Sony A7 IV"},{label:"Nikon Z7 II"},{label:"Fujifilm X-T5"},{label:"Panasonic Lumix S5"}] },
   { name:"Best Car Brands", mood: "tech", provider:"wiki", items:[{label:"Toyota"},{label:"BMW"},{label:"Mercedes-Benz"},{label:"Tesla, Inc."},{label:"Honda"}] },
   { name:"Best Electric Cars", mood: "tech", provider:"wiki", items:[{label:"Tesla Model 3"},{label:"Ford Mustang Mach-E"},{label:"Hyundai Ioniq 5"},{label:"Porsche Taycan"},{label:"Nissan Leaf"}] },
-  { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (1965)"},{label:"Chevrolet Camaro (1969)"},{label:"Porsche 911 (1973)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
+  { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (first generation)"},{label:"Chevrolet Camaro (first generation)"},{label:"Porsche 911 (classic)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
   { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}], mediaType:"brand" },
   { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion (productivity software)"},{label:"Trello"},{label:"Asana (software)"},{label:"Todoist"},{label:"Evernote"}] },
   { name:"Best Web Browsers", mood: "tech", provider:"wiki", mediaType:"software", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
@@ -1015,9 +1018,9 @@ const MORE_TOPICS = [
   { name:"Best Stand-Up Comedians", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Dave Chappelle"},{label:"Jerry Seinfeld"},{label:"Kevin Hart"},{label:"Ali Wong"},{label:"John Mulaney"}] },
   { name:"Best YouTubers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"MrBeast"},{label:"PewDiePie"},{label:"Markiplier"},{label:"Dude Perfect"},{label:"Emma Chamberlain"}] },
   { name:"Best Twitch Streamers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Ninja (streamer)"},{label:"Pokimane"},{label:"Shroud (streamer)"},{label:"xQc"},{label:"Valkyrae"}] },
-  { name:"Best Soccer Clubs", mood: "sports", provider:"wiki", items:[{label:"Real Madrid"},{label:"FC Barcelona"},{label:"Manchester United"},{label:"Bayern Munich"},{label:"Liverpool"}] },
+  { name:"Best Soccer Clubs", mood: "sports", provider:"wiki", items:[{label:"Real Madrid"},{label:"FC Barcelona"},{label:"Manchester United"},{label:"Bayern Munich"},{label:"Liverpool F.C."}] },
   { name:"Best NFL Teams (All-Time)", mood: "sports", provider:"wiki", items:[{label:"1985 Chicago Bears season", hints:{kind:"team"}},{label:"2007 New England Patriots season", hints:{kind:"team"}},{label:"1972 Miami Dolphins season", hints:{kind:"team"}},{label:"1990s Dallas Cowboys", hints:{kind:"team"}},{label:"2013 Seattle Seahawks season", hints:{kind:"team"}}] },
-  { name:"Best Olympic Sprinters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Usain Bolt"},{label:"Carl Lewis"},{label:"Michael Johnson"},{label:"Yohan Blake"},{label:"Justin Gatlin"}] },
+  { name:"Best Olympic Sprinters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Usain Bolt"},{label:"Carl Lewis"},{label:"Michael Johnson (sprinter)"},{label:"Yohan Blake"},{label:"Justin Gatlin"}] },
   { name:"Best Swimmers", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Michael Phelps"},{label:"Katie Ledecky"},{label:"Ian Thorpe"},{label:"Ryan Lochte"},{label:"Missy Franklin"}] },
   { name:"Best Chess Players", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Magnus Carlsen"},{label:"Garry Kasparov"},{label:"Bobby Fischer"},{label:"Anatoly Karpov"},{label:"Hikaru Nakamura"}] },
   { name:"Best Painters", mood: "people", provider:"wiki", mediaType:"person", items:[{label:"Leonardo da Vinci"},{label:"Vincent van Gogh"},{label:"Pablo Picasso"},{label:"Claude Monet"},{label:"Rembrandt"}] },
@@ -1048,3 +1051,165 @@ const MORE_TOPICS = [
 
 // Append to existing topics list
 window.TOPICS = (window.TOPICS || []).concat(MORE_TOPICS);
+// ————— Extra items for replay variety —————
+// Merged into each topic's pool (items ∪ itemPool ∪ these). Every visit deals
+// 5 from the pool, mixing a couple of familiar items with fresh ones. Labels
+// are exact Wikipedia article titles — the image pipeline pins each one to
+// its article, and anything it can't vet shows as a text card.
+const POOL_EXTRAS = {
+  "Jazz Legends": ["Charlie Parker","Thelonious Monk","Billie Holiday","Dizzy Gillespie","Charles Mingus","Herbie Hancock","Sarah Vaughan","Count Basie","Dave Brubeck","Chet Baker","Benny Goodman","Nina Simone","Art Blakey","Sonny Rollins","Bill Evans","Wynton Marsalis"],
+  "Classical Composers": ["Johannes Brahms","Antonio Vivaldi","Claude Debussy","Richard Wagner","Franz Schubert","George Frideric Handel","Joseph Haydn","Gustav Mahler","Igor Stravinsky","Sergei Rachmaninoff","Antonín Dvořák","Giuseppe Verdi","Franz Liszt","Felix Mendelssohn","Edvard Grieg","Maurice Ravel"],
+  "Breakfast Foods": ["Hash browns","Biscuits and gravy","Shakshouka","Avocado toast","Chilaquiles","Huevos rancheros","Crêpe","Full breakfast","Cinnamon roll","Quiche"],
+  "Cheeses": ["Stilton cheese","Gorgonzola","Halloumi","Ricotta","Pecorino Romano","Emmental cheese","Provolone","Havarti","Burrata","Monterey Jack","Comté cheese"],
+  "Beverages": ["Orange juice","Iced tea","Coconut water","Milkshake","Lassi","Agua fresca","Apple cider","Carbonated water","Hot toddy","Eggnog"],
+  "Big Cats": ["Snow leopard","Clouded leopard","Cougar","Eurasian lynx","Ocelot","Caracal","Serval","Bobcat","Fishing cat","Black panther","Canada lynx"],
+  "Dog Breeds": ["Golden Retriever","French Bulldog","Rottweiler","Dachshund","Siberian Husky","Border Collie","Shih Tzu","Pembroke Welsh Corgi","Great Dane","Australian Shepherd","Boxer (dog)","Chihuahua (dog)","Pomeranian dog","Dobermann","Bernese Mountain Dog","Cavalier King Charles Spaniel"],
+  "Cat Breeds": ["British Shorthair","Ragdoll","Scottish Fold","Abyssinian cat","Russian Blue","Norwegian Forest cat","Birman","Devon Rex","Exotic Shorthair","American Shorthair","Burmese cat","Savannah cat"],
+  "Birds": ["Peafowl","Hummingbird","Toucan","Bald eagle","Macaw","Kingfisher","Pelican","Atlantic puffin","European robin","Blue jay","Ostrich","Northern cardinal","Kiwi (bird)","Mute swan"],
+  "Sea Creatures": ["Jellyfish","Seahorse","Manta ray","Orca","Sea otter","Starfish","Sea urchin","Lobster","Blue whale","Great white shark","Humpback whale","Squid","Hammerhead shark","Walrus","Narwhal","Harbor seal"],
+  "Dinosaurs": ["Spinosaurus","Ankylosaurus","Allosaurus","Diplodocus","Parasaurolophus","Pteranodon","Iguanodon","Pachycephalosaurus","Carnotaurus","Giganotosaurus","Dilophosaurus","Archaeopteryx","Apatosaurus","Brontosaurus"],
+  "Insects": ["Firefly","Grasshopper","Mantis","Beetle","Cicada","Moth","Monarch butterfly","Phasmatodea","Cricket (insect)","Hercules beetle","Stag beetle","Bumblebee","Termite"],
+  "Bears": ["Sun bear","Sloth bear","Spectacled bear","Asian black bear","Kodiak bear"],
+  "Primates": ["Bonobo","Ring-tailed lemur","Capuchin monkey","Mandrill","Golden snub-nosed monkey","Proboscis monkey","Howler monkey","Spider monkey","Japanese macaque","Tarsier","Common marmoset","Slow loris","Squirrel monkey"],
+  "Horse Breeds": ["Appaloosa","American Quarter Horse","Shetland pony","Morgan horse","Tennessee Walking Horse","Andalusian horse","Lipizzan","Percheron","Shire horse","Icelandic horse","Akhal-Teke","American Paint Horse","Haflinger"],
+  "European Cities": ["Amsterdam","Prague","Vienna","Lisbon","Madrid","Venice","Florence","Budapest","Copenhagen","Athens","Dublin","Edinburgh","Stockholm","Dubrovnik","Munich","Seville"],
+  "US National Parks": ["Glacier National Park (U.S.)","Rocky Mountain National Park","Great Smoky Mountains National Park","Arches National Park","Olympic National Park","Grand Teton National Park","Bryce Canyon National Park","Joshua Tree National Park","Denali National Park and Preserve","Everglades National Park","Death Valley National Park","Sequoia National Park","Mount Rainier National Park","Shenandoah National Park","Crater Lake National Park"],
+  "World Landmarks": ["Colosseum","Petra","Christ the Redeemer (statue)","Sydney Opera House","Great Pyramid of Giza","Stonehenge","Angkor Wat","Big Ben","Golden Gate Bridge","Leaning Tower of Pisa","Sagrada Família","Burj Khalifa","Mount Rushmore","Acropolis of Athens","Chichen Itza","Forbidden City"],
+  "Beaches": ["Ipanema","Maya Bay","Anse Source d'Argent","Railay Beach","Manly Beach","Venice Beach","Miami Beach, Florida","Myrtle Beach, South Carolina","Hanauma Bay","Reynisfjara","Elafonisi","Cable Beach","Lanikai Beach","Siesta Key, Florida"],
+  "Mountains": ["Denali","Mont Blanc","Aconcagua","Mount Rainier","Kangchenjunga","Annapurna Massif","Table Mountain","Mount Olympus","Eiger","Ben Nevis","Mount Elbrus","Half Dome","Aoraki / Mount Cook","Monte Fitz Roy","Mount Vesuvius","Mount Kailash"],
+  "Islands": ["Bora Bora","Maldives","Fiji","Mauritius","Sicily","Crete","Tahiti","Galápagos Islands","Madagascar","Capri","Mallorca","Zanzibar","Bermuda","Palawan","Isle of Skye","Tasmania"],
+  "US Cities": ["San Francisco","Boston","New Orleans","Las Vegas","Washington, D.C.","Austin, Texas","Nashville, Tennessee","Denver","San Diego","Philadelphia","Portland, Oregon","Atlanta","Honolulu","Charleston, South Carolina","Savannah, Georgia"],
+  "Asian Cities": ["Shanghai","Beijing","Kyoto","Osaka","Taipei","Kuala Lumpur","Hanoi","Ho Chi Minh City","Mumbai","Delhi","Manila","Jakarta","Dubai","Istanbul","Busan","Kathmandu"],
+  "Castles": ["Château de Chambord","Prague Castle","Hohenzollern Castle","Eilean Donan","Conwy Castle","Malbork Castle","Château de Chenonceau","Warwick Castle","Peleș Castle","Matsumoto Castle","Osaka Castle","Bodiam Castle","Alcázar of Segovia","Predjama Castle","Castel Sant'Angelo"],
+  "Museums": ["Uffizi","Rijksmuseum","Museum of Modern Art","Vatican Museums","Musée d'Orsay","Tate Modern","National Gallery","Acropolis Museum","Guggenheim Museum Bilbao","Solomon R. Guggenheim Museum","Van Gogh Museum","Egyptian Museum","National Museum of Natural History","Art Institute of Chicago","Natural History Museum, London","Getty Center"],
+  "Tech Companies": ["Netflix","Nvidia","Tesla, Inc.","Samsung","Intel","IBM","Oracle Corporation","Adobe Inc.","Salesforce","Sony","OpenAI","Spotify","Uber","Airbnb","Cisco","Nintendo"],
+  "Smartphone Brands": ["Huawei","Motorola","Nokia","LG Electronics","Oppo","Vivo (technology company)","Asus","HTC","BlackBerry","Realme","Honor (brand)","Nothing (technology company)"],
+  "Camera Brands": ["Panasonic","Olympus Corporation","Pentax","Hasselblad","GoPro","Kodak","Polaroid Corporation","Sigma Corporation","Ricoh","DJI","Blackmagic Design","Red Digital Cinema","Minolta"],
+  "Car Brands": ["Tesla, Inc.","Audi","Porsche","Volkswagen","Chevrolet","Subaru","Hyundai Motor Company","Kia","Mazda","Lexus","Ferrari","Lamborghini","Jeep","Volvo Cars","Nissan","Land Rover"],
+  "Electric Cars": ["Tesla Model Y","Tesla Model S","Ford Mustang Mach-E","Porsche Taycan","Rivian R1T","Kia EV6","BMW i4","Lucid Air","Polestar 2","Audi e-tron GT","Ford F-150 Lightning","Mercedes-Benz EQS","Hyundai Ioniq 6","Tesla Cybertruck"],
+  "Game Consoles": ["PlayStation 2","Super Nintendo Entertainment System","Nintendo Entertainment System","Nintendo 64","Wii","Xbox 360","PlayStation 4","Sega Genesis","Game Boy","GameCube","Dreamcast","PlayStation (console)","Atari 2600","Nintendo DS","PlayStation Portable","Xbox One"],
+  "Programming Languages": ["Rust (programming language)","TypeScript","C (programming language)","C++","Swift (programming language)","Kotlin (programming language)","Ruby (programming language)","PHP","Haskell","Scala (programming language)","Lua (programming language)","Elixir (programming language)","R (programming language)","Julia (programming language)","Zig (programming language)"],
+  "JS Frameworks": ["jQuery","AngularJS","Ember.js","Backbone.js","Express.js","Node.js","Meteor (web framework)","Nuxt.js","Electron (software framework)","Deno (software)","Bun (software)"],
+  "Databases": ["Microsoft SQL Server","Oracle Database","Apache Cassandra","Elasticsearch","Firebase","Amazon DynamoDB","MariaDB","Neo4j","Apache CouchDB","IBM Db2","Microsoft Access","ClickHouse","InfluxDB","CockroachDB"],
+  "Cloud Providers": ["DigitalOcean","Heroku","Cloudflare","Linode","Vercel","Netlify","Alibaba Cloud","OVHcloud","Akamai Technologies","Rackspace Technology"],
+  "Board Games": ["Risk (game)","Cluedo","Pandemic (board game)","Carcassonne (board game)","Trivial Pursuit","The Game of Life","Stratego","Azul (board game)","Wingspan (board game)","Go (game)","Backgammon","Sorry! (game)","Battleship (game)","Connect Four","Mouse Trap (board game)","Jenga"],
+  "Card Games": ["Rummy","Spades (card game)","Gin rummy","Go Fish","Crazy Eights","Euchre","Cribbage","War (card game)","Old maid (card game)","Canasta","Baccarat","Texas hold 'em","Skip-Bo","Phase 10","Exploding Kittens"],
+  "Party Games": ["Twister (game)","Apples to Apples","Cards Against Humanity","Mafia (party game)","Never have I ever","Truth or dare","Two truths and a lie","The Jackbox Party Pack","Spoons (card game)","Musical chairs","Balderdash","Scattergories","Boggle"],
+  "Zelda Games": ["The Legend of Zelda (video game)","Zelda II: The Adventure of Link","The Legend of Zelda: A Link to the Past","The Legend of Zelda: Link's Awakening","The Legend of Zelda: Twilight Princess","The Legend of Zelda: Skyward Sword","The Legend of Zelda: The Minish Cap","The Legend of Zelda: Spirit Tracks","The Legend of Zelda: Phantom Hourglass","The Legend of Zelda: A Link Between Worlds","The Legend of Zelda: Echoes of Wisdom","The Legend of Zelda: Four Swords Adventures"],
+  "Coffee Drinks": ["Flat white","Cold brew coffee","Caffè macchiato","Cortado","Irish coffee","Affogato","Frappé coffee","Turkish coffee","Vietnamese iced coffee","Ristretto","Café au lait","Iced coffee","Dalgona coffee"],
+  "Tea Varieties": ["White tea","Matcha","Masala chai","Rooibos","Peppermint tea","Jasmine tea","Pu'er tea","Darjeeling tea","Assam tea","Hibiscus tea","Genmaicha","Lapsang souchong","English breakfast tea","Sencha"],
+  "Ice Cream Flavors": ["Rocky road ice cream","Pistachio ice cream","Butter pecan","Neapolitan ice cream","Rum and raisin","Moose Tracks","Tutti frutti","Spumoni","Stracciatella (ice cream)","Green tea ice cream"],
+  "Hobbies": ["Photography","Knitting","Fishing","Hiking","Birdwatching","Woodworking","Pottery","Baking","Camping","Rock climbing","Surfing","Origami","Jigsaw puzzle","Scrapbooking"],
+  "School Subjects": ["Physics","Chemistry","Biology","Geography","Music","Physical education","Computer science","Economics","Psychology","Philosophy","Algebra","Geometry","Astronomy"],
+  "Space Missions": ["Apollo 13","Sputnik 1","Vostok 1","Cassini–Huygens","New Horizons","Perseverance (rover)","Voyager 2","International Space Station","Rosetta (spacecraft)","Juno (spacecraft)","Kepler space telescope","Mars Pathfinder","Pioneer 10","Artemis I","Chandrayaan-3"],
+  "Constellations": ["Andromeda (constellation)","Pegasus (constellation)","Gemini (constellation)","Taurus (constellation)","Sagittarius (constellation)","Lyra","Cygnus (constellation)","Ursa Minor","Crux","Aquarius (constellation)","Canis Major","Draco (constellation)","Perseus (constellation)","Centaurus","Aries (constellation)"],
+  "Planets": ["Saturn","Uranus","Neptune","Pluto","Ceres (dwarf planet)","Eris (dwarf planet)","Haumea","Makemake"],
+  "Best Types of Pizza": ["Pizza al taglio","Pizza bianca","Pizza quattro stagioni","Sfincione"],
+  "Best Burger Styles": ["Butter burger","Steamed cheeseburger","Teriyaki burger","Loco moco","Slugburger","Pastrami burger"],
+  "Best Sandwiches": ["Croque monsieur","Pastrami on rye","Lobster roll","French dip","Sloppy joe","Submarine sandwich","Gyros","Torta","Peanut butter and jelly sandwich","Italian beef","Chivito (sandwich)","Katsu sando"],
+  "Best Breakfast Cereals": ["Corn Flakes","Special K","Raisin Bran","Trix (cereal)","Honey Bunches of Oats","Golden Grahams","Cookie Crisp","Count Chocula","Reese's Puffs","Pebbles cereal","Kix (cereal)","Wheaties","Corn Pops","Frosted Mini-Wheats"],
+  "Best Ice Cream Flavors": ["Rum and raisin","Moose Tracks","Tutti frutti","Spumoni","Stracciatella (ice cream)","Green tea ice cream","Butter pecan"],
+  "Best Sodas": ["Canada Dry","A&W Root Beer","Barq's","Crush (soft drink)","Sunkist (soft drink)","Big Red (drink)","Cheerwine","Irn-Bru","Jarritos","RC Cola","Fresca","Squirt (soft drink)","Vernors","Mello Yello","Diet Coke","Inca Kola","Ramune"],
+  "Best Coffee Drinks": ["Cortado","Frappé coffee","Turkish coffee","Vietnamese iced coffee","Ristretto","Café au lait","Iced coffee","Dalgona coffee","Café de olla"],
+  "Best Teas": ["Jasmine tea","Pu'er tea","Darjeeling tea","Assam tea","Hibiscus tea","Genmaicha","Lapsang souchong","English breakfast tea","Sencha","Bubble tea","Thai tea","Sweet tea"],
+  "Best Chocolate Candy": ["Hershey bar","Almond Joy","Kinder Bueno","Nestlé Crunch","Baby Ruth","Hershey's Kisses","Cadbury Dairy Milk","Mars (chocolate bar)","Bounty (chocolate bar)","Rolo","Aero (chocolate)","Galaxy (chocolate)","Milka","Heath bar","Caramello","100 Grand Bar","York Peppermint Pattie"],
+  "Best Potato Chip Flavors": ["Ketchup chips","Prawn cocktail crisps"],
+  "Best Hot Sauces": ["Texas Pete","Peri-peri","Chili oil","Skhug","Salsa verde","Nam phrik"],
+  "Best Sushi Rolls": ["Philadelphia roll","Dynamite roll","Oshizushi"],
+  "Best Cheeses": ["Stilton cheese","Gorgonzola","Halloumi","Ricotta","Pecorino Romano","Emmental cheese","Provolone","Havarti","Burrata","Monterey Jack","Comté cheese","Taleggio cheese"],
+  "Best Salads": ["Chef salad","Potato salad","Wedge salad","Som tam","Shirazi salad","Taco salad","Olivier salad","Larb","Pasta salad","Chicken salad"],
+  "Best BBQ Meats": ["Char siu","Bulgogi","Galbi","Asado","Churrasco","Shish kebab","Yakitori","Suya","Tandoori chicken","Satay"],
+  "Best Fast-Food Chains (US)": ["KFC","Subway (restaurant)","Arby's","Sonic Drive-In","Jack in the Box","Culver's","Carl's Jr.","Hardee's","Del Taco","Raising Cane's Chicken Fingers","Wingstop","Panda Express","Chipotle Mexican Grill","Dairy Queen","White Castle (restaurant)","Jersey Mike's Subs"],
+  "Best Breakfast Items": ["Hash browns","Biscuits and gravy","Shakshouka","Avocado toast","Chilaquiles","Huevos rancheros","Crêpe","Full breakfast","Cinnamon roll","Quiche","Bacon"],
+  "Best Pizza Regional Styles": ["California-style pizza","Pizza al taglio","Bar pizza"],
+  "Best Cookies": ["Fortune cookie","Oreo","Black and white cookie","Anzac biscuit","Thumbprint cookie","Madeleine (cake)","Florentine biscuit","Speculaas","Alfajor","Pizzelle","Rugelach"],
+  "Best Taco Fillings": ["Suadero","Cochinita pibil","Chicharrón","Picadillo"],
+  "Best Cities to Visit": ["Barcelona","Amsterdam","Istanbul","Kyoto","Sydney","Cape Town","Rio de Janeiro","Bangkok","Lisbon","Prague","Singapore","Dubai","Vienna","Buenos Aires","Marrakesh","Hong Kong","Venice","Mexico City"],
+  "Best US National Parks": ["Glacier National Park (U.S.)","Rocky Mountain National Park","Great Smoky Mountains National Park","Arches National Park","Olympic National Park","Grand Teton National Park","Bryce Canyon National Park","Joshua Tree National Park","Denali National Park and Preserve","Everglades National Park","Death Valley National Park","Sequoia National Park","Acadia National Park","Crater Lake National Park"],
+  "Best World Landmarks": ["Colosseum","Petra","Christ the Redeemer (statue)","Sydney Opera House","Great Pyramid of Giza","Stonehenge","Angkor Wat","Big Ben","Golden Gate Bridge","Leaning Tower of Pisa","Sagrada Família","Burj Khalifa","Mount Rushmore","Acropolis of Athens","Chichen Itza","Forbidden City"],
+  "Best Beaches": ["Bondi Beach","Waikiki","Whitehaven Beach","Navagio","Copacabana, Rio de Janeiro","Maya Bay","Anse Source d'Argent","Railay Beach","Tulum","Cancún","Seychelles","Turks and Caicos Islands","Cabo San Lucas","Fiji","Hanauma Bay","Reynisfjara"],
+  "Best Ski Destinations": ["Vail, Colorado","Park City, Utah","Jackson Hole Mountain Resort","Verbier","Val d'Isère","Courchevel","Niseko","Kitzbühel","St. Anton am Arlberg","Cortina d'Ampezzo","Lake Louise Ski Resort","Telluride, Colorado","Big Sky Resort","Mammoth Mountain"],
+  "Best Theme Parks": ["Magic Kingdom","Epcot","Disneyland Paris","Tokyo Disneyland","Universal Studios Hollywood","Cedar Point","Six Flags Magic Mountain","Busch Gardens Tampa Bay","Tivoli Gardens","Efteling","PortAventura World","Knott's Berry Farm","Dollywood","Hong Kong Disneyland","Shanghai Disneyland","SeaWorld Orlando"],
+  "Best Fantasy Book Series": ["The Chronicles of Narnia","Discworld","The Kingkiller Chronicle","Mistborn","His Dark Materials","Percy Jackson & the Olympians","Earthsea","The Dark Tower (series)","The First Law","Malazan Book of the Fallen","The Inheritance Cycle","The Belgariad","The Dresden Files","The Sword of Truth","A Court of Thorns and Roses"],
+  "Best Sci-Fi Authors": ["Ray Bradbury","Robert A. Heinlein","H. G. Wells","Jules Verne","William Gibson","Octavia E. Butler","Kurt Vonnegut","Douglas Adams","Neal Stephenson","Liu Cixin","Iain M. Banks","Mary Shelley","Ted Chiang","Andy Weir","N. K. Jemisin","Stanisław Lem"],
+  "Best Comic Book Heroes": ["Captain America","Iron Man","Flash (comics)","Thor (Marvel Comics)","Hulk","Black Panther (character)","Aquaman","Green Lantern","Daredevil (Marvel Comics character)","Deadpool","Storm (Marvel Comics)","Doctor Strange","Green Arrow","Hellboy","Supergirl"],
+  "Best Comic Book Villains": ["Lex Luthor","Doctor Doom","Darkseid","Harley Quinn","Venom (character)","Red Skull","Galactus","Ultron","Two-Face","Penguin (character)","Catwoman","Riddler","Kingpin (character)","Bane (DC Comics)","Sinestro","Brainiac (character)","Doctor Octopus"],
+  "Best 90s Sitcom Characters": ["Cosmo Kramer","Joey Tribbiani","Rachel Green","Ross Geller","Monica Geller","Phoebe Buffay","Steve Urkel","Carlton Banks","Al Bundy","Niles Crane","Roseanne Conner","Cory Matthews","Fran Fine"],
+  "Best 2000s TV Antiheroes": ["Vic Mackey","Al Swearengen","Gregory House","Jack Bauer","Nucky Thompson","Jax Teller","Saul Goodman","Stringer Bell","Gaius Baltar","Raylan Givens","Hank Moody"],
+  "Best Streaming Devices": ["Amazon Fire TV","TiVo","Slingbox","Google TV Streamer"],
+  "Best Smartphones of the 2010s": ["iPhone 4","iPhone 5","iPhone 6","Samsung Galaxy S III","Samsung Galaxy S7","Samsung Galaxy Note 4","Nexus 5","HTC One (M7)","OnePlus One","Nokia Lumia 920","Pixel (1st generation)"],
+  "Best Laptops for Creators": ["MacBook Air","ThinkPad X1 Carbon","Surface Book","Surface Pro","Framework Laptop","LG Gram","HP Envy","Asus ZenBook"],
+  "Best Headphones (Consumer)": ["AirPods Max","AirPods","Sony WH-1000XM4","Galaxy Buds"],
+  "Best Cameras": ["Nikon D850","Fujifilm X100V","Canon EOS R6","Nikon Z9","Panasonic Lumix DC-GH5","Canon EOS 5D Mark IV"],
+  "Best Car Brands": ["Audi","Porsche","Volkswagen","Chevrolet","Subaru","Hyundai Motor Company","Kia","Mazda","Lexus","Ferrari","Lamborghini","Jeep","Volvo Cars","Nissan","Ford Motor Company","Land Rover"],
+  "Best Electric Cars": ["Tesla Model Y","Tesla Model S","Rivian R1T","Kia EV6","BMW i4","Lucid Air","Polestar 2","Audi e-tron GT","Ford F-150 Lightning","Mercedes-Benz EQS","Hyundai Ioniq 6","Tesla Cybertruck","Chevrolet Bolt","Volkswagen ID.4"],
+  "Best Classic Cars": ["Ford Model T","Chevrolet Corvette (C2)","AC Cobra","Mercedes-Benz 300 SL","Ferrari 250 GTO","Aston Martin DB5","Lamborghini Miura","Chevrolet Bel Air","Nissan S30","Volkswagen Type 2","Citroën DS","Toyota 2000GT","BMW 507","Ford GT40","Plymouth Barracuda"],
+  "Best Streaming Services": ["Peacock (streaming service)","Paramount+","YouTube TV","Crunchyroll","Discovery+","Tubi","Pluto TV","Mubi","The Criterion Channel","Shudder (streaming service)","BritBox","Sling TV"],
+  "Best Productivity Apps": ["Microsoft OneNote","Google Keep","Slack (software)","Airtable","Monday.com","Obsidian (software)","Microsoft To Do","Jira (software)","Google Docs","Microsoft Teams"],
+  "Best Web Browsers": ["Opera (web browser)","Vivaldi (web browser)","Arc (web browser)","Internet Explorer","Netscape Navigator","Samsung Internet","Chromium (web browser)","Mosaic (web browser)","Waterfox"],
+  "Best Programming Languages": ["Rust (programming language)","TypeScript","C (programming language)","C++","Swift (programming language)","Kotlin (programming language)","Ruby (programming language)","PHP","Haskell","Scala (programming language)","Lua (programming language)","Elixir (programming language)","R (programming language)","Julia (programming language)"],
+  "Best Cloud Providers": ["IBM Cloud","Oracle Cloud","Cloudflare","Linode","Vercel","Netlify","Alibaba Cloud","OVHcloud","Akamai Technologies","Rackspace Technology"],
+  "Best Web Frameworks": ["Django (web framework)","Ruby on Rails","Laravel","Flask (web framework)","Spring Framework","ASP.NET Core","Express.js","Phoenix (web framework)","jQuery","AngularJS","Ember.js","Nuxt.js"],
+  "Best AI Tools (Consumer)": ["Gemini (chatbot)","Microsoft Copilot","DALL-E","GitHub Copilot","Grok (chatbot)","Character.ai","ElevenLabs","DeepSeek","Suno AI","Runway (company)"],
+  "Best Operating Systems": ["Windows XP","Windows 7","Windows 10","Debian","Fedora Linux","ChromeOS","Arch Linux","Linux Mint","FreeBSD","Mac OS X Snow Leopard","Windows 95","HarmonyOS","MS-DOS","BeOS"],
+  "Best Smartwatches": ["Apple Watch Ultra","Pebble (watch)","Samsung Galaxy Gear","Moto 360"],
+  "Best Fitness Activities": ["Pilates","CrossFit","Rowing (sport)","Boxing","Rock climbing","Hiking","Zumba","Tai chi","Kickboxing","Indoor cycling","High-intensity interval training","Calisthenics","Skipping rope","Martial arts"],
+  "Best Hikes in the World": ["Pacific Crest Trail","Camino de Santiago","Milford Track","Torres del Paine National Park","Everest base camps","Kalalau Trail","Angels Landing","West Highland Way","Overland Track","John Muir Trail","Annapurna Circuit","Haute Route"],
+  "Best Museums": ["Rijksmuseum","Museum of Modern Art","Vatican Museums","Musée d'Orsay","Tate Modern","National Gallery","Acropolis Museum","Guggenheim Museum Bilbao","Solomon R. Guggenheim Museum","Van Gogh Museum","Egyptian Museum","Hermitage Museum","Art Institute of Chicago","Natural History Museum, London","Getty Center"],
+  "Best Universities": ["Princeton University","Yale University","California Institute of Technology","Columbia University","University of Chicago","ETH Zurich","Imperial College London","University of Tokyo","University of California, Berkeley","University of Pennsylvania","Cornell University","University of Toronto","Tsinghua University","National University of Singapore","Johns Hopkins University","University College London"],
+  "Best 20th-Century Inventions": ["Personal computer","Transistor","Laser","Microwave oven","Air conditioning","Polio vaccine","Mobile phone","Global Positioning System","Integrated circuit","Ballpoint pen","Jet engine","Credit card","World Wide Web"],
+  "Best 21st-Century Inventions": ["Bitcoin","Blockchain","MRNA vaccine","Large language model","Self-driving car","Smartwatch","Reusable launch vehicle","Graphene","Wikipedia","Cultured meat","E-reader","Smart speaker"],
+  "Best Startups of the 2010s": [
+    {label:"Pinterest", hints:{kind:"brand"}},{label:"Lyft", hints:{kind:"brand"}},{label:"DoorDash", hints:{kind:"brand"}},
+    {label:"Instacart", hints:{kind:"brand"}},{label:"Robinhood Markets", hints:{kind:"brand"}},{label:"Discord", hints:{kind:"brand"}},
+    {label:"WeWork", hints:{kind:"brand"}},{label:"Coinbase", hints:{kind:"brand"}},{label:"Peloton Interactive", hints:{kind:"brand"}},
+    {label:"Canva", hints:{kind:"brand"}},{label:"Figma", hints:{kind:"brand"}},{label:"Revolut", hints:{kind:"brand"}},
+    {label:"ByteDance", hints:{kind:"brand"}},{label:"Twitch (service)", hints:{kind:"brand"}}
+  ],
+  "Best Social Networks": ["YouTube","Snapchat","LinkedIn","Pinterest","Tumblr","Threads (social network)","Bluesky","Discord","WhatsApp","Mastodon (social network)","BeReal","Myspace","Vine (service)","WeChat","Telegram (software)"],
+  "Best Podcasts": ["Stuff You Should Know","Dan Carlin's Hardcore History","Call Her Daddy","My Favorite Murder","Freakonomics Radio","SmartLess","Conan O'Brien Needs a Friend","Armchair Expert","Planet Money","Crime Junkie","Huberman Lab","WTF with Marc Maron","99% Invisible","Hidden Brain"],
+  "Best Late-Night Hosts": ["David Letterman","Johnny Carson","Conan O'Brien","Jay Leno","Craig Ferguson","Jon Stewart","James Corden","Trevor Noah","Arsenio Hall","Chelsea Handler","Samantha Bee","Taylor Tomlinson","Graham Norton"],
+  "Best Stand-Up Comedians": ["Richard Pryor","George Carlin","Eddie Murphy","Chris Rock","Bill Burr","Robin Williams","Joan Rivers","Ricky Gervais","Tiffany Haddish","Sarah Silverman","Steve Martin","Mitch Hedberg","Jim Gaffigan","Nate Bargatze","Bo Burnham","Trevor Noah"],
+  "Best YouTubers": ["Marques Brownlee","Casey Neistat","Lilly Singh","Jacksepticeye","Mark Rober","Linus Sebastian","IShowSpeed","Zach King","Michelle Phan","KSI","Ludwig Ahgren","Smosh","Rhett & Link"],
+  "Best Twitch Streamers": ["Kai Cenat","Ludwig Ahgren","Asmongold","Tfue","Summit1g","TimTheTatman","DrLupo","Hasan Piker","Ibai Llanos","Dr Disrespect","Amouranth","AuronPlay"],
+  "Best Soccer Clubs": ["Juventus FC","AC Milan","Inter Milan","Paris Saint-Germain FC","Chelsea F.C.","Arsenal F.C.","Manchester City F.C.","Borussia Dortmund","Atlético Madrid","AFC Ajax","Celtic F.C.","Boca Juniors","Club América","Tottenham Hotspur F.C.","S.L. Benfica","FC Porto"],
+  "Best NFL Teams (All-Time)": [
+    "1989 San Francisco 49ers season","1978 Pittsburgh Steelers season","1999 St. Louis Rams season","2000 Baltimore Ravens season",
+    "1991 Washington Redskins season","1962 Green Bay Packers season","1996 Green Bay Packers season","1984 San Francisco 49ers season",
+    "2016 New England Patriots season","1992 Dallas Cowboys season","1986 New York Giants season","1975 Pittsburgh Steelers season",
+    "2019 Kansas City Chiefs season","1998 Denver Broncos season","2002 Tampa Bay Buccaneers season"
+  ].map(label => ({ label, hints: { kind: "team" } })),
+  "Best Olympic Sprinters": ["Florence Griffith Joyner","Shelly-Ann Fraser-Pryce","Elaine Thompson-Herah","Maurice Greene (sprinter)","Asafa Powell","Allyson Felix","Jesse Owens","Noah Lyles","Donovan Bailey","Linford Christie","Wayde van Niekerk","Sha'Carri Richardson","Tyson Gay","Gail Devers","Fred Kerley"],
+  "Best Swimmers": ["Mark Spitz","Caeleb Dressel","Adam Peaty","Ariarne Titmus","Summer McIntosh","Dara Torres","Natalie Coughlin","Sarah Sjöström","Léon Marchand","Grant Hackett","Janet Evans","Matt Biondi","Johnny Weissmuller","Simone Manuel","Kosuke Kitajima"],
+  "Best Chess Players": ["José Raúl Capablanca","Mikhail Tal","Viswanathan Anand","Judit Polgár","Paul Morphy","Emanuel Lasker","Fabiano Caruana","Vladimir Kramnik","Boris Spassky","Mikhail Botvinnik","Alexander Alekhine","Ding Liren","Gukesh Dommaraju","Hou Yifan","Wilhelm Steinitz","Tigran Petrosian"],
+  "Best Painters": ["Michelangelo","Raphael","Frida Kahlo","Salvador Dalí","Johannes Vermeer","Edvard Munch","Georgia O'Keeffe","Andy Warhol","Jackson Pollock","Henri Matisse","Gustav Klimt","Caravaggio","Paul Cézanne","J. M. W. Turner","Diego Velázquez","Francisco Goya","Sandro Botticelli","Edward Hopper"],
+  "Best Architects": ["Ludwig Mies van der Rohe","Frank Gehry","Norman Foster","Renzo Piano","Tadao Ando","Oscar Niemeyer","Walter Gropius","Louis Kahn","Rem Koolhaas","Bjarke Ingels","Christopher Wren","Andrea Palladio","Filippo Brunelleschi","Kengo Kuma","Santiago Calatrava","Eero Saarinen"],
+  "Best Photographers": ["Dorothea Lange","Richard Avedon","Robert Capa","Irving Penn","Cindy Sherman","Sebastião Salgado","Vivian Maier","Helmut Newton","Man Ray","Alfred Stieglitz","Robert Mapplethorpe","Yousuf Karsh","Gordon Parks","Nan Goldin","Walker Evans"],
+  "Best Fashion Designers": ["Christian Dior","Yves Saint Laurent (designer)","Karl Lagerfeld","Ralph Lauren","Calvin Klein (fashion designer)","Tom Ford","Vivienne Westwood","Valentino Garavani","Miuccia Prada","Donatella Versace","Hubert de Givenchy","Virgil Abloh","Stella McCartney","Donna Karan","Diane von Fürstenberg","Cristóbal Balenciaga","Jean Paul Gaultier"],
+  "Best Watch Brands": ["Breitling SA","IWC Schaffhausen","Jaeger-LeCoultre","Vacheron Constantin","Hublot","Panerai","Seiko","Grand Seiko","Longines","Tissot","Swatch","Casio","Citizen Watch","Zenith (watchmaker)","A. Lange & Söhne","Breguet (brand)"],
+  "Best Beer Styles": ["Porter (beer)","Pale ale","Saison","Bock","Hefeweizen","Sour beer","Amber ale","Brown ale","Tripel","Dubbel","Gose","Kölsch (beer)","Märzen","Barley wine","Lambic","Witbier","Doppelbock"],
+  "Best Cocktails": ["Manhattan (cocktail)","Daiquiri","Moscow mule","Whiskey sour","Piña colada","Cosmopolitan (cocktail)","Mai Tai","Spritz (cocktail)","Bloody Mary (cocktail)","Espresso martini","Paloma (cocktail)","Sazerac","Mint julep","Gin and tonic","Tom Collins","French 75 (cocktail)","Long Island iced tea","Caipirinha","Sidecar (cocktail)"],
+  "Best Wine Varieties": ["Syrah","Riesling","Malbec","Zinfandel","Pinot gris","Sangiovese","Tempranillo","Chenin blanc","Grenache","Nebbiolo","Gewürztraminer","Muscat (grape)","Cabernet Franc","Viognier","Barbera","Champagne","Prosecco"],
+  "Best Winter Destinations": ["Banff, Alberta","Tromsø","Salzburg","Prague","Hokkaido","Lake Tahoe","Aspen, Colorado","Rovaniemi","Zermatt","Strasbourg","Harbin","Copenhagen","Edinburgh","St. Moritz","Lake Bled"],
+  "Best City Skylines": ["Tokyo","Chicago","Toronto","Seattle","Sydney","London","Kuala Lumpur","Shenzhen","Doha","Panama City","Frankfurt","Melbourne","Taipei","Seoul","Los Angeles","Bangkok"],
+  "Best Stadiums": ["Santiago Bernabéu Stadium","Old Trafford","Anfield","Lambeau Field","Fenway Park","Wrigley Field","Allianz Arena","Westfalenstadion","Rose Bowl (stadium)","Melbourne Cricket Ground","AT&T Stadium","SoFi Stadium","Estadio Azteca","San Siro","Michigan Stadium","Tottenham Hotspur Stadium"],
+  "Best Space Missions": ["Apollo 13","Sputnik 1","Vostok 1","Cassini–Huygens","New Horizons","Perseverance (rover)","Voyager 2","International Space Station","Rosetta (spacecraft)","Juno (spacecraft)","Kepler space telescope","Mars Pathfinder","Pioneer 10","Artemis I","Chandrayaan-3"],
+  "Best Code Editors": ["Emacs","Notepad++","Neovim","PyCharm","Xcode","Eclipse (software)","Visual Studio","Android Studio","GNU nano","BBEdit","TextMate","NetBeans","Brackets (text editor)"],
+  "Best Productivity Methods": ["Kanban (development)","Bullet journal","Pareto principle","SMART criteria","Zettelkasten","Objectives and key results","Parkinson's law","Mind map","Kaizen","Timeboxing"],
+  "Best Dog Breeds": ["Bulldog","Beagle","Rottweiler","Dachshund","Siberian Husky","Border Collie","Shih Tzu","Pembroke Welsh Corgi","Great Dane","Australian Shepherd","Boxer (dog)","Chihuahua (dog)","Pomeranian dog","Dobermann","Bernese Mountain Dog","Cavalier King Charles Spaniel"],
+  "Best Cat Breeds": ["Bengal cat","Ragdoll","Scottish Fold","Abyssinian cat","Russian Blue","Norwegian Forest cat","Birman","Devon Rex","Exotic Shorthair","American Shorthair","Burmese cat","Savannah cat"],
+  "Best Wildlife Animals": ["Cheetah","Gorilla","Polar bear","Zebra","Hippopotamus","Rhinoceros","Kangaroo","Koala","Snow leopard","Wolf","Orangutan","Red fox","Bald eagle","Jaguar","Leopard","Sloth","Red panda","Okapi"],
+  "Best Mountains": ["Mont Blanc","Aconcagua","Mount Rainier","Kangchenjunga","Annapurna Massif","Table Mountain","Mount Olympus","Eiger","Ben Nevis","Mount Elbrus","Half Dome","Mount Fuji","Aoraki / Mount Cook","Monte Fitz Roy","Mount Vesuvius","Mount Kailash"],
+  "Best Rivers": ["River Thames","Rhine","Ganges","Mekong","Colorado River","Seine","Volga","Congo River","Zambezi","Rio Grande","Hudson River","Euphrates","Yellow River","Columbia River","Tagus","Murray River"],
+  "Best Islands": ["Bora Bora","Maldives","Fiji","Mauritius","Sicily","Crete","Tahiti","Galápagos Islands","Madagascar","Capri","Mallorca","Zanzibar","Bermuda","Palawan","Isle of Skye","Tasmania"],
+  "Best Languages to Learn": ["Italian language","Portuguese language","Korean language","Arabic","Russian language","Hindi","Swahili language","Dutch language","Greek language","Turkish language","American Sign Language","Latin","Vietnamese language","Hebrew language","Swedish language"]
+};
+
+window.TOPICS.forEach(topic => {
+  const extras = POOL_EXTRAS[topic.name];
+  if (!extras) return;
+  const seen = new Set();
+  topic.itemPool = [...(topic.items || []), ...(topic.itemPool || []),
+    ...extras.map(x => (typeof x === 'string' ? { label: x } : x))]
+    .filter(it => it && it.label && !seen.has(it.label) && seen.add(it.label));
+});
