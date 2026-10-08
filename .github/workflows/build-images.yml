@@ -50,6 +50,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Optional repo variable capping vision checks per run (0 = no cap).
           VERIFY_MAX_CALLS: ${{ vars.VERIFY_MAX_CALLS || '0' }}
+          # Stop starting new items after this many minutes and commit what's
+          # done (the job timeout below would otherwise discard everything);
+          # re-run the workflow to continue.
+          BUILD_TIME_BUDGET_MIN: "150"
         run: node tools/build-images/build.js ${{ inputs.force == true && '--force' || '' }}
 
       - name: Commit and push manifest

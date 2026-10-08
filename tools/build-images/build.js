@@ -26,6 +26,8 @@ import { isBlockedWikiFile } from './lib/sources/wikimedia.js';
 import { loadJson, writeManifest, writeImagesJs, summarize, SHIPPABLE } from './lib/manifest.js';
 import { verifyEnabled, verifyImage, verifyKey, verifyStatus, isMatch } from './lib/verify.js';
 
+const BUILD_START = Date.now();
+
 // BR_ROOT override exists for the offline test harness (test/run-tests.sh).
 const ROOT = process.env.BR_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const MANIFEST_FILE = path.join(ROOT, 'images.manifest.json');
@@ -33,7 +35,10 @@ const IMAGES_JS_FILE = path.join(ROOT, 'images.js');
 const OVERRIDES_FILE = path.join(ROOT, 'images.overrides.json');
 
 function parseArgs(argv) {
-  const args = { concurrency: 4, force: false, revalidateOnly: false, topic: null, label: null, limit: 0 };
+  const args = {
+    concurrency: 4, force: false, revalidateOnly: false, topic: null, label: null, limit: 0,
+    timeBudgetMin: parseFloat(process.env.BUILD_TIME_BUDGET_MIN || '0') || 0
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force') args.force = true;
@@ -42,6 +47,7 @@ function parseArgs(argv) {
     else if (a === '--label') args.label = argv[++i] || '';
     else if (a === '--concurrency') args.concurrency = Math.max(1, parseInt(argv[++i], 10) || 4);
     else if (a === '--limit') args.limit = parseInt(argv[++i], 10) || 0;
+    else if (a === '--time-budget') args.timeBudgetMin = parseFloat(argv[++i]) || 0;
     else { console.error(`Unknown argument: ${a}`); process.exit(2); }
   }
   return args;
@@ -242,6 +248,18 @@ async function applyOverride(key, ov, entry, unit, keys, log) {
   return entry;
 }
 
+// Whether a unit has real work pending (vs. a link-rot check). Used to put
+// that work first, so a time-budgeted run spends its budget where it counts.
+function needsWork(unit, existing, overrides) {
+  if (!existing || overrides[unit.key]) return true;
+  if ((existing.rules || 1) < RULES_VERSION || existing.category !== unit.category) return true;
+  if (verifyEnabled()) {
+    if (existing.confidence === 'auto' && existing.verify?.key !== verifyKey(unit, existing.url)) return true;
+    if (existing.confidence === 'review' && (existing.gate !== 'vision' || existing.reviewReason === 'verify-unavailable')) return true;
+  }
+  return false;
+}
+
 async function processUnit(unit, ctx) {
   const { manifest, overrides, keys, args, log } = ctx;
   const key = unit.key;
@@ -362,10 +380,22 @@ async function main() {
   };
 
   const ctx = { manifest, overrides, keys, args, log };
-  const queue = units.slice();
+  // Pending work first; a time budget (CI job limits) stops dequeuing once
+  // spent — everything finished is still written, and the next run picks up
+  // where this one stopped.
+  const pending = units.filter(u => needsWork(u, manifest[u.key], overrides));
+  const queue = [...pending, ...units.filter(u => !pending.includes(u))];
+  const budgetMs = args.timeBudgetMin > 0 ? args.timeBudgetMin * 60000 : 0;
+  let deferred = 0;
+  if (budgetMs) console.log(`Time budget: ${args.timeBudgetMin} min; ${pending.length} units have pending work.`);
   const results = new Map();
   await Promise.all(Array.from({ length: args.concurrency }, async () => {
     while (queue.length) {
+      if (budgetMs && Date.now() - BUILD_START > budgetMs) {
+        deferred += queue.length;
+        queue.length = 0;
+        break;
+      }
       const unit = queue.shift();
       try {
         const entry = await processUnit(unit, ctx);
@@ -405,6 +435,9 @@ async function main() {
   const verified = Object.values(manifest).filter(e => SHIPPABLE.has(e.confidence) && e.verify && isMatch(e.verify)).length;
   console.log(`vision gate: ${vEnd.calls} checks this run; ${verified} shipped images carry a match verdict` +
     (vEnd.disabledReason ? ` (disabled mid-run: ${vEnd.disabledReason})` : ''));
+  if (deferred) {
+    console.log(`\nTime budget reached: ${deferred} units deferred to the next run (re-run the workflow to continue).`);
+  }
   console.log(`\nimages.js: ${shipped} entries shipped → app shows text for the rest.`);
   console.log('Review pending picks in tools/review.html, save decisions to images.overrides.json, and re-run.');
 }

@@ -89,4 +89,10 @@ approved the old image — otherwise it is **demoted to review**. Review
 entries wait for a human, except that they get one retry when the vision
 gate first becomes available. Rejected entries stay rejected.
 
+Time budget: CI sets `BUILD_TIME_BUDGET_MIN=150` (or pass `--time-budget N`).
+Items with pending work go first; once the budget is spent the build stops
+starting new items, writes everything finished, and logs how many were
+deferred — re-run the workflow to continue. (A first vision-gate pass over
+the whole catalog typically takes more than one run.)
+
 Offline test suite (mocked network): `bash test/run-tests.sh`

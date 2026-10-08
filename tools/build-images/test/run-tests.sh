@@ -34,6 +34,19 @@ check() { # check <description> <node -e expression that must print true>
   if [[ "$got" == "true" ]]; then echo "PASS: $desc"; else echo "FAIL: $desc"; exit 1; fi
 }
 
+echo "=== Run 0: an exhausted time budget still writes outputs and exits cleanly ==="
+WORK0="$(mktemp -d)"
+cp test/fixtures/topics.js test/fixtures/config.js "$WORK0/"
+echo '{}' > "$WORK0/images.overrides.json"
+if env -u ANTHROPIC_API_KEY -u ANTHROPIC_BASE_URL BR_ROOT="$WORK0" BUILD_TIME_BUDGET_MIN=0.00001 \
+     node --import ./test/mock-fetch.mjs build.js > "$WORK0/run0.log" 2>&1 \
+   && grep -q "units deferred to the next run" "$WORK0/run0.log" && [[ -f "$WORK0/images.js" ]]; then
+  echo "PASS: budgeted run deferred work, wrote outputs, exited 0"
+else
+  echo "FAIL: budgeted run"; tail -20 "$WORK0/run0.log"; rm -rf "$WORK0"; exit 1
+fi
+rm -rf "$WORK0"
+
 echo "=== Run 1: fresh build ==="
 run_build
 
