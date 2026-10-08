@@ -2,127 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>FIRESIDE Blind Rankings</title>
+  <meta name="description" content="Rank five things blind — you only see the next one after you've placed this one." />
   <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#141218" />
+  <meta name="theme-color" content="#120d0b" />
 
-  <!-- Fonts: Inter for MD3 feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Preconnects to image/API CDNs -->
+  <!-- Image CDNs used by the vetted manifest (images.js) -->
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
-  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
-  <link rel="preconnect" href="https://en.wikipedia.org" crossorigin>
   <link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
   <link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
-  <link rel="preconnect" href="https://api.tvmaze.com" crossorigin>
-  <link rel="preconnect" href="https://itunes.apple.com" crossorigin>
-  <link rel="preconnect" href="https://pixabay.com" crossorigin>
-  <link rel="preconnect" href="https://api.openverse.org" crossorigin>
-  <link rel="preconnect" href="https://api.pexels.com" crossorigin>
-  <link rel="preconnect" href="https://api.unsplash.com" crossorigin>
+  <link rel="preconnect" href="https://assets.fanart.tv" crossorigin>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="app-header">
-    <div class="container">
-      <span class="brand">FIRESIDE</span>
-      <span class="brand-sub">Blind Rankings</span>
-      <button id="changeMoodBtn" class="btn btn--tonal btn--mood-change">Moods</button>
-    </div>
-  </header>
-
-  <!-- Mood picker overlay -->
-  <div id="moodPicker" class="mood-picker" hidden>
-    <div class="mood-picker-inner">
-      <h2 class="mood-picker-title">What are you in the mood for?</h2>
-      <p class="mood-picker-sub">Pick a few categories or skip for a random mix</p>
-      <div id="moodChips" class="mood-chips" role="group" aria-label="Category moods"></div>
-      <div class="mood-actions">
-        <button id="moodSkipBtn" class="btn btn--tonal">Random Mix</button>
-        <button id="moodGoBtn" class="btn btn--filled" disabled>Let's Go</button>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Fireside</span>
+        <span class="brand-sub">Blind Rankings</span>
       </div>
+      <button id="moodBtn" class="chip-btn" type="button" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+        <span>Moods</span>
+      </button>
+    </header>
+
+    <main class="game">
+      <section class="topic" aria-labelledby="topicTitle">
+        <div class="topic-meta">
+          <span id="topicMood" class="topic-mood"></span>
+          <button id="skipBtn" class="text-btn" type="button">Skip topic</button>
+        </div>
+        <h1 id="topicTitle" class="topic-title">&nbsp;</h1>
+        <div class="progress">
+          <ol id="progressDots" class="dots" aria-hidden="true">
+            <li></li><li></li><li></li><li></li><li></li>
+          </ol>
+          <span id="progressText" class="progress-text"></span>
+        </div>
+      </section>
+
+      <section class="stage" aria-label="Current item">
+        <article id="card" class="card">
+          <div class="card-backdrop" aria-hidden="true"></div>
+          <img id="cardImg" class="card-img" alt="" decoding="async" hidden>
+          <div id="cardText" class="card-text" hidden></div>
+          <div class="card-caption"><span id="cardLabel" class="card-label"></span></div>
+          <div id="cardLoading" class="card-loading" hidden><span class="spinner" role="status" aria-label="Loading"></span></div>
+        </article>
+
+        <div id="results" class="results" hidden>
+          <div id="resultsMedal" class="results-medal" aria-hidden="true"><span>1</span></div>
+          <p class="results-kicker">Your #1</p>
+          <h2 id="resultsTitle" class="results-title"></h2>
+          <p id="resultsTopic" class="results-topic"></p>
+          <div class="results-actions">
+            <button id="shareBtn" class="btn btn-ghost" type="button">Share</button>
+            <button id="nextBtn" class="btn btn-primary" type="button">Next topic</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="board" aria-label="Your ranking">
+        <p id="boardHint" class="board-hint">Where does it rank? Tap a spot — no take-backs.</p>
+        <ol id="slots" class="slots">
+          <li><button class="slot" type="button" data-rank="1"><span class="slot-num">1</span><span class="slot-body"></span></button></li>
+          <li><button class="slot" type="button" data-rank="2"><span class="slot-num">2</span><span class="slot-body"></span></button></li>
+          <li><button class="slot" type="button" data-rank="3"><span class="slot-num">3</span><span class="slot-body"></span></button></li>
+          <li><button class="slot" type="button" data-rank="4"><span class="slot-num">4</span><span class="slot-body"></span></button></li>
+          <li><button class="slot" type="button" data-rank="5"><span class="slot-num">5</span><span class="slot-body"></span></button></li>
+        </ol>
+        <p class="credits">Images: TMDB, Wikipedia &amp; Wikimedia Commons, Fanart.tv, TVMaze. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Mood picker -->
+  <div id="moodPicker" class="sheet" role="dialog" aria-modal="true" aria-labelledby="moodTitle" hidden>
+    <div class="sheet-panel">
+      <h2 id="moodTitle" class="sheet-title">What are you in the mood for?</h2>
+      <p class="sheet-sub">Pick a few, or let the fire decide.</p>
+      <div id="moodChips" class="mood-chips" role="group" aria-label="Moods"></div>
+      <div class="sheet-actions">
+        <button id="moodSkipBtn" class="btn btn-ghost" type="button">Surprise me</button>
+        <button id="moodGoBtn" class="btn btn-primary" type="button" disabled>Let's go</button>
+      </div>
+      <p class="credits">Images: TMDB, Wikipedia &amp; Wikimedia Commons, Fanart.tv, TVMaze. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
     </div>
   </div>
 
-  <main class="layout container">
-    <!-- Stage (left) -->
-    <section class="stage" aria-labelledby="topicTag">
-      <div class="stage-top">
-        <span id="topicTag" class="chip" aria-live="polite">Topic</span>
-        <span id="progress" class="progress-text">1 / 5</span>
-      </div>
-
-      <h2 id="itemTitle" class="item-title" aria-live="polite">Loading...</h2>
-
-      <!-- Card -->
-      <article id="currentCard" class="card">
-        <div id="cardLoading" class="card-loading" hidden aria-hidden="true">
-          <div class="spinner" role="status" aria-label="Loading image"></div>
-        </div>
-        <img id="cardImg" class="card-img" alt="" decoding="async" fetchpriority="high" loading="eager" hidden>
-        <div id="cardText" class="card-text" aria-live="polite"></div>
-        <!-- Completion overlay inside card -->
-        <div id="completionOverlay" class="completion-overlay" hidden>
-          <div class="completion-badge">ALL RANKED</div>
-        </div>
-      </article>
-
-      <!-- Place buttons -->
-      <div id="placeButtons" class="place-buttons" aria-label="Place into rank">
-        <button class="btn btn--tonal place" data-rank="1">#1</button>
-        <button class="btn btn--tonal place" data-rank="2">#2</button>
-        <button class="btn btn--tonal place" data-rank="3">#3</button>
-        <button class="btn btn--tonal place" data-rank="4">#4</button>
-        <button class="btn btn--tonal place" data-rank="5">#5</button>
-      </div>
-    </section>
-
-    <!-- Rankings (right) -->
-    <section class="ranks" aria-label="Ranking slots">
-      <div class="ranks-header">
-        <h3 class="ranks-title">Your Rankings</h3>
-        <div class="ranks-actions">
-          <button id="shareBtn" class="btn btn--tonal btn--share" hidden>Share</button>
-          <button id="nextTopicBtn" class="btn btn--filled btn--success">New Topic</button>
-        </div>
-      </div>
-
-      <ol id="rankList" class="rank-list" role="list" aria-label="Rankings 1 to 5">
-        <li class="rank-slot" data-rank="1"><div class="slot-num">#1</div><div class="slot-content empty">--</div></li>
-        <li class="rank-slot" data-rank="2"><div class="slot-num">#2</div><div class="slot-content empty">--</div></li>
-        <li class="rank-slot" data-rank="3"><div class="slot-num">#3</div><div class="slot-content empty">--</div></li>
-        <li class="rank-slot" data-rank="4"><div class="slot-num">#4</div><div class="slot-content empty">--</div></li>
-        <li class="rank-slot" data-rank="5"><div class="slot-num">#5</div><div class="slot-content empty">--</div></li>
-      </ol>
-    </section>
-  </main>
-
-  <!-- Share toast -->
-  <div id="shareToast" class="share-toast" hidden>Copied to clipboard!</div>
-
-  <footer class="app-footer">
-    <small>Images via TMDB, Wikipedia, Wikidata, iTunes, TVMaze</small>
-  </footer>
-
-  <!-- Confetti overlay -->
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
   <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
 
-  <!-- Aria live region (hidden) -->
-  <div id="live" class="sr-only" aria-live="polite"></div>
-
-  <!-- Service worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
   </script>
-
-  <!-- Load order: config -> topics -> images (generated manifest) -> app -->
-  <script defer src="config.js"></script>
+  <!-- topics -> vetted image manifest (generated by tools/build-images) -> app -->
   <script defer src="topics.js"></script>
   <script defer src="images.js"></script>
   <script defer src="script.js"></script>
