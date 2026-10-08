@@ -42,13 +42,15 @@ export async function validateImage(url, category) {
 }
 
 // Cheap link-rot check for already-vetted entries on incremental runs.
+// Returns the image bytes when the URL is alive (so the vision gate can check
+// it without a second download), otherwise null.
 export async function revalidateUrl(url) {
   const dl = await fetchBytes(url);
-  if (!dl.ok) return false;
+  if (!dl.ok) return null;
   try {
     await sharp(dl.bytes, { limitInputPixels: 1e9 }).metadata();
-    return true;
+    return dl.bytes;
   } catch {
-    return false;
+    return null;
   }
 }

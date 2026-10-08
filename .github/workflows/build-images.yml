@@ -45,6 +45,11 @@ jobs:
           # keys). These optional secrets enable extra review-page candidates.
           PEXELS_KEY: ${{ secrets.PEXELS_KEY }}
           UNSPLASH_KEY: ${{ secrets.UNSPLASH_KEY }}
+          # Vision gate: with this secret set, Claude must confirm every image
+          # depicts its item before it ships (see tools/build-images/README.md).
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional repo variable capping vision checks per run (0 = no cap).
+          VERIFY_MAX_CALLS: ${{ vars.VERIFY_MAX_CALLS || '0' }}
         run: node tools/build-images/build.js ${{ inputs.force == true && '--force' || '' }}
 
       - name: Commit and push manifest

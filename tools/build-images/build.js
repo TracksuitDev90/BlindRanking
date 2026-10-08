@@ -18,12 +18,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTopics } from './lib/load-topics.js';
 import { buildUnits } from './lib/keys.js';
-import { resolveItem, fitFor } from './lib/resolve.js';
+import { resolveItem, fitFor, searchCandidates } from './lib/resolve.js';
 import { validateImage, revalidateUrl } from './lib/validate.js';
 import { computeFocal } from './lib/focal.js';
 import { FACE_CATS, normalize } from './lib/categorize.js';
 import { isBlockedWikiFile } from './lib/sources/wikimedia.js';
 import { loadJson, writeManifest, writeImagesJs, summarize, SHIPPABLE } from './lib/manifest.js';
+import { verifyEnabled, verifyImage, verifyKey, verifyStatus, isMatch } from './lib/verify.js';
 
 // BR_ROOT override exists for the offline test harness (test/run-tests.sh).
 const ROOT = process.env.BR_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -54,14 +55,38 @@ function looksLikeLogoUrl(url) {
   return /\blogo\b|\bpictogram\b|\bsvg\b/.test(norm);
 }
 
-// Resolve + validate + focal-point one unit into a manifest entry.
-async function buildEntry(unit, keys, log) {
+// Bumped whenever resolution rules tighten: machine-vetted entries resolved
+// under older rules are re-resolved on the next build (human-approved entries
+// never are). v2: identity-linked TMDB/MusicBrainz lookups, redirect checks,
+// person/team/product entity checks, product-vs-logo categories, wider
+// filename blocklist.
+const RULES_VERSION = 2;
+// Most options the vision gate will try per item (primary pick + alternates).
+const MAX_TRIES = 4;
+
+// Download, validate and focal-point one candidate image.
+async function prepareImage(unit, url) {
   let { fit, pad } = fitFor(unit);
+  const v = await validateImage(url, unit.category);
+  if (!v.ok) return { ok: false, reason: `validation-failed:${v.reason}` };
+  // A URL that is clearly a rendered logo/pictogram must never be
+  // cover-cropped, whatever the category says.
+  if (fit === 'cover' && looksLikeLogoUrl(url)) { fit = 'contain'; pad = true; }
+  const focal = await computeFocal(v.bytes, unit.category, fit, unit.label);
+  return { ok: true, v, fit, pad, focal };
+}
+
+// Resolve + validate + focal-point (+ vision-verify) one unit into a
+// manifest entry. `known` maps url → a verdict already obtained this run.
+async function buildEntry(unit, keys, log, known = new Map()) {
+  const verify = verifyEnabled();
   const base = {
     label: unit.label,
     topics: unit.topics,
     category: unit.category,
-    fit, pad,
+    ...fitFor(unit),
+    rules: RULES_VERSION,
+    gate: verify ? 'vision' : 'rules',
     resolvedAt: new Date().toISOString()
   };
 
@@ -74,51 +99,100 @@ async function buildEntry(unit, keys, log) {
   }
 
   const candidates = dedupeCandidates(res.candidates, res.pick?.url);
+  const isPerson = FACE_CATS.has(unit.category);
 
-  if (!res.pick) {
+  // Options in preference order. Without the vision gate only the strict
+  // pick is eligible. With it, alternates may be tried too: for things
+  // (food, logos, products…) any candidate the gate confirms; for real
+  // people only the pinned entity's own images — identity comes from the
+  // entity, never from a picture search.
+  const options = res.pick ? [res.pick] : [];
+  const addOptions = (list) => {
+    for (const c of list || []) {
+      if (!c?.url || options.some(o => o.url === c.url)) continue;
+      if (isPerson && !(c.pinned && res.pick?.exact)) continue;
+      options.push({ url: c.url, source: c.source, sourceId: c.pinned ? `${c.source}:pinned` : c.source, exact: !!c.pinned });
+    }
+  };
+  if (verify) addOptions(res.candidates);
+  // Picture searches run only once everything better has failed the gate.
+  let searched = !!res.searched || isPerson;
+
+  if (!options.length && (!verify || searched)) {
     log(unit, 'review', res.reviewReason);
     return { ...base, url: null, source: null, confidence: 'review', reviewReason: res.reviewReason, candidates };
   }
 
-  const v = await validateImage(res.pick.url, unit.category);
-  if (!v.ok) {
-    log(unit, 'review', `validation-failed:${v.reason}`);
-    return {
-      ...base, url: res.pick.url, source: res.pick.source, sourceId: res.pick.sourceId,
-      confidence: 'review', reviewReason: `validation-failed:${v.reason}`, candidates
+  let fallback = null; // what the review page shows if nothing passes
+  const toReview = (entry, reason) => ({ ...entry, confidence: 'review', reviewReason: reason });
+  const limit = verify ? MAX_TRIES : 1;
+
+  for (let i = 0; i < limit; i++) {
+    if (i >= options.length && verify && !searched) {
+      searched = true;
+      const found = await searchCandidates(unit, keys).catch(() => []);
+      addOptions(found);
+      for (const c of dedupeCandidates(found, null)) {
+        if (!candidates.some(x => x.url === c.url) && candidates.length < 6) candidates.push(c);
+      }
+    }
+    const opt = options[i];
+    if (!opt) break;
+    const prep = await prepareImage(unit, opt.url);
+    const entry = {
+      ...base,
+      url: opt.url,
+      source: opt.source,
+      sourceId: opt.sourceId,
+      candidates: opt === res.pick ? candidates : dedupeCandidates([res.pick, ...(res.candidates || [])].filter(Boolean), opt.url)
     };
+    if (!prep.ok) {
+      fallback ||= toReview(entry, prep.reason);
+      continue;
+    }
+    Object.assign(entry, {
+      fit: prep.fit, pad: prep.pad,
+      width: prep.v.width, height: prep.v.height, contentHash: prep.v.hash,
+      focusX: prep.focal.x, focusY: prep.focal.y
+    });
+    const faceOk = !isPerson || prep.fit !== 'cover' || prep.focal.faces > 0;
+    const strictReason = !opt.exact ? (opt.inexactReason || 'inexact-match') : (!faceOk ? 'no-face-detected' : null);
+
+    if (!verify) {
+      // Rules-only policy: exact entity match + valid bytes + (people) a face.
+      if (!strictReason) {
+        log(unit, 'auto', `${entry.source} ${entry.width}x${entry.height} focal ${entry.focusX},${entry.focusY}`);
+        return { ...entry, confidence: 'auto', reviewReason: null };
+      }
+      log(unit, 'review', strictReason);
+      return toReview(entry, strictReason);
+    }
+
+    // Vision policy. People still need an exact pin and a detected face —
+    // the gate checks picture type and context, never identity.
+    if (isPerson && strictReason) {
+      fallback ||= toReview(entry, strictReason);
+      continue;
+    }
+    const verdict = known.get(opt.url) || await verifyImage(unit, opt.url, prep.v.bytes);
+    if (!verdict) {
+      fallback ||= toReview(entry, 'verify-unavailable');
+      break; // API down or call cap reached: retry on the next build
+    }
+    entry.verify = verdict;
+    if (isMatch(verdict)) {
+      log(unit, 'auto', `${entry.source} verified (${verdict.confidence}) — ${verdict.depicts.slice(0, 60)}`);
+      return { ...entry, confidence: 'auto', reviewReason: null };
+    }
+    fallback ||= toReview(entry, `vision-${verdict.verdict}:${verdict.depicts.slice(0, 90)}`);
   }
 
-  if (fit === 'cover' && looksLikeLogoUrl(res.pick.url)) {
-    fit = 'contain'; pad = true;
-    base.fit = fit; base.pad = pad;
+  if (!fallback) {
+    log(unit, 'review', res.reviewReason || 'no-candidates');
+    return { ...base, url: null, source: null, confidence: 'review', reviewReason: res.reviewReason || 'no-candidates', candidates };
   }
-
-  const focal = await computeFocal(v.bytes, unit.category, fit, unit.label);
-  const entry = {
-    ...base,
-    url: res.pick.url,
-    source: res.pick.source,
-    sourceId: res.pick.sourceId,
-    width: v.width,
-    height: v.height,
-    contentHash: v.hash,
-    focusX: focal.x,
-    focusY: focal.y,
-    candidates
-  };
-
-  // Auto-accept: exact entity match + validated bytes + (for people) a face.
-  if (res.pick.exact && (!FACE_CATS.has(unit.category) || fit !== 'cover' || focal.faces > 0)) {
-    entry.confidence = 'auto';
-    entry.reviewReason = null;
-    log(unit, 'auto', `${entry.source} ${entry.width}x${entry.height} focal ${focal.x},${focal.y}`);
-  } else {
-    entry.confidence = 'review';
-    entry.reviewReason = res.pick.exact ? 'no-face-detected' : 'inexact-match';
-    log(unit, 'review', entry.reviewReason);
-  }
-  return entry;
+  log(unit, 'review', fallback.reviewReason);
+  return fallback;
 }
 
 function dedupeCandidates(cands, chosenUrl, max = 4) {
@@ -141,6 +215,7 @@ async function applyOverride(key, ov, entry, unit, keys, log) {
     return { ...entry, confidence: 'rejected', reviewReason: 'rejected-by-review' };
   }
   if (ov.url) {
+    if (entry.source === 'override' && entry.url === ov.url && entry.confidence === 'approved') return entry;
     const { fit, pad } = fitFor(unit);
     const v = await validateImage(ov.url, unit.category);
     if (!v.ok) {
@@ -184,32 +259,57 @@ async function processUnit(unit, ctx) {
   // (blocklist/fit-guard improvements). Human-approved entries are never
   // second-guessed — overrides own those.
   const rulesChanged = existing && existing.confidence === 'auto' && (
+    (existing.rules || 1) < RULES_VERSION ||
     existing.category !== unit.category ||
-    isBlockedWikiFile(existing.url, unit.category) ||
+    isBlockedWikiFile(existing.url, unit.category, unit.label) ||
     (existing.fit === 'cover' && looksLikeLogoUrl(existing.url))
   );
 
-  // Vetted entries: link-rot check only (unless --force or a url override).
-  if (existing && SHIPPABLE.has(existing.confidence) && !args.force && !ov?.url && !rulesChanged) {
-    const alive = await revalidateUrl(existing.url);
-    if (alive) {
+  // A url override that the manifest already reflects needs no re-resolve.
+  const pendingUrlOverride = ov?.url && !(existing?.source === 'override' && existing.url === ov.url);
+
+  // Vetted entries: link-rot check only (unless --force or a new url
+  // override), plus a one-time vision check of machine-vetted ones once the
+  // gate is on.
+  if (existing && SHIPPABLE.has(existing.confidence) && !args.force && !pendingUrlOverride && !rulesChanged) {
+    const bytes = await revalidateUrl(existing.url);
+    if (bytes) {
       // Keep byte-identical to avoid noisy diffs; refresh topics in case the
       // label moved between topics.
-      return applyOverride(key, ov, { ...existing, topics: unit.topics }, unit, keys, log);
+      const kept = { ...existing, topics: unit.topics };
+      if (existing.confidence === 'auto' && verifyEnabled() && existing.verify?.key !== verifyKey(unit, existing.url)) {
+        const verdict = await verifyImage(unit, existing.url, bytes);
+        if (!verdict) return applyOverride(key, ov, kept, unit, keys, log); // unverified; retried next build
+        if (isMatch(verdict)) {
+          log(unit, 'auto', `existing image verified (${verdict.confidence})`);
+          return applyOverride(key, ov, { ...kept, verify: verdict }, unit, keys, log);
+        }
+        // The shipped picture failed the gate: look for one that passes.
+        const fresh = await buildEntry(unit, keys, () => {}, new Map([[existing.url, verdict]]));
+        log(unit, fresh.confidence, `shipped image failed the gate (${verdict.verdict}: ${verdict.depicts.slice(0, 50)}) → ` +
+          (fresh.confidence === 'auto' ? `replaced by verified ${fresh.source}` : fresh.reviewReason));
+        return applyOverride(key, ov, fresh, unit, keys, log);
+      }
+      return applyOverride(key, ov, kept, unit, keys, log);
     }
-    // URL died: re-resolve, but never silently ship a different image than
-    // the one a human saw — demote to review.
+    // URL died: re-resolve. A replacement ships only if the vision gate
+    // confirms it and no human had approved the old one; otherwise demote.
     const fresh = await buildEntry(unit, keys, () => {});
-    fresh.confidence = 'review';
-    fresh.reviewReason = 'dead-url';
-    log(unit, 'review', `dead-url (was ${existing.url})`);
+    if (!(existing.confidence === 'auto' && fresh.confidence === 'auto' && fresh.verify)) {
+      fresh.confidence = 'review';
+      fresh.reviewReason = 'dead-url';
+    }
+    log(unit, fresh.confidence, `dead-url (was ${existing.url})`);
     return applyOverride(key, ov, fresh, unit, keys, log);
   }
 
   // Review entries await a human; don't hammer the APIs again unless forced,
-  // an override arrived, or the categorization rules changed.
+  // an override arrived, the rules changed, or the vision gate is newly
+  // available to rescue them.
+  const retryForVision = verifyEnabled() && existing &&
+    (existing.gate !== 'vision' || existing.reviewReason === 'verify-unavailable');
   if (existing && existing.confidence === 'review' && !args.force && !ov &&
-      existing.category === unit.category) {
+      existing.category === unit.category && (existing.rules || 1) >= RULES_VERSION && !retryForVision) {
     return { ...existing, topics: unit.topics };
   }
 
@@ -248,6 +348,10 @@ async function main() {
   const overrides = loadJson(OVERRIDES_FILE, {});
 
   console.log(`Topics: ${topics.length} | units total: ${allKeys.size} | processing: ${units.length}${args.force ? ' (force)' : ''}`);
+  const vs = verifyStatus();
+  console.log(vs.enabled
+    ? `Vision gate: ON (${vs.model}, effort ${vs.effort}${vs.maxCalls ? `, max ${vs.maxCalls} calls` : ''}) — every shipped image must be confirmed.`
+    : 'Vision gate: OFF (set ANTHROPIC_API_KEY to enable) — rules-only accuracy checks.');
 
   let done = 0;
   const log = (unit, status, detail) => {
@@ -295,6 +399,10 @@ async function main() {
   for (const [cat, c] of Object.entries(s.byCategory).sort()) {
     console.log(`  ${cat.padEnd(14)} ${c.shipped}/${c.total}`);
   }
+  const vEnd = verifyStatus();
+  const verified = Object.values(manifest).filter(e => SHIPPABLE.has(e.confidence) && e.verify && isMatch(e.verify)).length;
+  console.log(`vision gate: ${vEnd.calls} checks this run; ${verified} shipped images carry a match verdict` +
+    (vEnd.disabledReason ? ` (disabled mid-run: ${vEnd.disabledReason})` : ''));
   console.log(`\nimages.js: ${shipped} entries shipped → app shows text for the rest.`);
   console.log('Review pending picks in tools/review.html, save decisions to images.overrides.json, and re-run.');
 }

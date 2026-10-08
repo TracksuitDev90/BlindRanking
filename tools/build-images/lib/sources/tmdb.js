@@ -83,3 +83,16 @@ export async function tvmazeExact(label) {
   if (!j || !titlesEqual(j.name, c)) return null;
   return j.image?.original || j.image?.medium || null;
 }
+
+// Identity lookups: the TMDB ID comes from the item's Wikidata entity
+// (P4947/P4983/P4985), so there is no title or name matching to get wrong —
+// remakes, same-title films and namesakes can't be confused.
+async function tmdbById(kind, id, key) {
+  if (!key || !id || !/^\d+$/.test(String(id))) return null;
+  const u = new URL(`https://api.themoviedb.org/3/${kind}/${id}`);
+  u.searchParams.set('api_key', key);
+  return fetchJson(u.toString());
+}
+export const tmdbMovieById = (id, key) => tmdbById('movie', id, key);
+export const tmdbTVById = (id, key) => tmdbById('tv', id, key);
+export const tmdbPersonById = (id, key) => tmdbById('person', id, key);

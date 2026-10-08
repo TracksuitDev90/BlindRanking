@@ -22,9 +22,16 @@ export async function wikiPage(title) {
   const j = await fetchJson(u.toString());
   const page = j?.query?.pages?.[0];
   if (!page || page.missing || page.invalid) return { exists: false };
+  // Redirects are how Wikipedia canonicalizes names ("MIT" → "Massachusetts
+  // Institute of Technology"), but some point at a broader article or one of
+  // its sections ("Sour cream and onion" → a dip). Report them so the
+  // resolver can tell an alias from a change of subject.
+  const redirect = (j.query.redirects || [])[0] || null;
   return {
     exists: true,
     title: page.title,
+    redirectedFrom: redirect ? redirect.from : null,
+    redirectFragment: redirect?.tofragment || null,
     disambig: page.pageprops?.disambiguation !== undefined,
     qid: page.pageprops?.wikibase_item || null,
     description: page.description || '',
@@ -35,7 +42,10 @@ export async function wikiPage(title) {
   };
 }
 
-// Wikidata entity: English description plus image (P18) and logo (P154) file names.
+// Wikidata entity: English description, image (P18) and logo (P154) file
+// names, what it is (P31), and the external IDs that let us fetch artwork by
+// identity instead of by name: TMDB movie/TV/person (P4947/P4983/P4985),
+// MusicBrainz artist (P434), and for team seasons the team itself (P5138).
 export async function wikidataEntity(qid) {
   if (!qid) return null;
   const u = new URL('https://www.wikidata.org/w/api.php');
@@ -47,12 +57,21 @@ export async function wikidataEntity(qid) {
   const j = await fetchJson(u.toString());
   const ent = j?.entities?.[qid];
   if (!ent) return null;
-  const claimFile = prop => ent.claims?.[prop]?.[0]?.mainsnak?.datavalue?.value || null;
+  const claimValue = prop => ent.claims?.[prop]?.[0]?.mainsnak?.datavalue?.value ?? null;
+  const claimIds = prop => (ent.claims?.[prop] || [])
+    .map(c => c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
+  const str = v => (typeof v === 'string' || typeof v === 'number') ? String(v) : null;
   return {
     qid,
     description: ent.descriptions?.en?.value || '',
-    image: claimFile('P18'),
-    logo: claimFile('P154')
+    image: claimValue('P18'),
+    logo: claimValue('P154'),
+    instanceOf: claimIds('P31'),
+    tmdbMovie: str(claimValue('P4947')),
+    tmdbTv: str(claimValue('P4983')),
+    tmdbPerson: str(claimValue('P4985')),
+    musicbrainzArtist: str(claimValue('P434')),
+    seasonOf: claimIds('P5138')[0] || null
   };
 }
 
@@ -73,11 +92,25 @@ const PHOTO_BLOCK_PATTERNS = [
   /\bblank map\b/, /\bspecial marker\b/, /\bmarker\b/, /\bpictogram\b/,
   /\blogo\b/, /\bemblem\b/, /\bseal of\b/, /\bsvg\b/
 ];
-export function isBlockedWikiFile(fileName, cat) {
+// Never the thing itself, whatever the category: fans in costume, an
+// autograph, a grave, a waxwork. A word that is part of the item's own name
+// is exempt ("Tomb Raider", "Grave of the Fireflies").
+const ALWAYS_BLOCK_WORDS = [
+  'cosplay', 'cosplayer', 'cosplayers', 'signature', 'autograph', 'grave', 'tomb',
+  'gravestone', 'headstone', 'wax', 'waxwork', 'tussauds', 'walk of fame',
+  'mural', 'graffiti', 'stamp', 'banknote', 'figurine', 'plush', 'lego'
+];
+const normFile = s => decodeURIComponent(String(s || '').replace(/%(?![0-9a-f]{2})/gi, '%25'))
+  .toLowerCase().replace(/[_\-.,()]+/g, ' ');
+
+export function isBlockedWikiFile(fileName, cat, label = '') {
   if (!fileName) return false;
+  const norm = normFile(fileName);
+  const labelNorm = normFile(label);
+  const hit = ALWAYS_BLOCK_WORDS.find(w => new RegExp(`\\b${w}\\b`).test(norm));
+  if (hit && !new RegExp(`\\b${hit}\\b`).test(labelNorm)) return true;
   // Logo categories (brand/team/game/software/podcast) WANT logos and crests.
   if (['brand', 'team', 'game', 'software', 'podcast', 'logo'].includes(cat)) return false;
-  const norm = String(fileName).toLowerCase().replace(/%2[02]/g, ' ').replace(/[_\-.]+/g, ' ');
   return PHOTO_BLOCK_PATTERNS.some(p => p.test(norm));
 }
 
