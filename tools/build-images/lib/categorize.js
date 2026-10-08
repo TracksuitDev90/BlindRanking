@@ -101,7 +101,7 @@ export function inferCategoryWithMood(label, hints, topicMood) {
 // everything is a place.
 // Topics whose items are fictional characters: not real people (no face or
 // "is a human" requirement), not logos.
-export const CHARACTER_TOPIC_RE = /\bcharacters?\b|\bheroes\b|\bsuperheroes\b|\bvillains?\b|\bantiheroes\b|\bmascots?\b|\bprincesses\b|\bsidekicks?\b/;
+export const CHARACTER_TOPIC_RE = /\bcharacters?\b|\bheroes\b|\bsuperheroes\b|\bvillains?\b|\bantiheroes\b|\bmascots?\b|\bprincesses\b|\bsidekicks?\b|\bpok ?mon\b/;
 // Topics whose items are specific products (a car model, a phone): the right
 // image is a photo of that exact model, never the maker's logo — even though
 // labels like "Porsche Taycan" trip the brand regexes in inferCategory().
@@ -115,11 +115,19 @@ export function categoryForBuild(label, hints, topicMood) {
   // official logo (P154, contain+pad), not a storefront/product photo.
   if (/\bbrands?\b|\bchains\b|\bfast food\b|\bmakers?\b|\bmanufacturers?\b|\bcompanies\b/.test(tn)) return CATS.BRAND;
   if (CHARACTER_TOPIC_RE.test(tn) && (cat === CATS.PERSON || cat === CATS.GENERIC)) return CATS.CHARACTER;
+  // (Label regexes misfire here: "Galaxy S10" / "Nissan S30" look like TV
+  // seasons, "Porsche Taycan" like a brand.)
   if (topicMood === 'tech' && PRODUCT_TOPIC_RE.test(tn) &&
-      [CATS.BRAND, CATS.GENERIC, CATS.DEVICE, CATS.PRODUCT].includes(cat)) return CATS.DEVICE;
-  // Music topics list artists and bands; "person" there means musician
-  // (MusicBrainz/Fanart.tv photos, no "must be one human" rule for bands).
-  if (topicMood === 'music' && cat === CATS.PERSON) return CATS.MUSIC_ARTIST;
+      cat !== CATS.PERSON && cat !== CATS.MUSIC_ARTIST) return CATS.DEVICE;
+  // Music topics list artists and bands (MusicBrainz/Fanart.tv photos, no
+  // "must be one human" rule for bands) — whatever the label regexes say
+  // ("Dierks Bentley" is not the car maker).
+  if (topicMood === 'music' && cat !== CATS.MUSIC_ALBUM && cat !== CATS.MUSIC_TRACK) return CATS.MUSIC_ARTIST;
+  // Food topics (brand/chain topics returned above) are food: "Apple pie"
+  // is a pie, not Apple Inc.
+  if (topicMood === 'food') return CATS.FOOD;
+  // Space missions, rovers and telescopes are photographed, not logos.
+  if (topicMood === 'tech' && /\bspace\b|\bmissions?\b|\brovers?\b|\btelescopes?\b/.test(tn)) return CATS.GENERIC;
   if (topicMood === 'sports') {
     if (/\bstadiums?\b|\barenas?\b|\bballparks?\b/.test(tn)) return CATS.PLACE;
     if (/\bteams?\b|\bclubs?\b|\bfranchises?\b/.test(tn) && cat !== CATS.PERSON) return CATS.TEAM;

@@ -102,6 +102,25 @@ const WIKI_PAGES = {
     pageimage: 'Some_Player_2000.jpg',
     thumbnail: { source: 'https://upload.wikimedia.org/some-player.jpg', width: 800, height: 1000 }
   },
+  // Label that the TV regex reads as "season 30"; in a cars topic it's a car.
+  'Testla S30': {
+    title: 'Testla S30', description: 'sports car', pageprops: { wikibase_item: 'Q711' },
+    pageimage: 'Testla_S30_1972.jpg',
+    thumbnail: { source: 'https://upload.wikimedia.org/testla-s30.jpg', width: 1000, height: 700 }
+  },
+  // A product whose description names its maker's corporation.
+  'Plymouth Test': {
+    title: 'Plymouth Test', description: 'Car model built by Test Corporation', pageprops: { wikibase_item: 'Q712' },
+    pageimage: 'Plymouth_Test_1970.jpg',
+    thumbnail: { source: 'https://upload.wikimedia.org/plymouth-test.jpg', width: 1000, height: 700 }
+  },
+  // A club with no free logo: its only images are a stadium photo.
+  'Test FC': {
+    title: 'Test FC', description: 'association football club', pageprops: { wikibase_item: 'Q713' }
+  },
+  'Test Board Game': {
+    title: 'Test Board Game', description: 'board game', pageprops: { wikibase_item: 'Q714' }
+  },
   'Test Chain': {
     title: 'Test Chain', description: 'fast food restaurant chain',
     pageprops: { wikibase_item: 'Q600' },
@@ -125,6 +144,10 @@ const WIKIDATA = {
   Q706: { descriptions: { en: { value: 'YouTube channel' } }, claims: { P31: [{ mainsnak: { datavalue: { value: { id: 'Q17558136' } } } }] } },
   Q707: { descriptions: { en: { value: 'city in England' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test City logo.svg' } } }] } },
   Q708: { descriptions: { en: { value: 'card game' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test Game box.jpg' } } }] } },
+  Q711: { descriptions: { en: { value: 'sports car' } }, claims: {} },
+  Q712: { descriptions: { en: { value: 'Car model built by Test Corporation' } }, claims: {} },
+  Q713: { descriptions: { en: { value: 'association football club' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test FC stadium stand.jpg' } } }] } },
+  Q714: { descriptions: { en: { value: 'board game' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'A game of Test Board Game in progress.jpg' } } }] } },
   Q709: { descriptions: { en: { value: 'American football team season' } }, claims: { P5138: [{ mainsnak: { datavalue: { value: { id: 'Q710' } } } }] } },
   Q710: { descriptions: { en: { value: 'American football team' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Team logo.svg' } } }] } }
 };
@@ -132,7 +155,7 @@ const WIKIDATA = {
 // Mocked Claude vision gate: VISION_MATCH items match whatever the picture;
 // any other item matches only the distinct green picture, else "mismatch".
 const VISION_MATCH = new Set(['Test Movie', 'Twin Title', 'Test Brand', 'Test Chain', 'Test Burger',
-  'Fizzy Pop', 'Tesla Model Z', 'Test Game', '2000 Test Team season']);
+  'Fizzy Pop', 'Tesla Model Z', 'Test Game', '2000 Test Team season', 'Testla S30', 'Plymouth Test', 'Test Board Game']);
 async function anthropicMessages(body, headers) {
   const key = typeof headers?.get === 'function' ? headers.get('x-api-key') : headers?.['x-api-key'];
   if (key === 'bad-key') {

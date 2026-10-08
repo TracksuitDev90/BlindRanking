@@ -59,8 +59,10 @@ function looksLikeLogoUrl(url) {
 // under older rules are re-resolved on the next build (human-approved entries
 // never are). v2: identity-linked TMDB/MusicBrainz lookups, redirect checks,
 // person/team/product entity checks, product-vs-logo categories, wider
-// filename blocklist.
-const RULES_VERSION = 2;
+// filename blocklist. v3: logo-type items ship only real logos; Wikidata
+// images trusted only where they reliably show the item (not clubs, brands,
+// characters, games); wide wordmark logos accepted.
+const RULES_VERSION = 3;
 // Most options the vision gate will try per item (primary pick + alternates).
 const MAX_TRIES = 4;
 

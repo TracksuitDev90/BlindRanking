@@ -95,8 +95,9 @@ async function pinEntity(unit, { requireContext }) {
   if (unit.category === CATS.PERSON && wd?.instanceOf?.length && !wd.instanceOf.includes(HUMAN)) {
     return fail(`not-a-person:${short}`, wd);
   }
+  // ("Car model built by Chrysler Corporation" is a product, not a company.)
   if (PRODUCT_CATS.has(unit.category) && COMPANY_DESC.test(descLc) &&
-      !/\b(brand|drink|beverage|food|dish|snack|cereal|candy|confection|beer|wine|soda|chocolate|shoe|sneaker)\b/.test(descLc)) {
+      !/\b(brand|drink|beverage|food|dish|snack|cereal|candy|confection|beer|wine|soda|chocolate|shoe|sneaker|models?|car|cars|vehicle|automobile|smartphone|phone|console|device|laptop|camera|headphones?|earbuds|watch|tablet|product|series|line of)\b/.test(descLc)) {
     return fail(`entity-is-company:${short}`, wd);
   }
   if (unit.category === CATS.BRAND && NOT_A_BRAND_DESC.test(descLc) && !COMPANY_DESC.test(descLc)) {
@@ -112,15 +113,38 @@ function withExactness(pick, pin) {
   return pin?.inexact ? { ...pick, exact: false, inexactReason: pin.inexact } : pick;
 }
 
+// Where an entity's own pictures can be trusted to show the item itself.
+// Wikidata's image (P18) is reliably the thing for people, places, food and
+// products, but for clubs and brands it is often a stadium or storefront, and
+// for fictional characters often a cosplayer, statue or the actor off-set.
+const P18_TRUSTED = new Set([
+  CATS.PERSON, CATS.MUSIC_ARTIST, CATS.PLACE, CATS.FOOD, CATS.DEVICE, CATS.PRODUCT,
+  CATS.SNEAKER, CATS.FASHION, CATS.ACTIVITY, CATS.GENERIC, CATS.MUSIC_ALBUM, CATS.MUSIC_TRACK
+]);
+// Logo-type items are only depicted by a logo/crest/wordmark.
+const NEEDS_LOGO = new Set([CATS.BRAND, CATS.TEAM, CATS.SOFTWARE, CATS.PODCAST, CATS.LOGO]);
+const looksLikeLogoFile = name =>
+  /\b(logo|logotype|crest|emblem|badge|wordmark|svg)\b/.test(String(name || '').toLowerCase().replace(/[_\-.,()]+/g, ' '));
+
 function pageImagePick(page, wd, unit, sourceIdPrefix) {
   // Article lead image first (often the curated infobox image), then the
   // Wikidata P18 image. Both are screened against the blocklist (flags,
-  // locator maps, logos-on-photo-categories, cosplay, signatures, …).
-  if (page?.imageUrl && !isBlockedWikiFile(page.imageName, unit.category, unit.label)) {
-    return { url: page.imageUrl, source: 'wikipedia', sourceId: `${sourceIdPrefix}:${page.title}`, exact: true };
+  // locator maps, logos-on-photo-categories, cosplay, signatures, …), and
+  // marked inexact where that kind of picture can't be trusted to show the
+  // item (inexact picks need review or the vision gate to ship).
+  const cat = unit.category;
+  if (page?.imageUrl && !isBlockedWikiFile(page.imageName, cat, unit.label)) {
+    const exact = !NEEDS_LOGO.has(cat) || looksLikeLogoFile(page.imageName);
+    return { url: page.imageUrl, source: 'wikipedia', sourceId: `${sourceIdPrefix}:${page.title}`, exact,
+      ...(exact ? {} : { inexactReason: 'lead-image-not-a-logo' }) };
   }
-  if (wd?.image && !isBlockedWikiFile(wd.image, unit.category, unit.label)) {
-    return { url: commonsFileUrl(wd.image), source: 'wikidata-p18', sourceId: `wikidata:${wd.qid}`, exact: true };
+  if (wd?.image && !isBlockedWikiFile(wd.image, cat, unit.label)) {
+    // Tabletop games' Wikidata images are photos of the game itself (video
+    // games' are often event or cosplay photos).
+    const tabletop = cat === CATS.GAME && unit.topics.some(t => /\b(board|card|party|tabletop)\b/i.test(t));
+    const exact = NEEDS_LOGO.has(cat) ? looksLikeLogoFile(wd.image) : (P18_TRUSTED.has(cat) || tabletop);
+    return { url: commonsFileUrl(wd.image), source: 'wikidata-p18', sourceId: `wikidata:${wd.qid}`, exact,
+      ...(exact ? {} : { inexactReason: `wikidata-image-unvetted-for-${cat}` }) };
   }
   return null;
 }
@@ -160,7 +184,7 @@ export async function resolveItem(unit, keys) {
       addCand({ url: pin.page.imageUrl, source: 'wikipedia' }, vouched);
     }
     if (pin.wd?.image && !isBlockedWikiFile(pin.wd.image, cat, unit.label)) {
-      addCand({ url: commonsFileUrl(pin.wd.image), source: 'wikidata-p18' }, vouched);
+      addCand({ url: commonsFileUrl(pin.wd.image), source: 'wikidata-p18' }, vouched && P18_TRUSTED.has(cat));
     }
   };
   const review = async (reason, pin) => {

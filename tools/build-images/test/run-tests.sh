@@ -65,14 +65,22 @@ check "person topic item that is not a human goes to review" \
   "m['test-channel'].confidence==='review' && m['test-channel'].reviewReason.startsWith('not-a-person')"
 check "team label that pins to a city goes to review" \
   "m['test-city'].confidence==='review' && m['test-city'].reviewReason.startsWith('context-mismatch')"
-check "cosplay lead image skipped for the entity's own image" \
-  "m['test-game'].confidence==='auto' && m['test-game'].source==='wikidata-p18'"
+check "cosplay lead image never shipped; a game's Wikidata photo needs a second opinion" \
+  "m['test-game'].confidence==='review' && m['test-game'].reviewReason==='wikidata-image-unvetted-for-game' && !m['test-game'].url.includes('cosplay')"
+check "a board game's Wikidata photo (the game itself) ships" \
+  "m['test-board-game'].category==='game' && m['test-board-game'].confidence==='auto' && m['test-board-game'].source==='wikidata-p18'"
+check "club whose only picture is a stadium photo stays text" \
+  "m['test-fc'].category==='team' && m['test-fc'].confidence==='review' && m['test-fc'].reviewReason==='wikidata-image-unvetted-for-team'"
+check "'S30' in a cars topic is a car, not a TV season" \
+  "m['testla-s30'].category==='device' && m['testla-s30'].confidence==='auto'"
+check "product built by a 'Corporation' is not mistaken for a company" \
+  "m['plymouth-test'].confidence==='auto'"
 check "team season shows the team's logo" \
   "m['2000-test-team-season'].confidence==='auto' && m['2000-test-team-season'].source==='wikidata-p154' && m['2000-test-team-season'].sourceId.endsWith(':season-of')"
 check "entries record the rules version and gate" \
-  "m['test-brand'].rules===2 && m['test-brand'].gate==='rules'"
+  "m['test-brand'].rules===3 && m['test-brand'].gate==='rules'"
 check "images.js ships only vetted entries" \
-  "Object.keys(shipped).length===10 && shipped['test-movie-2020-film'] && shipped['test-burger'] && shipped['test-brand'] && shipped['test-island'] && shipped['test-chain'] && shipped['tesla-model-z'] && !shipped['test-qb'] && !shipped['sour-thing'] && !shipped['fizzy-pop']"
+  "Object.keys(shipped).length===12 && shipped['test-movie-2020-film'] && shipped['testla-s30'] && shipped['test-board-game'] && !shipped['test-game'] && !shipped['test-fc'] && shipped['test-burger'] && shipped['test-brand'] && shipped['test-island'] && shipped['test-chain'] && shipped['tesla-model-z'] && !shipped['test-qb'] && !shipped['sour-thing'] && !shipped['fizzy-pop']"
 
 echo "=== Run 2: idempotence ==="
 cp "$WORK/images.manifest.json" "$WORK/manifest.run1.json"
@@ -136,6 +144,8 @@ check "non-human person item is never rescued by a picture search" \
   "m['test-channel'].confidence==='review' && !shipped['test-channel']"
 check "human decisions are untouched by the gate" \
   "m['test-qb'].confidence==='approved' && !m['test-qb'].verify && m['wrong-guy'].source==='override' && m['missing-thing'].confidence==='rejected'"
+check "a game's Wikidata photo ships once the gate confirms it" \
+  "m['test-game'].confidence==='auto' && m['test-game'].verify.verdict==='match'"
 check "every machine-shipped image carries a match verdict" \
   "Object.values(m).filter(e => e.confidence==='auto').every(e => e.verify && e.verify.verdict==='match' && e.verify.confidence>=0.8)"
 

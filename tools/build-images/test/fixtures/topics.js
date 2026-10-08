@@ -24,7 +24,7 @@ window.TOPICS = [
     { label: "Sour Thing" }, { label: "Fizzy Pop" }, { label: "Test Soda" }
   ]},
   { name: "Electric Cars Test", mood: "tech", provider: "wiki", items: [
-    { label: "Tesla Model Z" }
+    { label: "Tesla Model Z" }, { label: "Testla S30" }, { label: "Plymouth Test" }
   ]},
   { name: "Twin Movies Test", mood: "movies", provider: "tmdb", mediaType: "movie", items: [
     { label: "Twin Title (2001 film)" }
@@ -33,10 +33,13 @@ window.TOPICS = [
     { label: "Test Channel" }
   ]},
   { name: "Best Soccer Clubs Test", mood: "sports", provider: "wiki", items: [
-    { label: "Test City" }
+    { label: "Test City" }, { label: "Test FC" }
   ]},
-  { name: "Best Card Games Test", mood: "games", provider: "wiki", items: [
+  { name: "Best Indie Games Test", mood: "games", provider: "wiki", items: [
     { label: "Test Game" }
+  ]},
+  { name: "Best Board Games Test", mood: "games", provider: "wiki", items: [
+    { label: "Test Board Game" }
   ]},
   { name: "Best NFL Teams Test", mood: "sports", provider: "wiki", items: [
     { label: "2000 Test Team season", hints: { kind: "team" } }

@@ -993,7 +993,7 @@ const MORE_TOPICS = [
   { name:"Best Cameras", mood: "tech", provider:"wiki", items:[{label:"Canon EOS R5"},{label:"Sony A7 IV"},{label:"Nikon Z7 II"},{label:"Fujifilm X-T5"},{label:"Panasonic Lumix S5"}] },
   { name:"Best Car Brands", mood: "tech", provider:"wiki", items:[{label:"Toyota"},{label:"BMW"},{label:"Mercedes-Benz"},{label:"Tesla, Inc."},{label:"Honda"}] },
   { name:"Best Electric Cars", mood: "tech", provider:"wiki", items:[{label:"Tesla Model 3"},{label:"Ford Mustang Mach-E"},{label:"Hyundai Ioniq 5"},{label:"Porsche Taycan"},{label:"Nissan Leaf"}] },
-  { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (1965)"},{label:"Chevrolet Camaro (1969)"},{label:"Porsche 911 (1973)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
+  { name:"Best Classic Cars", mood: "tech", provider:"wiki", items:[{label:"Ford Mustang (first generation)"},{label:"Chevrolet Camaro (first generation)"},{label:"Porsche 911 (classic)"},{label:"Jaguar E-Type"},{label:"Volkswagen Beetle"}] },
   { name:"Best Streaming Services", mood: "tv", provider:"wiki", items:[{label:"Netflix"},{label:"Disney+"},{label:"Hulu"},{label:"Amazon Prime Video"},{label:"HBO Max"}], mediaType:"brand" },
   { name:"Best Productivity Apps", mood: "tech", provider:"wiki", items:[{label:"Notion (productivity software)"},{label:"Trello"},{label:"Asana (software)"},{label:"Todoist"},{label:"Evernote"}] },
   { name:"Best Web Browsers", mood: "tech", provider:"wiki", mediaType:"software", items:[{label:"Google Chrome"},{label:"Mozilla Firefox"},{label:"Microsoft Edge"},{label:"Safari (web browser)"},{label:"Brave (web browser)"}] },
