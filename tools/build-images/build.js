@@ -67,8 +67,20 @@ function looksLikeLogoUrl(url) {
 // person/team/product entity checks, product-vs-logo categories, wider
 // filename blocklist. v3: logo-type items ship only real logos; Wikidata
 // images trusted only where they reliably show the item (not clubs, brands,
-// characters, games); wide wordmark logos accepted.
-const RULES_VERSION = 3;
+// characters, games); wide wordmark logos accepted. v4: current (not
+// historical) logo/image when Wikidata lists several; redirects to a title
+// whose disambiguator names the item are aliases.
+const RULES_VERSION = 4;
+
+// Whether an entry was resolved under rules that have since changed in a way
+// that affects it. v4 only touches Wikidata logo/image picks and redirect
+// verdicts, so rules-3 entries outside those are left alone.
+function staleUnderRules(e) {
+  const v = e.rules || 1;
+  if (v < 3) return true;
+  if (v < 4) return /^wikidata-p(154|18)$/.test(e.source || '') || /^redirect-mismatch/.test(e.reviewReason || '');
+  return false;
+}
 // Most options the vision gate will try per item (primary pick + alternates).
 const MAX_TRIES = 4;
 
@@ -252,7 +264,7 @@ async function applyOverride(key, ov, entry, unit, keys, log) {
 // that work first, so a time-budgeted run spends its budget where it counts.
 function needsWork(unit, existing, overrides) {
   if (!existing || overrides[unit.key]) return true;
-  if ((existing.rules || 1) < RULES_VERSION || existing.category !== unit.category) return true;
+  if (staleUnderRules(existing) || existing.category !== unit.category) return true;
   if (verifyEnabled()) {
     if (existing.confidence === 'auto' && existing.verify?.key !== verifyKey(unit, existing.url)) return true;
     if (existing.confidence === 'review' && (existing.gate !== 'vision' || existing.reviewReason === 'verify-unavailable')) return true;
@@ -279,7 +291,7 @@ async function processUnit(unit, ctx) {
   // (blocklist/fit-guard improvements). Human-approved entries are never
   // second-guessed — overrides own those.
   const rulesChanged = existing && existing.confidence === 'auto' && (
-    (existing.rules || 1) < RULES_VERSION ||
+    staleUnderRules(existing) ||
     existing.category !== unit.category ||
     isBlockedWikiFile(existing.url, unit.category, unit.label) ||
     (existing.fit === 'cover' && looksLikeLogoUrl(existing.url))
@@ -329,7 +341,7 @@ async function processUnit(unit, ctx) {
   const retryForVision = verifyEnabled() && existing &&
     (existing.gate !== 'vision' || existing.reviewReason === 'verify-unavailable');
   if (existing && existing.confidence === 'review' && !args.force && !ov &&
-      existing.category === unit.category && (existing.rules || 1) >= RULES_VERSION && !retryForVision) {
+      existing.category === unit.category && !staleUnderRules(existing) && !retryForVision) {
     return { ...existing, topics: unit.topics };
   }
 

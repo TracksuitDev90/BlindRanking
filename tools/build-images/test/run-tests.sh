@@ -62,6 +62,8 @@ check "missing wikipedia page goes to review" \
   "m['missing-thing'].confidence==='review' && m['missing-thing'].reviewReason==='no-wikipedia-page'"
 check "brand logo via Wikidata P154, contain+pad" \
   "m['test-brand'].confidence==='auto' && m['test-brand'].source==='wikidata-p154' && m['test-brand'].pad===true"
+check "current logo chosen over a historical one listed first" \
+  "m['test-brand'].url.includes('Test_Brand_logo.svg') && !m['test-brand'].url.includes('1990')"
 check "place flag lead image skipped for the P18 photo" \
   "m['test-island'].confidence==='auto' && m['test-island'].source==='wikidata-p18' && !m['test-island'].url.includes('Flag')"
 check "chains topic resolves as brand logo, contain+pad" \
@@ -91,7 +93,7 @@ check "product built by a 'Corporation' is not mistaken for a company" \
 check "team season shows the team's logo" \
   "m['2000-test-team-season'].confidence==='auto' && m['2000-test-team-season'].source==='wikidata-p154' && m['2000-test-team-season'].sourceId.endsWith(':season-of')"
 check "entries record the rules version and gate" \
-  "m['test-brand'].rules===3 && m['test-brand'].gate==='rules'"
+  "m['test-brand'].rules===4 && m['test-brand'].gate==='rules'"
 check "images.js ships only vetted entries" \
   "Object.keys(shipped).length===12 && shipped['test-movie-2020-film'] && shipped['testla-s30'] && shipped['test-board-game'] && !shipped['test-game'] && !shipped['test-fc'] && shipped['test-burger'] && shipped['test-brand'] && shipped['test-island'] && shipped['test-chain'] && shipped['tesla-model-z'] && !shipped['test-qb'] && !shipped['sour-thing'] && !shipped['fizzy-pop']"
 

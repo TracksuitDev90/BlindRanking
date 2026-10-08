@@ -57,7 +57,22 @@ export async function wikidataEntity(qid) {
   const j = await fetchJson(u.toString());
   const ent = j?.entities?.[qid];
   if (!ent) return null;
-  const claimValue = prop => ent.claims?.[prop]?.[0]?.mainsnak?.datavalue?.value ?? null;
+  // When a property has several values (a club's logos over the decades),
+  // take the current one: Wikidata's preferred rank, else a value without an
+  // end date (P582) — the most recently started (P580) — else the last.
+  const claimValue = prop => {
+    const claims = (ent.claims?.[prop] || []).filter(c => c.rank !== 'deprecated' && c.mainsnak?.datavalue);
+    if (!claims.length) return null;
+    const preferred = claims.find(c => c.rank === 'preferred');
+    if (preferred) return preferred.mainsnak.datavalue.value;
+    const qTime = (c, q) => c.qualifiers?.[q]?.[0]?.datavalue?.value?.time || '';
+    const open = claims.filter(c => !qTime(c, 'P582'));
+    const pool = open.length ? open : claims;
+    const best = pool.length > 1 && pool.some(c => qTime(c, 'P580'))
+      ? pool.slice().sort((a, b) => qTime(b, 'P580').localeCompare(qTime(a, 'P580')))[0]
+      : (open.length ? open[0] : claims[claims.length - 1]);
+    return best.mainsnak.datavalue.value;
+  };
   const claimIds = prop => (ent.claims?.[prop] || [])
     .map(c => c?.mainsnak?.datavalue?.value?.id).filter(Boolean);
   const str = v => (typeof v === 'string' || typeof v === 'number') ? String(v) : null;

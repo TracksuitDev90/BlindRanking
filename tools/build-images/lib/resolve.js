@@ -64,7 +64,9 @@ function tokens(s) {
 // Stick" → "Amazon Fire TV", "HBO Max" → "Max"), and one with different
 // words changes the subject ("Sour cream and onion" → "French onion dip").
 export function redirectIsAlias(label, target) {
-  const a = tokens(label), b = tokens(target);
+  // The target's own disambiguator counts ("Nissan S30" → "Nissan Fairlady
+  // Z (S30)" is an alias).
+  const a = tokens(label), b = tokens(target).concat(tokens((/\(([^)]*)\)\s*$/.exec(target) || [])[1] || ''));
   if (!a.length || !b.length) return false;
   const sb = new Set(b);
   if (a.every(t => sb.has(t))) return true;

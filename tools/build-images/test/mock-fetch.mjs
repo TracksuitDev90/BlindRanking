@@ -133,7 +133,12 @@ const WIKIDATA = {
   Q100: { descriptions: { en: { value: 'American football quarterback' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test QB.jpg' } } }] } },
   Q400: { descriptions: { en: { value: 'Australian cricketer' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Wrong Guy.jpg' } } }] } },
   Q200: { descriptions: { en: { value: 'dish' } }, claims: {} },
-  Q300: { descriptions: { en: { value: 'technology company' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Brand logo.svg' } } }] } },
+  // Two logos: the historical one listed first, the current one preferred.
+  Q300: { descriptions: { en: { value: 'technology company' } }, claims: { P154: [
+    { rank: 'normal', mainsnak: { datavalue: { value: 'Test Brand logo (1990-2010).svg' } },
+      qualifiers: { P582: [{ datavalue: { value: { time: '+2010-00-00T00:00:00Z' } } }] } },
+    { rank: 'preferred', mainsnak: { datavalue: { value: 'Test Brand logo.svg' } } }
+  ] } },
   Q500: { descriptions: { en: { value: 'island' } }, claims: { P18: [{ mainsnak: { datavalue: { value: 'Test Island beach.jpg' } } }] } },
   Q600: { descriptions: { en: { value: 'fast food chain' } }, claims: { P154: [{ mainsnak: { datavalue: { value: 'Test Chain logo.svg' } } }] } },
   Q701: { descriptions: { en: { value: 'dip' } }, claims: {} },
